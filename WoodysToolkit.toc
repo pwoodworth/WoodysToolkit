@@ -1,0 +1,10 @@
+## Interface: 50100
+## Title: WoodysToolkit
+## Version: 0.9
+## Author: Patrick Woodworth (patrick@woodworth.org)
+## Notes: v0.9 Allows you to lock 'MouseLook' (hold right mouse button) on among other tweaks.
+## DefaultState: enabled
+## X-Category: Interface Enhancements
+## LoadOnDemand: 0
+## SavedVariables: WoodysToolkit_acctData
+WoodysToolkit.xml
