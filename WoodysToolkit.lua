@@ -16,10 +16,10 @@ BINDING_NAME_WoodysToolkit_momentary    = "Disable Lock While Pressed"
 local b = CreateFrame("Button", "WoodysSpellStopTargetingButton", UIParent, "SecureActionButtonTemplate")
 b:SetAttribute("type", "stop")
 
-WoodysMouse = {}
-WoodysMouse.debug = false
+WoodysToolkit = {}
+WoodysToolkit.debug = false
 
-function WoodysMouse:Reset()
+function WoodysToolkit:Reset()
     WoodysToolkit_acctData = {}
     WoodysToolkit_acctData["lockEnabled"] = false
     WoodysToolkit_acctData["lockSuppressed"] = false
@@ -27,22 +27,22 @@ function WoodysMouse:Reset()
     WoodysToolkit_acctData["version"] = 1
 end
 
-function WoodysMouse:InitVars()
+function WoodysToolkit:InitVars()
     if type(WoodysToolkit_acctData) ~= "table" then
       self:Reset()
     end
 end
 
-local function WoodMouse_InitVars()
-    WoodysMouse:InitVars()
+local function WoodysToolkit_InitVars()
+    WoodysToolkit:InitVars()
 end
 
-local function WoodMouse_Reset()
-    WoodysMouse:Reset()
+local function WoodysToolkit_Reset()
+    WoodysToolkit:Reset()
 end
 
 local function ML_debug(...)
-    if not DEFAULT_CHAT_FRAME or not WoodysMouse.debug then return end
+    if not DEFAULT_CHAT_FRAME or not WoodysToolkit.debug then return end
     local msg = ''
     for k,v in ipairs(arg) do
         msg = msg .. tostring(v) .. ' : '
@@ -59,7 +59,7 @@ local function status(bool)
     if bool then return "true" else return "false" end
 end
 
-local function WoodMouse_GetVar(varname)
+local function WoodysToolkit_GetVar(varname)
     if type(WoodysToolkit_acctData) ~= "table" then
         return nil
     else
@@ -67,22 +67,22 @@ local function WoodMouse_GetVar(varname)
     end
 end
 
-local function WoodMouse_SetVar(varname, varval)
+local function WoodysToolkit_SetVar(varname, varval)
     --print("newval - ", varname, " : ", varval)
-    WoodMouse_InitVars()
+    WoodysToolkit_InitVars()
     WoodysToolkit_acctData[varname] = varval
 end
 
-local function WoodMouse_InitBindings()
-    local b1name = "WoodMouse_mode_disable"
-    if WoodMouse_GetVar("btn1backsup") then
+local function WoodysToolkit_InitBindings()
+    local b1name = "WoodysToolkit_mode_disable"
+    if WoodysToolkit_GetVar("btn1backsup") then
       b1name = "MOVEBACKWARD"
     end
     SetMouselookOverrideBinding("BUTTON1", b1name)
     SetMouselookOverrideBinding("BUTTON2", "MOVEFORWARD")
 end
 
-local function WoodMouse_ApplyMode()
+local function WoodysToolkit_ApplyMode()
     local shouldBeLooking = false
     if type(WoodysToolkit_acctData) == "table" then
       if WoodysToolkit_acctData["lockEnabled"] and not WoodysToolkit_acctData["lockSuppressed"] then
@@ -100,68 +100,68 @@ local function WoodMouse_ApplyMode()
     end
 end
 
-function WoodMouse_Enable()
-    WoodMouse_SetVar("lockEnabled", true)
-    WoodMouse_ApplyMode()
+function WoodysToolkit_Enable()
+    WoodysToolkit_SetVar("lockEnabled", true)
+    WoodysToolkit_ApplyMode()
 end
 
-function WoodMouse_Disable()
-    WoodMouse_SetVar("lockEnabled", false)
-    WoodMouse_ApplyMode()
+function WoodysToolkit_Disable()
+    WoodysToolkit_SetVar("lockEnabled", false)
+    WoodysToolkit_ApplyMode()
 end
 
-function WoodMouse_Toggle()
-    local newval = not WoodMouse_GetVar("lockEnabled")
-    WoodMouse_SetVar("lockEnabled", newval)
-    WoodMouse_ApplyMode()
+function WoodysToolkit_Toggle()
+    local newval = not WoodysToolkit_GetVar("lockEnabled")
+    WoodysToolkit_SetVar("lockEnabled", newval)
+    WoodysToolkit_ApplyMode()
 end
 
-function WoodMouse_Momentary(keystate)
+function WoodysToolkit_Momentary(keystate)
     local newval = keystate == "down"
-    WoodMouse_SetVar("lockSuppressed", newval)
-    WoodMouse_ApplyMode()
+    WoodysToolkit_SetVar("lockSuppressed", newval)
+    WoodysToolkit_ApplyMode()
 end
 
-function WoodMouse_SlashCommand(msg, editbox)
- local command, rest = msg:match("^(%S*)%s*(.-)$");
- -- Any leading non-whitespace is captured into command;
- -- the rest (minus leading whitespace) is captured into rest.
- if command == "reset" then
-    WoodMouse_Reset()
- elseif command == "button1" then
-   if rest == "backup" then
-     WoodMouse_SetVar("btn1backsup", true)
-     WoodMouse_InitBindings()
-   elseif rest == "cancel" then
-     WoodMouse_SetVar("btn1backsup", false)
-     WoodMouse_InitBindings()
-   else
-     local curval = WoodMouse_GetVar("btn1backsup") and 'backup' or 'cancel'
-     print("button1 : ", curval)
-   end
- elseif command == "remove" and rest ~= "" then
-   -- Handle removing of the contents of rest... to something.
-   -- print(command, " : \"", rest, "\" )
-   print(command, " : ", string.format("%s%s%s",'"',rest,'"') )
- else
-   -- If not handled above, display some sort of help message
-   print("Usage: /woodmouse button1 [backup||cancel]");
- end
+function WoodysToolkit_SlashCommand(msg, editbox)
+    local command, rest = msg:match("^(%S*)%s*(.-)$");
+    -- Any leading non-whitespace is captured into command;
+    -- the rest (minus leading whitespace) is captured into rest.
+    if command == "reset" then
+        WoodysToolkit_Reset()
+    elseif command == "button1" then
+        if rest == "backup" then
+            WoodysToolkit_SetVar("btn1backsup", true)
+            WoodysToolkit_InitBindings()
+        elseif rest == "cancel" then
+            WoodysToolkit_SetVar("btn1backsup", false)
+            WoodysToolkit_InitBindings()
+        else
+            local curval = WoodysToolkit_GetVar("btn1backsup") and 'backup' or 'cancel'
+            print("button1 : ", curval)
+        end
+    elseif command == "remove" and rest ~= "" then
+        -- Handle removing of the contents of rest... to something.
+        -- print(command, " : \"", rest, "\" )
+        print(command, " : ", string.format("%s%s%s", '"', rest, '"'))
+    else
+        -- If not handled above, display some sort of help message
+        print("Usage: /woodmouse button1 [backup||cancel]");
+    end
 end
 
-function WoodMouse_OnLoad(self,...)
+function WoodysToolkit_OnLoad(self,...)
     WoodMouseFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    WoodMouse_InitBindings()
-    SLASH_WoodMouse1, SLASH_WoodMouse2 = '/woodmouse', "/woodysmouse";
-    SlashCmdList["WoodMouse"] = WoodMouse_SlashCommand; -- Also a valid assignment strategy
+    WoodysToolkit_InitBindings()
+    SLASH_WoodysToolkit1, SLASH_WoodysToolkit2 = '/woodystoolkit', "/wtk";
+    SlashCmdList["WoodysToolkit"] = WoodysToolkit_SlashCommand; -- Also a valid assignment strategy
 end;
 
-function WoodMouse_OnEvent(self,event,...)
+function WoodysToolkit_OnEvent(self,event,...)
     --Print("on event:" ..event)
     if event == "PLAYER_ENTERING_WORLD" then
         --Print("PLAYER_ENTERING_WORLD event")
-        WoodMouse_InitVars()
-        WoodMouse_InitBindings()
-        WoodMouse_ApplyMode()
+        WoodysToolkit_InitVars()
+        WoodysToolkit_InitBindings()
+        WoodysToolkit_ApplyMode()
     end
 end

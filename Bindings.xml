@@ -1,14 +1,14 @@
 <Bindings>
     <Binding name="WoodysToolkit_mode_toggle" description="Toggle MouseLook Lock" header="WoodysToolkit">
-        WoodMouse_Toggle()
+        WoodysToolkit_Toggle()
     </Binding>
     <Binding name="WoodysToolkit_mode_enable" description="Enable MouseLook Lock" header="WoodysToolkit">
-        WoodMouse_Enable()
+        WoodysToolkit_Enable()
     </Binding>
     <Binding name="WoodysToolkit_mode_disable" description="Disable MouseLook Lock" header="WoodysToolkit">
-        WoodMouse_Disable()
+        WoodysToolkit_Disable()
     </Binding>
     <Binding name="WoodysToolkit_momentary" description="Brings up the pointer while held down" runOnUp="true" hidden="false" header="WoodysToolkit">
-        WoodMouse_Momentary(keystate)
+        WoodysToolkit_Momentary(keystate)
     </Binding>
 </Bindings>

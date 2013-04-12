@@ -2,10 +2,10 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
     <Script file="WoodysToolkit.lua"/>
-    <Frame name="WoodMouseFrame" hidden="false" parent="UIParent">
+    <Frame name="WoodysToolkitFrame" hidden="false" parent="UIParent">
         <Scripts>
-            <OnLoad function="WoodMouse_OnLoad"/>
-            <OnEvent function="WoodMouse_OnEvent"/>
+            <OnLoad function="WoodysToolkit_OnLoad"/>
+            <OnEvent function="WoodysToolkit_OnEvent"/>
         </Scripts>
     </Frame>
 </Ui>
