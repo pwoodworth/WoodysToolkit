@@ -13,6 +13,15 @@ BINDING_NAME_WoodysToolkit_mode_enable  = "Enable MouseLook Lock"
 BINDING_NAME_WoodysToolkit_mode_disable  = "Disable MouseLook Lock"
 BINDING_NAME_WoodysToolkit_momentary    = "Disable Lock While Pressed"
 
+WoodysToolkit = setmetatable({}, {
+    __index = function(table, key)
+        return WoodysToolkit_acctData[key]
+    end,
+    __newindex = function(table, key, value)
+        WoodysToolkit_acctData[key] = value
+    end
+})
+
 local function WTK_debug(...)
     if not DEFAULT_CHAT_FRAME or not WoodysToolkit.debug then return end
     local msg = ''
@@ -31,63 +40,10 @@ local function status(bool)
     if bool then return "true" else return "false" end
 end
 
-WoodysToolkit = {}
-WoodysToolkit.debug = false
-
-local function WoodysToolkit_Reset()
-    WoodysToolkit_acctData = {}
-    WoodysToolkit_acctData["lockEnabled"] = false
-    WoodysToolkit_acctData["lockSuppressed"] = false
-    WoodysToolkit_acctData["btn1backsup"] = false
-    WoodysToolkit_acctData["version"] = 1
-end
-
-local function WoodysToolkit_InitVars()
-    if type(WoodysToolkit_acctData) ~= "table" then
-        WoodysToolkit_Reset()
-    end
-end
-
-local function WoodysToolkit_GetVar(varname)
-    if type(WoodysToolkit_acctData) ~= "table" then
-        return nil
-    else
-        return WoodysToolkit_acctData[varname]
-    end
-end
-
-local function WoodysToolkit_SetVar(varname, varval)
-    WoodysToolkit_InitVars()
-    WoodysToolkit_acctData[varname] = varval
-end
-
-local function WoodysToolkit_IsButton1Backup()
-    return WoodysToolkit_GetVar("btn1backsup")
-end
-
-local function WoodysToolkit_SetButton1Backup(val)
-    WoodysToolkit_SetVar("btn1backsup", val)
-end
-
-local function WoodysToolkit_IsLockEnabled()
-    return WoodysToolkit_GetVar("lockEnabled")
-end
-
-local function WoodysToolkit_SetLockEnabled(val)
-    WoodysToolkit_SetVar("lockEnabled", val)
-end
-
-local function WoodysToolkit_IsLockSuppressed()
-    return WoodysToolkit_GetVar("lockSuppressed")
-end
-
-local function WoodysToolkit_SetLockSuppressed(val)
-    WoodysToolkit_SetVar("lockSuppressed", val)
-end
 
 local function WoodysToolkit_GetButton1Action()
     local b1name = "WoodysToolkit_mode_disable"
-    if WoodysToolkit_IsButton1Backup() then
+    if WoodysToolkit.btn1backsup then
         b1name = "MOVEBACKWARD"
     end
     return b1name
@@ -100,12 +56,7 @@ local function WoodysToolkit_InitBindings()
 end
 
 local function WoodysToolkit_ApplyMode()
-    local shouldBeLooking = false
-    if type(WoodysToolkit_acctData) == "table" then
-      if WoodysToolkit_acctData["lockEnabled"] and not WoodysToolkit_acctData["lockSuppressed"] then
-        shouldBeLooking = true
-      end
-    end
+    local shouldBeLooking = WoodysToolkit.lockEnabled and not WoodysToolkit.lockSuppressed
     if IsMouselooking() then
       if not shouldBeLooking then
         MouselookStop()
@@ -117,25 +68,27 @@ local function WoodysToolkit_ApplyMode()
     end
 end
 
+function WoodysToolkit_Reset()
+    WoodysToolkit_acctData = {}
+end
+
 function WoodysToolkit_Enable()
-    WoodysToolkit_SetLockEnabled(true)
+    WoodysToolkit.lockEnabled = true
     WoodysToolkit_ApplyMode()
 end
 
 function WoodysToolkit_Disable()
-    WoodysToolkit_SetLockEnabled(false)
+    WoodysToolkit.lockEnabled = false
     WoodysToolkit_ApplyMode()
 end
 
 function WoodysToolkit_Toggle()
-    local newval = not WoodysToolkit_IsLockEnabled()
-    WoodysToolkit_SetLockEnabled(newval)
+    WoodysToolkit.lockEnabled = not WoodysToolkit.lockEnabled
     WoodysToolkit_ApplyMode()
 end
 
 function WoodysToolkit_Momentary(keystate)
-    local newval = keystate == "down"
-    WoodysToolkit_SetLockSuppressed(newval)
+    WoodysToolkit.lockSuppressed = (keystate == "down")
     WoodysToolkit_ApplyMode()
 end
 
@@ -147,13 +100,13 @@ function WoodysToolkit_SlashCommand(msg, editbox)
         WoodysToolkit_Reset()
     elseif command == "button1" then
         if rest == "backup" then
-            WoodysToolkit_SetButton1Backup(true)
+            WoodysToolkit.btn1backsup = true
             WoodysToolkit_InitBindings()
         elseif rest == "cancel" then
-            WoodysToolkit_SetButton1Backup(false)
+            WoodysToolkit.btn1backsup = false
             WoodysToolkit_InitBindings()
         else
-            local curval = WoodysToolkit_IsButton1Backup() and 'backup' or 'cancel'
+            local curval = WoodysToolkit.btn1backsup and 'backup' or 'cancel'
             print("button1 : ", curval)
         end
     elseif command == "remove" and rest ~= "" then
@@ -177,7 +130,6 @@ function WoodysToolkit_OnEvent(self,event,...)
     --Print("on event:" ..event)
     if event == "PLAYER_ENTERING_WORLD" then
         --Print("PLAYER_ENTERING_WORLD event")
-        WoodysToolkit_InitVars()
         WoodysToolkit_InitBindings()
         WoodysToolkit_ApplyMode()
     end
