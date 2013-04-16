@@ -34,7 +34,7 @@ end
 WoodysToolkit = {}
 WoodysToolkit.debug = false
 
-function WoodysToolkit:Reset()
+local function WoodysToolkit_Reset()
     WoodysToolkit_acctData = {}
     WoodysToolkit_acctData["lockEnabled"] = false
     WoodysToolkit_acctData["lockSuppressed"] = false
@@ -42,13 +42,13 @@ function WoodysToolkit:Reset()
     WoodysToolkit_acctData["version"] = 1
 end
 
-function WoodysToolkit:InitVars()
+local function WoodysToolkit_InitVars()
     if type(WoodysToolkit_acctData) ~= "table" then
-      self:Reset()
+        WoodysToolkit_Reset()
     end
 end
 
-function WoodysToolkit:GetVar(varname)
+local function WoodysToolkit_GetVar(varname)
     if type(WoodysToolkit_acctData) ~= "table" then
         return nil
     else
@@ -56,50 +56,50 @@ function WoodysToolkit:GetVar(varname)
     end
 end
 
-function WoodysToolkit:SetVar(varname, varval)
-    self:InitVars()
+local function WoodysToolkit_SetVar(varname, varval)
+    WoodysToolkit_InitVars()
     WoodysToolkit_acctData[varname] = varval
 end
 
-function WoodysToolkit:IsButton1Backup()
-    return self:GetVar("btn1backsup")
+local function WoodysToolkit_IsButton1Backup()
+    return WoodysToolkit_GetVar("btn1backsup")
 end
 
-function WoodysToolkit:SetButton1Backup(val)
-    self:SetVar("btn1backsup", val)
+local function WoodysToolkit_SetButton1Backup(val)
+    WoodysToolkit_SetVar("btn1backsup", val)
 end
 
-function WoodysToolkit:IsLockEnabled()
-    return self:GetVar("lockEnabled")
+local function WoodysToolkit_IsLockEnabled()
+    return WoodysToolkit_GetVar("lockEnabled")
 end
 
-function WoodysToolkit:SetLockEnabled(val)
-    self:SetVar("lockEnabled", val)
+local function WoodysToolkit_SetLockEnabled(val)
+    WoodysToolkit_SetVar("lockEnabled", val)
 end
 
-function WoodysToolkit:IsLockSuppressed()
-    return self:GetVar("lockSuppressed")
+local function WoodysToolkit_IsLockSuppressed()
+    return WoodysToolkit_GetVar("lockSuppressed")
 end
 
-function WoodysToolkit:SetLockSuppressed(val)
-    self:SetVar("lockSuppressed", val)
+local function WoodysToolkit_SetLockSuppressed(val)
+    WoodysToolkit_SetVar("lockSuppressed", val)
 end
 
-function WoodysToolkit:GetButton1Action()
+local function WoodysToolkit_GetButton1Action()
     local b1name = "WoodysToolkit_mode_disable"
-    if self:IsButton1Backup() then
+    if WoodysToolkit_IsButton1Backup() then
         b1name = "MOVEBACKWARD"
     end
     return b1name
 end
 
-function WoodysToolkit:InitBindings()
-    local b1name = self:GetButton1Action()
+local function WoodysToolkit_InitBindings()
+    local b1name = WoodysToolkit_GetButton1Action()
     SetMouselookOverrideBinding("BUTTON1", b1name)
     SetMouselookOverrideBinding("BUTTON2", "MOVEFORWARD")
 end
 
-function WoodysToolkit:ApplyMode()
+local function WoodysToolkit_ApplyMode()
     local shouldBeLooking = false
     if type(WoodysToolkit_acctData) == "table" then
       if WoodysToolkit_acctData["lockEnabled"] and not WoodysToolkit_acctData["lockSuppressed"] then
@@ -118,25 +118,25 @@ function WoodysToolkit:ApplyMode()
 end
 
 function WoodysToolkit_Enable()
-    WoodysToolkit:SetLockEnabled(true)
-    WoodysToolkit:ApplyMode()
+    WoodysToolkit_SetLockEnabled(true)
+    WoodysToolkit_ApplyMode()
 end
 
 function WoodysToolkit_Disable()
-    WoodysToolkit:SetLockEnabled(false)
-    WoodysToolkit:ApplyMode()
+    WoodysToolkit_SetLockEnabled(false)
+    WoodysToolkit_ApplyMode()
 end
 
 function WoodysToolkit_Toggle()
-    local newval = not WoodysToolkit:IsLockEnabled()
-    WoodysToolkit:SetLockEnabled(newval)
-    WoodysToolkit:ApplyMode()
+    local newval = not WoodysToolkit_IsLockEnabled()
+    WoodysToolkit_SetLockEnabled(newval)
+    WoodysToolkit_ApplyMode()
 end
 
 function WoodysToolkit_Momentary(keystate)
     local newval = keystate == "down"
-    WoodysToolkit:SetLockSuppressed(newval)
-    WoodysToolkit:ApplyMode()
+    WoodysToolkit_SetLockSuppressed(newval)
+    WoodysToolkit_ApplyMode()
 end
 
 function WoodysToolkit_SlashCommand(msg, editbox)
@@ -144,16 +144,16 @@ function WoodysToolkit_SlashCommand(msg, editbox)
     -- Any leading non-whitespace is captured into command;
     -- the rest (minus leading whitespace) is captured into rest.
     if command == "reset" then
-        WoodysToolkit:Reset()
+        WoodysToolkit_Reset()
     elseif command == "button1" then
         if rest == "backup" then
-            WoodysToolkit:SetButton1Backup(true)
-            WoodysToolkit:InitBindings()
+            WoodysToolkit_SetButton1Backup(true)
+            WoodysToolkit_InitBindings()
         elseif rest == "cancel" then
-            WoodysToolkit:SetButton1Backup(false)
-            WoodysToolkit:InitBindings()
+            WoodysToolkit_SetButton1Backup(false)
+            WoodysToolkit_InitBindings()
         else
-            local curval = WoodysToolkit:IsButton1Backup() and 'backup' or 'cancel'
+            local curval = WoodysToolkit_IsButton1Backup() and 'backup' or 'cancel'
             print("button1 : ", curval)
         end
     elseif command == "remove" and rest ~= "" then
@@ -168,7 +168,7 @@ end
 
 function WoodysToolkit_OnLoad(self,...)
     WoodysToolkitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    WoodysToolkit:InitBindings()
+    WoodysToolkit_InitBindings()
     SLASH_WoodysToolkit1, SLASH_WoodysToolkit2 = '/woodystoolkit', "/wtk";
     SlashCmdList["WoodysToolkit"] = WoodysToolkit_SlashCommand; -- Also a valid assignment strategy
 end;
@@ -177,8 +177,8 @@ function WoodysToolkit_OnEvent(self,event,...)
     --Print("on event:" ..event)
     if event == "PLAYER_ENTERING_WORLD" then
         --Print("PLAYER_ENTERING_WORLD event")
-        WoodysToolkit:InitVars()
-        WoodysToolkit:InitBindings()
-        WoodysToolkit:ApplyMode()
+        WoodysToolkit_InitVars()
+        WoodysToolkit_InitBindings()
+        WoodysToolkit_ApplyMode()
     end
 end
