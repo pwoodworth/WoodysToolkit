@@ -13,23 +13,52 @@ BINDING_NAME_WoodysToolkit_mode_enable  = "Enable MouseLook Lock"
 BINDING_NAME_WoodysToolkit_mode_disable  = "Disable MouseLook Lock"
 BINDING_NAME_WoodysToolkit_momentary    = "Disable Lock While Pressed"
 
-WoodysToolkit = {}
-WoodysToolkit.data = setmetatable({}, {
+WoodysToolkit_acctData = {}
+
+-- WoodysToolkit = {}
+
+
+local function WoodysToolkit_InitData()
+    if type(WoodysToolkit_acctData) ~= "table" then
+        WoodysToolkit_acctData = {}
+    end
+    if type(WoodysToolkit_acctData.bindings) ~= "table" then
+        WoodysToolkit_acctData.bindings = {}
+    end
+end
+
+local data = setmetatable({}, {
     __index = function(table, key)
-        if type(WoodysToolkit_acctData) ~= "table" then
-            WoodysToolkit_acctData = {}
-        end
+        WoodysToolkit_InitData()
         return WoodysToolkit_acctData[key]
     end,
     __newindex = function(table, key, value)
-        if type(WoodysToolkit_acctData) ~= "table" then
-            WoodysToolkit_acctData = {}
-        end
+        WoodysToolkit_InitData()
         WoodysToolkit_acctData[key] = value
     end
 })
 
-local data = WoodysToolkit.data
+WoodysToolkit = setmetatable({}, {
+    __index = function(table, key)
+        if key == "data" then
+            return data
+        end
+    end,
+    __newindex = function(table, key, value)
+        if key == "data" then
+            -- noop
+        else
+            rawset(table, key, value)
+        end
+    end
+})
+
+WoodysToolkit.OVERRIDE_DEFAULTS = {
+    BUTTON1 = "WoodysToolkit_mode_disable",
+    BUTTON2 = "MOVEFORWARD",
+    LEFT = "STRAFELEFT",
+    RIGHT = "STRAFERIGHT",
+}
 
 local function WTK_debug(...)
     if not DEFAULT_CHAT_FRAME or not data.debug then return end
@@ -49,19 +78,15 @@ local function status(bool)
     if bool then return "true" else return "false" end
 end
 
-
-local function WoodysToolkit_GetButton1Action()
-    local b1name = "WoodysToolkit_mode_disable"
-    if data.btn1backsup then
-        b1name = "MOVEBACKWARD"
-    end
-    return b1name
-end
-
 local function WoodysToolkit_InitBindings()
-    local b1name = WoodysToolkit_GetButton1Action()
-    SetMouselookOverrideBinding("BUTTON1", b1name)
-    SetMouselookOverrideBinding("BUTTON2", "MOVEFORWARD")
+    for k,v in pairs(WoodysToolkit.OVERRIDE_DEFAULTS) do
+        local val = data.bindings[k]
+        if not val then
+            val = v
+        end
+        SetMouselookOverrideBinding(k, val)
+        print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
+    end
 end
 
 local function WoodysToolkit_ApplyMode()
@@ -138,9 +163,29 @@ function WoodysToolkit_OnLoad(self,...)
 end;
 
 function WoodysToolkit_OnEvent(self,event,...)
-    --Print("on event:" ..event)
+    print("on event:" ..event)
     if event == "PLAYER_ENTERING_WORLD" then
         WoodysToolkit_InitBindings()
         WoodysToolkit_ApplyMode()
     end
+end
+
+function is_main(_arg, ...)
+    local n_arg = _arg and #_arg or 0;
+    if n_arg == select("#", ...) then
+        for i=1,n_arg do
+            if _arg[i] ~= select(i, ...) then
+                print(_arg[i], "does not match", (select(i, ...)))
+                return false;
+            end
+        end
+        return true;
+    end
+    return false;
+end
+
+if is_main(arg, ...) then
+    print("Main file");
+    WoodysToolkit_OnEvent(nil, "PLAYER_ENTERING_WORLD")
+--    print("button1.action " .. WoodysToolkit.button1.action);
 end
