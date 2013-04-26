@@ -85,7 +85,7 @@ local function WoodysToolkit_InitBindings()
             val = v
         end
         SetMouselookOverrideBinding(k, val)
-        print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
+--        print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
     end
 end
 
@@ -163,7 +163,7 @@ function WoodysToolkit_OnLoad(self,...)
 end;
 
 function WoodysToolkit_OnEvent(self,event,...)
-    print("on event:" ..event)
+--    print("on event:" ..event)
     if event == "PLAYER_ENTERING_WORLD" then
         WoodysToolkit_InitBindings()
         WoodysToolkit_ApplyMode()
@@ -184,8 +184,8 @@ function is_main(_arg, ...)
     return false;
 end
 
-if is_main(arg, ...) then
-    print("Main file");
-    WoodysToolkit_OnEvent(nil, "PLAYER_ENTERING_WORLD")
+-- if is_main(arg, ...) then
+--    print("Main file");
+--    WoodysToolkit_OnEvent(nil, "PLAYER_ENTERING_WORLD")
 --    print("button1.action " .. WoodysToolkit.button1.action);
-end
+-- end
