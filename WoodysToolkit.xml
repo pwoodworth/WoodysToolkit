@@ -8,4 +8,85 @@
             <OnEvent function="WoodysToolkit_OnEvent"/>
         </Scripts>
     </Frame>
+<!--
+    <Frame name="WoodysToolkitConfigFrame"
+           toplevel="true" parent="UIParent" frameStrata="DIALOG"
+           hidden="true" enableMouse="true">
+-->
+    <Frame name="WoodysToolkitConfigFrame" hidden="true">
+        <Scripts>
+            <OnLoad>
+                WoodysToolkitConfig_OnLoad(self);
+            </OnLoad>
+<!--
+            <OnShow>
+                WoodysToolkitConfig_OnShow(self);
+            </OnShow>
+-->
+        </Scripts>
+
+<!--
+        <Size><AbsDimension x="260" y="280"/></Size>
+        <Anchors><Anchor point="CENTER"/></Anchors>
+
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                  edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="11" right="12" top="12" bottom="11"/>
+            </BackgroundInsets>
+            <TileSize><AbsValue val="32"/></TileSize>
+            <EdgeSize><AbsValue val="32"/></EdgeSize>
+        </Backdrop>
+-->
+        <Frames>
+<!--
+            <CheckButton name="$parentCheckButtonOn" inherits="OptionsCheckButtonTemplate">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parent">
+                        <Offset><AbsDimension x="20" y="-30"/></Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnLoad> getglobal(self:GetName().."Text"):SetText("On"); </OnLoad>
+                    <OnClick> myClockConfigFrameOption_OnClick(); </OnClick>
+                </Scripts>
+            </CheckButton>
+            <EditBox name="$parentEditBox" letters="80">
+                <Size x="100" y="32" />
+                <Anchors>
+                    <Anchor point="LEFT">
+                        <Offset x="50" y="0" />
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="BACKGROUND">
+                        <Texture file="Interface\ChatFrame\UI-ChatInputBorder-Left">
+                            <Size x="75" y="32" />
+                            <Anchors>
+                                <Anchor point="LEFT">
+                                    <Offset x="-10" y="0" />
+                                </Anchor>
+                            </Anchors>
+                            <TexCoords left="0" right="0.2" top="0" bottom="1.0"/>
+                        </Texture>
+                        <Texture file="Interface\ChatFrame\UI-ChatInputBorder-Right">
+                            <Size x="75" y="32" />
+                            <Anchors>
+                                <Anchor point="RIGHT">
+                                    <Offset x="10" y="0" />
+                                </Anchor>
+                            </Anchors>
+                            <TexCoords left="0.7" right="1.0" top="0" bottom="1.0"/>
+                        </Texture>
+                    </Layer>
+                </Layers>
+                <Scripts>
+                    <OnLoad>
+                    </OnLoad>
+                </Scripts>
+                <FontString inherits="ChatFontNormal" />
+            </EditBox>
+-->
+        </Frames>
+    </Frame>
 </Ui>

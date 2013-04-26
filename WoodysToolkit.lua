@@ -19,6 +19,31 @@ WoodysToolkit_acctData = {}
 
 local WTK_DEBUG = false
 
+WoodysToolkit_GOOD_VARS = {
+    "version",
+    "bindings",
+    "lockEnabled",
+    "lockSuppressed",
+}
+
+
+WoodysToolkit_OVERRIDE_BINDINGS = {
+    "BUTTON1",
+    "BUTTON2",
+    "BUTTON3",
+}
+
+WoodysToolkit_OVERRIDE_DEFAULTS = {
+    BUTTON1 = "WoodysToolkit_mode_disable",
+    BUTTON2 = "MOVEFORWARD",
+}
+
+local function WTK_createSet(list)
+  local set = {}
+  for _, l in ipairs(list) do set[l] = true end
+  return set
+end
+
 local statedata = {}
 
 local function WoodysToolkit_InitData()
@@ -28,24 +53,82 @@ local function WoodysToolkit_InitData()
     if type(WoodysToolkit_acctData.bindings) ~= "table" then
         WoodysToolkit_acctData.bindings = {}
     end
+    local items = WTK_createSet(WoodysToolkit_GOOD_VARS)
+    for k,v in pairs(WoodysToolkit_acctData) do
+        if not items[k] then
+          WoodysToolkit_acctData[k] = nil
+        end
+    end
 end
 
-local data = setmetatable({}, {
-    __index = function(table, key)
-        if key == "debug" then
-            return WTK_DEBUG
+local function createOverrideEntry(overidx)
+    return setmetatable({}, {
+        __index = function(table, key, value)
+            local bVal = WoodysToolkit_OVERRIDE_BINDINGS[overidx]
+            if key == "binding" then
+                return bVal
+            elseif key == "action" then
+                local aVal = WoodysToolkit_acctData.bindings[bVal]
+                if not aVal or aVal == "" then
+                    if bVal then
+                        aVal = WoodysToolkit_OVERRIDE_DEFAULTS[bVal]
+                    else
+                        aVal = false
+                    end
+                end
+                return aVal
+            end
+        end,
+        __newindex = function(table, key, value)
+            local bVal = WoodysToolkit_OVERRIDE_BINDINGS[overidx]
+            if key == "action" then
+                if type(value) ~= "string" or value == "" or value == WoodysToolkit_OVERRIDE_DEFAULTS[bVal] then
+                    WoodysToolkit_acctData.bindings[bVal] = nil
+                else
+                    WoodysToolkit_acctData.bindings[bVal] = value
+                end
+            end
         end
-        WoodysToolkit_InitData()
-        return WoodysToolkit_acctData[key]
-    end,
-    __newindex = function(table, key, value)
-        if key == "debug" then
+    })
+end
+
+
+local function createDataTable()
+    local overrides = { }
+    for ii in ipairs(WoodysToolkit_OVERRIDE_BINDINGS) do
+        overrides[ii] = createOverrideEntry(ii)
+    end
+    setmetatable(overrides, {
+        __newindex = function(table, key, value)
             return
         end
-        WoodysToolkit_InitData()
-        WoodysToolkit_acctData[key] = value
-    end
-})
+    })
+
+    return setmetatable({}, {
+        __index = function(table, key)
+            if key == "debug" then
+                return WTK_DEBUG
+            elseif key == "overrides" then
+                WoodysToolkit_InitData()
+                return overrides
+            end
+            WoodysToolkit_InitData()
+            return WoodysToolkit_acctData[key]
+        end,
+        __newindex = function(table, key, value)
+            if key == "debug" then
+                WTK_DEBUG = value
+                return
+            elseif key == "overrides" then
+                return
+            end
+            WoodysToolkit_InitData()
+            WoodysToolkit_acctData[key] = value
+        end
+    })
+end
+
+local data = createDataTable()
 
 WoodysToolkit = setmetatable({}, {
     __index = function(table, key)
@@ -61,14 +144,6 @@ WoodysToolkit = setmetatable({}, {
         end
     end
 })
-
-WoodysToolkit.OVERRIDE_DEFAULTS = {
-    BUTTON1 = "WoodysToolkit_mode_disable",
-    BUTTON2 = "MOVEFORWARD",
-    BUTTON3 = "TOGGLEAUTORUN",
-    LEFT = "STRAFELEFT",
-    RIGHT = "STRAFERIGHT",
-}
 
 local function WTK_debug(...)
     if not DEFAULT_CHAT_FRAME or not data.debug then return end
@@ -89,18 +164,31 @@ local function dprint(text)
     DEFAULT_CHAT_FRAME:AddMessage(text)
 end
 
+local function printd(text)
+    if not DEFAULT_CHAT_FRAME or not data.debug then return end
+    DEFAULT_CHAT_FRAME:AddMessage(text)
+end
+
+local function printi(text)
+    if not DEFAULT_CHAT_FRAME then return end
+    DEFAULT_CHAT_FRAME:AddMessage(text)
+end
+
 local function status(bool)
     if bool then return "true" else return "false" end
 end
 
 local function WoodysToolkit_InitBindings()
-    for k,v in pairs(WoodysToolkit.OVERRIDE_DEFAULTS) do
-        local val = data.bindings[k]
-        if not val then
-            val = v
+    for index,override in ipairs(data.overrides) do
+        local val = override.action
+        if not val or val == "" or type(val) ~= "string" then
+            val = nil
+            printd('SetMouselookOverrideBinding("' .. override.binding .. '", nilit ' .. tostring(val) .. ')')
+        else
+            printd('SetMouselookOverrideBinding("' .. override.binding .. '", "' .. val .. '")')
+--        SetMouselookOverrideBinding(override.binding, val)
         end
-        SetMouselookOverrideBinding(k, val)
---        print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
+        SetMouselookOverrideBinding(override.binding, val)
     end
 end
 
@@ -141,48 +229,6 @@ end
 function WoodysToolkit_Momentary(keystate)
     data.lockSuppressed = (keystate == "down")
     WoodysToolkit_ApplyMode()
-end
-
-function WoodysToolkit_SlashCommand(msg, editbox)
-    local command, rest = msg:match("^(%S*)%s*(.-)$");
-    -- Any leading non-whitespace is captured into command;
-    -- the rest (minus leading whitespace) is captured into rest.
-    if command == "reset" then
-        WoodysToolkit_Reset()
-    elseif command == "button1" then
-        if rest == "backup" then
-            data.btn1backsup = true
-            WoodysToolkit_InitBindings()
-        elseif rest == "cancel" then
-            data.btn1backsup = false
-            WoodysToolkit_InitBindings()
-        else
-            local curval = data.btn1backsup and 'backup' or 'cancel'
-            print("button1 : ", curval)
-        end
-    elseif command == "remove" and rest ~= "" then
-        -- Handle removing of the contents of rest... to something.
-        -- print(command, " : \"", rest, "\" )
-        print(command, " : ", string.format("%s%s%s", '"', rest, '"'))
-    else
-        -- If not handled above, display some sort of help message
-        print("Usage: /woodystoolkit button1 [backup||cancel]");
-    end
-end
-
-function WoodysToolkit_OnLoad(self,...)
-    WoodysToolkitFrame:RegisterEvent("ADDON_LOADED")
-    WoodysToolkitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    SLASH_WoodysToolkit1, SLASH_WoodysToolkit2 = '/woodystoolkit', "/wtk";
-    SlashCmdList["WoodysToolkit"] = WoodysToolkit_SlashCommand; -- Also a valid assignment strategy
-end;
-
-function WoodysToolkit_OnEvent(self,event,...)
---    print("on event:" ..event)
-    if event == "PLAYER_ENTERING_WORLD" then
-        WoodysToolkit_InitBindings()
-        WoodysToolkit_ApplyMode()
-    end
 end
 
 function WoodysToolkit_MoveAndSteerStart()
@@ -248,6 +294,155 @@ hooksecurefunc("MoveForwardStart", WoodysToolkit_MoveForwardStart);
 hooksecurefunc("MoveForwardStop", WoodysToolkit_MoveForwardStop);
 hooksecurefunc("MoveBackwardStart", WoodysToolkit_MoveBackwardStart);
 hooksecurefunc("MoveBackwardStop", WoodysToolkit_MoveBackwardStop);
+
+local function WoodysToolkit_GetConfigPanelName()
+    return "WoodysToolkit" -- .. GetAddOnMetadata("WoodysToolkit", "Version");
+end
+
+function WoodysToolkit_SlashCommand(msg, editbox)
+    local command, rest = msg:match("^(%S*)%s*(.-)$");
+    -- Any leading non-whitespace is captured into command;
+    -- the rest (minus leading whitespace) is captured into rest.
+    if command == "debug" then
+        if rest == "true" or rest == "on" then
+            data.debug = true
+        elseif rest ~= "" then
+            data.debug = false
+        end
+        printi("debug: " .. status(data.debug))
+    elseif command == "reset" then
+        WoodysToolkit_Reset()
+    elseif command == "button1" then
+        if rest == "backup" then
+            data.btn1backsup = true
+            WoodysToolkit_InitBindings()
+        elseif rest == "cancel" then
+            data.btn1backsup = false
+            WoodysToolkit_InitBindings()
+        else
+            local curval = data.btn1backsup and 'backup' or 'cancel'
+            print("button1 : ", curval)
+        end
+    elseif command == "remove" and rest ~= "" then
+        -- Handle removing of the contents of rest... to something.
+        -- print(command, " : \"", rest, "\" )
+        print(command, " : ", string.format("%s%s%s", '"', rest, '"'))
+    else
+        -- If not handled above, display some sort of help message
+        print("Usage: /woodystoolkit button1 [backup||cancel]");
+        InterfaceOptionsFrame_OpenToCategory(WoodysToolkit_GetConfigPanelName());
+    end
+end
+
+function WoodysToolkit_OnLoad(self,...)
+    WoodysToolkitFrame:RegisterEvent("ADDON_LOADED")
+    WoodysToolkitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    SLASH_WoodysToolkit1, SLASH_WoodysToolkit2 = '/woodystoolkit', "/wtk";
+    SlashCmdList["WoodysToolkit"] = WoodysToolkit_SlashCommand; -- Also a valid assignment strategy
+end;
+
+function WoodysToolkit_OnEvent(self,event,...)
+    printd("on event: " .. event)
+    if event == "PLAYER_ENTERING_WORLD" then
+        WoodysToolkit_InitBindings()
+        WoodysToolkit_ApplyMode()
+    end
+end
+
+local myFrames = {}
+
+function WoodysToolkitConfig_Close(self,...)
+    printd("WoodysToolkitConfig_Close")
+    for index, override in ipairs(data.overrides) do
+        local k = override.binding
+        local valBox = myFrames["WoodysConfigEditBoxVal" .. index]
+        if valBox then
+            local val = valBox:GetText()
+            override.action = val
+        end
+--        print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
+    end
+    WoodysToolkit_InitBindings()
+end
+
+function WoodysToolkitConfig_Refresh(self,...)
+    printd("WoodysToolkitConfig_Refresh")
+    for index, override in ipairs(data.overrides) do
+        local k = override.binding
+        local val = override.action
+        local editBox = myFrames["WoodysConfigEditBoxBindingName" .. index]
+        if editBox then
+            editBox:SetText("")
+            editBox:SetText(k or "")
+            editBox:SetCursorPosition(0)
+        end
+        local valBox = myFrames["WoodysConfigEditBoxVal" .. index]
+        if valBox then
+            valBox:SetText("")
+            valBox:SetText(val or "")
+            valBox:SetCursorPosition(0)
+        end
+--        print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
+    end
+
+end
+
+function WoodysToolkitConfig_CancelOrLoad(self,...)
+    -- Set the name for the Category for the Panel
+end
+
+local function WoodysToolkitConfig_CreateEditBox(name, xpos, ypos)
+    if myFrames[name] then
+        return
+    end
+    local editBox = CreateFrame("EditBox", name, myFrames.Parent, "InputBoxTemplate")
+    editBox:SetMaxLetters(80)
+    editBox:SetWidth(250)
+    editBox:SetHeight(20)
+    editBox:SetPoint("TOPLEFT", myFrames.Parent, "TOPLEFT", xpos, ypos)
+--    editBox:SetFontObject("ChatFontNormal")
+    myFrames[name] = editBox
+end
+
+local function WoodysToolkitConfig_CreateOverrideWidget(index)
+    WoodysToolkitConfig_CreateEditBox("WoodysConfigEditBoxBindingName" .. index, 20, index * -30)
+    WoodysToolkitConfig_CreateEditBox("WoodysConfigEditBoxVal" .. index, 300, index * -30)
+end
+
+function WoodysToolkitConfig_OnLoad(panel,...)
+
+    myFrames.Parent = panel
+
+    for ii in ipairs(WoodysToolkit_OVERRIDE_BINDINGS) do
+        WoodysToolkitConfig_CreateOverrideWidget(ii)
+    end
+
+    -- Set the name for the Category for the Panel
+    --
+    panel.name = WoodysToolkit_GetConfigPanelName()
+
+    -- When the player clicks okay, run this function.
+    --
+    panel.okay = function (self)
+        WoodysToolkitConfig_Close();
+    end;
+
+    -- When the player clicks okay, run this function.
+    --
+    panel.refresh = function (self)
+        WoodysToolkitConfig_Refresh();
+    end;
+
+
+    -- When the player clicks cancel, run this function.
+    --
+    panel.cancel = function (self)  WoodysToolkitConfig_CancelOrLoad();  end;
+
+    -- Add the panel to the Interface Options
+    --
+    InterfaceOptions_AddCategory(panel);
+end
+
 
 function is_main(_arg, ...)
     local n_arg = _arg and #_arg or 0;
