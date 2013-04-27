@@ -1,69 +1,117 @@
-local myFrames = {}
+--[[------------------------------------------------------------
+    WoodysToolkitConfig
+--------------------------------------------------------------]]
 
-function WoodysToolkitConfig_Close(self,...)
-    WoodyToolkit.utils.printd("WoodysToolkitConfig_Close")
+local printd = WoodyToolkit.utils.printd
+local status = WoodyToolkit.utils.status
 
+WoodysGuiToolkit = {}
+
+WoodysGuiToolkit.prototype = {}
+
+function WoodysGuiToolkit.prototype.GetBindingFieldName(self, index)
+    return self.frames.Parent:GetName() .. "BindingEditor" .. index
+end
+
+function WoodysGuiToolkit.prototype.GetBindingField(self, index)
+    local name = self:GetBindingFieldName(index)
+    return self.frames[name]
+end
+
+function WoodysGuiToolkit.prototype.GetOrCreateBindingField(self, index)
+    local name = self:GetBindingFieldName(index)
+    local editBox = self.frames[name]
+    if not editBox then
+        editBox = CreateFrame("EditBox", name, self.frames.Parent, "WoodysToolkitInputBoxTemplate")
+        editBox:SetPoint("TOPLEFT", self.frames.Parent, "TOPLEFT", 20, index * -30)
+        editBox:Disable()
+--        editBox:SetNormalFontObject("GameFontHighlight");
+--        local font = editBox:GetNormalFontObject();
+--        font:SetTextColor(1, 0.5, 0.25, 1.0);
+--        editBox:SetNormalFontObject(font);
+        self.frames[name] = editBox
+    end
+    return editBox
+end
+
+function WoodysGuiToolkit.prototype.GetActionFieldName(self, index)
+    return self.frames.Parent:GetName() .. "ActionEditor" .. index
+end
+
+function WoodysGuiToolkit.prototype.GetActionField(self, index)
+    local name = self:GetActionFieldName(index)
+    return self.frames[name]
+end
+
+function WoodysGuiToolkit.prototype.GetOrCreateActionField(self, index)
+    local name = self:GetActionFieldName(index)
+    local editBox = self.frames[name]
+    if not editBox then
+        editBox = CreateFrame("EditBox", name, self.frames.Parent, "WoodysToolkitInputBoxFancyTemplate")
+        editBox:SetPoint("TOPLEFT", self.frames.Parent, "TOPLEFT", 300, index * -30)
+        self.frames[name] = editBox
+    end
+    return editBox
+end
+
+WoodysGuiToolkit.mt = {}
+
+function WoodysGuiToolkit.new(o)
+    if not o.frames then o.frames = {} end
+    setmetatable(o, WoodysGuiToolkit.mt)
+    return o
+end
+
+WoodysGuiToolkit.mt.__index = function(table, key)
+    return WoodysGuiToolkit.prototype[key]
+end
+
+gWtkConfig = WoodysGuiToolkit.new({})
+
+function WoodysToolkitConfig_Close(panel,...)
+    printd("panel.okay: status(parent == panel) = " .. status(gWtkConfig.frames.Parent == panel))
+    printd("panel.okay: parent:GetName() = " .. gWtkConfig.frames.Parent:GetName())
     for index, keyid in ipairs(WtkAddon:GetOverrideBindingKeys()) do
-        local valBox = myFrames["WoodysConfigEditBoxVal" .. index]
+        local valBox = gWtkConfig:GetActionField(index)
         if valBox then
             local actionid = valBox:GetText()
             WtkAddon:PutOverrideBinding(keyid, actionid)
         end
-        -- print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
     end
     WtkAddon:InitBindings()
 end
 
-function WoodysToolkitConfig_Refresh(self,...)
-    WoodyToolkit.utils.printd("WoodysToolkitConfig_Refresh")
+function WoodysToolkitConfig_Refresh(panel,...)
+    printd("panel.refresh: status(parent == panel) = " .. status(gWtkConfig.frames.Parent == panel))
     for index, keyid in ipairs(WtkAddon:GetOverrideBindingKeys()) do
-        WoodyToolkit.utils.printd("WoodysToolkitConfig_Refresh: " .. tostring(index))
-        local editBox = myFrames["WoodysConfigEditBoxBindingName" .. index]
+        local editBox = gWtkConfig:GetOrCreateBindingField(index)
         if editBox then
             editBox:SetText("")
             editBox:SetText(keyid or "")
             editBox:SetCursorPosition(0)
         end
-        local valBox = myFrames["WoodysConfigEditBoxVal" .. index]
+        local valBox = gWtkConfig:GetOrCreateActionField(index)
         if valBox then
             local actionid = WtkAddon:GetOverrideBindingAction(keyid)
             valBox:SetText("")
             valBox:SetText(actionid or "")
             valBox:SetCursorPosition(0)
         end
-        -- print('SetMouselookOverrideBinding("' .. k .. '", ' .. val .. ')')
     end
 
 end
 
-function WoodysToolkitConfig_CancelOrLoad(self,...)
-    -- Set the name for the Category for the Panel
-end
-
-local function WoodysToolkitConfig_CreateEditBox(name, xpos, ypos)
-    if myFrames[name] then
-        return
-    end
-    local editBox = CreateFrame("EditBox", name, myFrames.Parent, "InputBoxTemplate")
-    editBox:SetMaxLetters(80)
-    editBox:SetWidth(250)
-    editBox:SetHeight(20)
-    editBox:SetPoint("TOPLEFT", myFrames.Parent, "TOPLEFT", xpos, ypos)
-    myFrames[name] = editBox
-end
-
-local function WoodysToolkitConfig_CreateOverrideWidget(index)
-    WoodysToolkitConfig_CreateEditBox("WoodysConfigEditBoxBindingName" .. index, 20, index * -30)
-    WoodysToolkitConfig_CreateEditBox("WoodysConfigEditBoxVal" .. index, 300, index * -30)
+function WoodysToolkitConfig_CancelOrLoad(panel,...)
+    printd("panel.cancel: status(parent == panel) = " .. status(gWtkConfig.frames.Parent == panel))
 end
 
 function WoodysToolkitConfig_OnLoad(panel,...)
 
-    myFrames.Parent = panel
+    gWtkConfig.frames.Parent = panel
 
-    for ii in ipairs(WtkAddon:GetOverrideBindingKeys()) do
-        WoodysToolkitConfig_CreateOverrideWidget(ii)
-    end
+--    for ii in ipairs(WtkAddon:GetOverrideBindingKeys()) do
+--        gWtkConfig:CreateOverrideWidget(ii)
+--    end
 
     -- Set the name for the Category for the Panel
     --
@@ -71,22 +119,15 @@ function WoodysToolkitConfig_OnLoad(panel,...)
 
     -- When the player clicks okay, run this function.
     --
-    panel.okay = function (self)
-        WoodysToolkitConfig_Close();
-    end;
+    panel.okay = WoodysToolkitConfig_Close
 
     -- When the player clicks default, run this function.
     --
-    panel.refresh = function (self)
-        WoodysToolkitConfig_Refresh();
-    end;
-
+    panel.refresh = WoodysToolkitConfig_Refresh
 
     -- When the player clicks cancel, run this function.
     --
-    panel.cancel = function (self)
-        WoodysToolkitConfig_CancelOrLoad();
-    end;
+    panel.cancel = WoodysToolkitConfig_CancelOrLoad
 
     -- Add the panel to the Interface Options
     --
