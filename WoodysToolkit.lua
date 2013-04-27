@@ -1,23 +1,13 @@
---[[------------------------------------------------------------
-    Woodys Toolkit v0.9
+BINDING_HEADER_WOODYSTOOLKIT = 'WoodysToolkit'
+BINDING_NAME_WOODYSMOUSELOCKTOGGLE  = "Toggle MouseLook Lock"
+BINDING_NAME_WOODYSMOUSELOCKSTART  = "Enable MouseLook Lock"
+BINDING_NAME_WOODYSMOUSELOCKSTOP  = "Disable MouseLook Lock"
+BINDING_NAME_WOODYSMOUSELOCKPAUSE    = "Suspend MouseLook While Pressed"
 
-    By Patrick Woodworth
-
-    Revision History
-    0.9	Pre-release -- 1
---------------------------------------------------------------]]
-
-BINDING_HEADER_WoodysToolkit = 'WoodysToolkit'
-BINDING_NAME_WoodysToolkit_mode_toggle  = "Toggle MouseLook Lock"
-BINDING_NAME_WoodysToolkit_mode_enable  = "Enable MouseLook Lock"
-BINDING_NAME_WoodysToolkit_mode_disable  = "Disable MouseLook Lock"
-BINDING_NAME_WoodysToolkit_momentary    = "Disable Lock While Pressed"
-
+WoodysToolkit_debug = false
 WoodysToolkit_acctData = {}
 
 -- WoodysToolkit = {}
-
-local WTK_DEBUG = false
 
 WoodysToolkit_GOOD_VARS = {
     "version",
@@ -34,7 +24,7 @@ WoodysToolkit_OVERRIDE_BINDINGS = {
 }
 
 WoodysToolkit_OVERRIDE_DEFAULTS = {
-    BUTTON1 = "WoodysToolkit_mode_disable",
+    BUTTON1 = "WOODYSMOUSELOCKSTOP",
     BUTTON2 = "MOVEFORWARD",
 }
 
@@ -61,42 +51,33 @@ local function WoodysToolkit_InitData()
     end
 end
 
-local function createOverrideEntry(overidx)
-    return setmetatable({}, {
-        __index = function(table, key, value)
-            local bVal = WoodysToolkit_OVERRIDE_BINDINGS[overidx]
-            if key == "binding" then
-                return bVal
-            elseif key == "action" then
-                local aVal = WoodysToolkit_acctData.bindings[bVal]
-                if not aVal or aVal == "" then
-                    if bVal then
-                        aVal = WoodysToolkit_OVERRIDE_DEFAULTS[bVal]
+do
+    local overrides = {}
+    for ii = 1, #WoodysToolkit_OVERRIDE_BINDINGS, 1 do
+        local bVal = WoodysToolkit_OVERRIDE_BINDINGS[ii]
+        local defaultAction = WoodysToolkit_OVERRIDE_DEFAULTS[bVal]
+        overrides[ii] = setmetatable({}, {
+            __index = function(table, key, value)
+                if key == "binding" then
+                    return bVal
+                elseif key == "action" then
+                    local aVal = WoodysToolkit_acctData.bindings[bVal]
+                    if not aVal or aVal == "" then
+                        aVal = defaultAction
+                    end
+                    return aVal
+                end
+            end,
+            __newindex = function(table, key, value)
+                if key == "action" then
+                    if type(value) ~= "string" or value == "" or value == defaultAction then
+                        WoodysToolkit_acctData.bindings[bVal] = nil
                     else
-                        aVal = false
+                        WoodysToolkit_acctData.bindings[bVal] = value
                     end
                 end
-                return aVal
             end
-        end,
-        __newindex = function(table, key, value)
-            local bVal = WoodysToolkit_OVERRIDE_BINDINGS[overidx]
-            if key == "action" then
-                if type(value) ~= "string" or value == "" or value == WoodysToolkit_OVERRIDE_DEFAULTS[bVal] then
-                    WoodysToolkit_acctData.bindings[bVal] = nil
-                else
-                    WoodysToolkit_acctData.bindings[bVal] = value
-                end
-            end
-        end
-    })
-end
-
-
-local function createDataTable()
-    local overrides = { }
-    for ii in ipairs(WoodysToolkit_OVERRIDE_BINDINGS) do
-        overrides[ii] = createOverrideEntry(ii)
+        })
     end
     setmetatable(overrides, {
         __newindex = function(table, key, value)
@@ -104,10 +85,10 @@ local function createDataTable()
         end
     })
 
-    return setmetatable({}, {
+    local data = setmetatable({}, {
         __index = function(table, key)
             if key == "debug" then
-                return WTK_DEBUG
+                return WoodysToolkit_debug and true
             elseif key == "overrides" then
                 WoodysToolkit_InitData()
                 return overrides
@@ -117,7 +98,7 @@ local function createDataTable()
         end,
         __newindex = function(table, key, value)
             if key == "debug" then
-                WTK_DEBUG = value
+                WoodysToolkit_debug = value and true
                 return
             elseif key == "overrides" then
                 return
@@ -126,24 +107,25 @@ local function createDataTable()
             WoodysToolkit_acctData[key] = value
         end
     })
+
+    WoodysToolkit = setmetatable({}, {
+        __index = function(table, key)
+            if key == "data" then
+                return data
+            end
+        end,
+        __newindex = function(table, key, value)
+            if key == "data" then
+                -- noop
+            else
+                rawset(table, key, value)
+            end
+        end
+    })
 end
 
-local data = createDataTable()
+local data = WoodysToolkit.data
 
-WoodysToolkit = setmetatable({}, {
-    __index = function(table, key)
-        if key == "data" then
-            return data
-        end
-    end,
-    __newindex = function(table, key, value)
-        if key == "data" then
-            -- noop
-        else
-            rawset(table, key, value)
-        end
-    end
-})
 
 local function WTK_debug(...)
     if not DEFAULT_CHAT_FRAME or not data.debug then return end
@@ -228,12 +210,8 @@ end
 
 function WoodysToolkit_Momentary(keystate)
     data.lockSuppressed = (keystate == "down")
+    printd("lockSuppressed: " .. status(data.lockSuppressed))
     WoodysToolkit_ApplyMode()
-end
-
-function WoodysToolkit_MoveAndSteerStart()
-    statedata.steering = true
-    dprint('statedata.steering: ' .. status(statedata.steering))
 end
 
 function WoodysToolkit_MoveAndSteerStop()
@@ -242,58 +220,28 @@ function WoodysToolkit_MoveAndSteerStop()
     dprint('statedata.steering: ' .. status(statedata.steering))
 end
 
-function WoodysToolkit_TurnOrActionStart()
-    statedata.turning = true
-    dprint('statedata.turning: ' .. status(statedata.turning))
+function WoodysToolkit_HookHandler(statekey, stateval)
+    statedata[statekey] = stateval
+    printd('statedata.' .. statekey .. ': ' .. tostring(statedata[statekey]))
 end
 
-function WoodysToolkit_TurnOrActionStop()
-    statedata.turning = false
-    dprint('statedata.turning: ' .. status(statedata.turning))
+function WoodysToolkit_HookIt(funcname, statekey, stateval)
+    hooksecurefunc(funcname, function()
+        WoodysToolkit_HookHandler(statekey, stateval)
+    end);
 end
 
-function WoodysToolkit_CameraOrSelectOrMoveStart()
-    statedata.camera = true
-    dprint('statedata.camera: ' .. status(statedata.camera))
-end
+WoodysToolkit_HookIt("MoveAndSteerStart", "steering", true);
+WoodysToolkit_HookIt("TurnOrActionStart", "turning", true);
+WoodysToolkit_HookIt("TurnOrActionStop", "turning", false);
+WoodysToolkit_HookIt("CameraOrSelectOrMoveStart", "camera", true);
+WoodysToolkit_HookIt("CameraOrSelectOrMoveStop", "camera", false);
+WoodysToolkit_HookIt("MoveForwardStart", "moving", true);
+WoodysToolkit_HookIt("MoveForwardStop", "moving", false);
+WoodysToolkit_HookIt("MoveBackwardStart", "moving", true);
+WoodysToolkit_HookIt("MoveBackwardStop", "moving", false);
 
-function WoodysToolkit_CameraOrSelectOrMoveStop()
-    statedata.camera = false
-    dprint('statedata.camera: ' .. status(statedata.camera))
-end
-
-function WoodysToolkit_MoveForwardStart()
-    statedata.moving = true
-    dprint('statedata.moving1: ' .. status(statedata.moving))
-end
-
-function WoodysToolkit_MoveForwardStop()
-    statedata.moving = false
-    dprint('statedata.moving1: ' .. status(statedata.moving))
-end
-
-function WoodysToolkit_MoveBackwardStart()
-    statedata.moving = true
-    dprint('statedata.moving2: ' .. status(statedata.moving))
-end
-
-function WoodysToolkit_MoveBackwardStop()
-    statedata.moving = false
-    dprint('statedata.moving2: ' .. status(statedata.moving))
-end
-
---[[
---]]
-hooksecurefunc("MoveAndSteerStart", WoodysToolkit_MoveAndSteerStart);
-hooksecurefunc("TurnOrActionStart", WoodysToolkit_TurnOrActionStart);
-hooksecurefunc("TurnOrActionStop", WoodysToolkit_TurnOrActionStop);
-hooksecurefunc("CameraOrSelectOrMoveStart", WoodysToolkit_CameraOrSelectOrMoveStart);
-hooksecurefunc("CameraOrSelectOrMoveStop", WoodysToolkit_CameraOrSelectOrMoveStop);
 hooksecurefunc("MoveAndSteerStop", WoodysToolkit_MoveAndSteerStop);
-hooksecurefunc("MoveForwardStart", WoodysToolkit_MoveForwardStart);
-hooksecurefunc("MoveForwardStop", WoodysToolkit_MoveForwardStop);
-hooksecurefunc("MoveBackwardStart", WoodysToolkit_MoveBackwardStart);
-hooksecurefunc("MoveBackwardStop", WoodysToolkit_MoveBackwardStop);
 
 local function WoodysToolkit_GetConfigPanelName()
     return "WoodysToolkit" -- .. GetAddOnMetadata("WoodysToolkit", "Version");
@@ -368,6 +316,7 @@ end
 function WoodysToolkitConfig_Refresh(self,...)
     printd("WoodysToolkitConfig_Refresh")
     for index, override in ipairs(data.overrides) do
+        printd("WoodysToolkitConfig_Refresh: " .. tostring(index))
         local k = override.binding
         local val = override.action
         local editBox = myFrames["WoodysConfigEditBoxBindingName" .. index]

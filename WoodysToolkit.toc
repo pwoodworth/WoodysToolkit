@@ -6,5 +6,5 @@
 ## DefaultState: enabled
 ## X-Category: Interface Enhancements
 ## LoadOnDemand: 0
-## SavedVariables: WoodysToolkit_acctData
+## SavedVariables: WoodysToolkit_debug, WoodysToolkit_acctData
 WoodysToolkit.xml
