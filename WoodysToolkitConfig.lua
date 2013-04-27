@@ -1,12 +1,7 @@
-local function WTK_printd(text)
-    if not WoodysToolkit_debug or not DEFAULT_CHAT_FRAME then return end
-    DEFAULT_CHAT_FRAME:AddMessage(text)
-end
-
 local myFrames = {}
 
 function WoodysToolkitConfig_Close(self,...)
-    WTK_printd("WoodysToolkitConfig_Close")
+    WtkAddon.utils.printd("WoodysToolkitConfig_Close")
 
     for index, keyid in ipairs(WoodysToolkit:GetOverrideBindingKeys()) do
         local valBox = myFrames["WoodysConfigEditBoxVal" .. index]
@@ -20,9 +15,9 @@ function WoodysToolkitConfig_Close(self,...)
 end
 
 function WoodysToolkitConfig_Refresh(self,...)
-    WTK_printd("WoodysToolkitConfig_Refresh")
+    WtkAddon.utils.printd("WoodysToolkitConfig_Refresh")
     for index, keyid in ipairs(WoodysToolkit:GetOverrideBindingKeys()) do
-        WTK_printd("WoodysToolkitConfig_Refresh: " .. tostring(index))
+        WtkAddon.utils.printd("WoodysToolkitConfig_Refresh: " .. tostring(index))
         local editBox = myFrames["WoodysConfigEditBoxBindingName" .. index]
         if editBox then
             editBox:SetText("")
