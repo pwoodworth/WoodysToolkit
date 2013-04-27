@@ -4,58 +4,30 @@ BINDING_NAME_WOODYSMOUSELOCKSTART  = "Enable MouseLook Lock"
 BINDING_NAME_WOODYSMOUSELOCKSTOP  = "Disable MouseLook Lock"
 BINDING_NAME_WOODYSMOUSELOCKPAUSE    = "Suspend MouseLook While Pressed"
 
-WoodysToolkit_debug = false
 WoodysToolkit_acctData = {}
 
-do
-    local function IsDebug()
-        return WoodysToolkit_debug and true
-    end
-
-    local function WTK_debug(...)
-        if not DEFAULT_CHAT_FRAME or not IsDebug() then return end
-        local msg = ''
-        for k,v in ipairs(arg) do
-            msg = msg .. tostring(v) .. ' : '
-        end
-        DEFAULT_CHAT_FRAME:AddMessage(msg)
-    end
-
-    local function printd(text)
-        if not DEFAULT_CHAT_FRAME or not IsDebug() then return end
-        DEFAULT_CHAT_FRAME:AddMessage(text)
-    end
-
-    local function printi(text)
-        if not DEFAULT_CHAT_FRAME then return end
-        DEFAULT_CHAT_FRAME:AddMessage(text)
-    end
-
-    local function status(bool)
-        if bool then return "true" else return "false" end
-    end
-
-    local function CreateSet(list)
-        local set = {}
-        for _, l in ipairs(list) do set[l] = true end
-        return set
-    end
-
-    WTKUtil = {
-        printd = printd,
-        printi = printi,
-        status = status,
-        CreateSet = CreateSet,
-    }
+local function WTK_printd(text)
+    if not DEFAULT_CHAT_FRAME or not WoodysToolkit_debug then return end
+    DEFAULT_CHAT_FRAME:AddMessage(text)
 end
 
-local status = WTKUtil.status
-local printi = WTKUtil.printi
-local printd = WTKUtil.printd
-local WTK_createSet = WTKUtil.CreateSet
+local function WTK_printi(text)
+    if not DEFAULT_CHAT_FRAME then return end
+    DEFAULT_CHAT_FRAME:AddMessage(text)
+end
+
+local function WTK_status(bool)
+    if bool then return "true" else return "false" end
+end
+
+local function WTK_createSet(list)
+    local set = {}
+    for _, l in ipairs(list) do set[l] = true end
+    return set
+end
 
 WoodysToolkit = {
-    GOOD_DATAKEY_SET = WTKUtil.CreateSet({
+    GOOD_DATAKEY_SET = WTK_createSet({
         "version",
         "bindings",
         "lockEnabled",
@@ -72,7 +44,7 @@ WoodysToolkit = {
     }
 }
 
-WoodysToolkit.OVERRIDE_KEYID_SET = WTKUtil.CreateSet(WoodysToolkit.OVERRIDE_KEYID_LIST)
+WoodysToolkit.OVERRIDE_KEYID_SET = WTK_createSet(WoodysToolkit.OVERRIDE_KEYID_LIST)
 
 do
     local function WTK_GetValidatedData()
@@ -166,9 +138,9 @@ do
             local val = self:GetOverrideBindingAction(keyid)
             if not val or val == "" or type(val) ~= "string" then
                 val = nil
-                printd('SetMouselookOverrideBinding("' .. keyid .. '", ' .. tostring(val) .. ')')
+                WTK_printd('SetMouselookOverrideBinding("' .. keyid .. '", ' .. tostring(val) .. ')')
             else
-                printd('SetMouselookOverrideBinding("' .. keyid .. '", "' .. val .. '")')
+                WTK_printd('SetMouselookOverrideBinding("' .. keyid .. '", "' .. val .. '")')
             end
             SetMouselookOverrideBinding(keyid, val)
         end
@@ -231,7 +203,7 @@ end
 
 function WoodysToolkit_PauseBindingImpl(keystate)
     data.lockSuppressed = (keystate == "down")
-    printd("lockSuppressed: " .. status(data.lockSuppressed))
+    WTK_printd("lockSuppressed: " .. WTK_status(data.lockSuppressed))
     WTK_ApplyMode()
 end
 
@@ -239,12 +211,12 @@ do
     local function WoodysToolkit_MoveAndSteerStop()
         statedata.steering = false
         WTK_StopMouseLock()
-        printd('statedata.steering: ' .. status(statedata.steering))
+        WTK_printd('statedata.steering: ' .. WTK_status(statedata.steering))
     end
 
     local function WoodysToolkit_HookHandler(statekey, stateval)
         statedata[statekey] = stateval
-        printd('statedata.' .. statekey .. ': ' .. tostring(statedata[statekey]))
+        WTK_printd('statedata.' .. statekey .. ': ' .. tostring(statedata[statekey]))
     end
 
     local function WoodysToolkit_HookIt(funcname, statekey, stateval)
@@ -276,7 +248,7 @@ function WoodysToolkit_SlashCommand(msg, editbox)
         elseif rest ~= "" then
             data.debug = false
         end
-        printi("debug: " .. status(data.debug))
+        WTK_printi("debug: " .. WTK_status(data.debug))
     elseif command == "reset" then
         WTK_ResetAddon()
     elseif command == "remove" and rest ~= "" then
@@ -291,6 +263,7 @@ function WoodysToolkit_SlashCommand(msg, editbox)
 end
 
 function WoodysToolkit_OnLoad(self,...)
+--    WTK_printd("WoodysToolkit_OnLoad: " .. type(self))
     WoodysToolkitFrame:RegisterEvent("ADDON_LOADED")
     WoodysToolkitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
     SLASH_WoodysToolkit1, SLASH_WoodysToolkit2 = '/woodystoolkit', "/wtk";
@@ -298,7 +271,7 @@ function WoodysToolkit_OnLoad(self,...)
 end;
 
 function WoodysToolkit_OnEvent(self,event,...)
-    printd("on event: " .. event)
+    WTK_printd("on event: " .. event)
     if event == "PLAYER_ENTERING_WORLD" then
         WoodysToolkit:InitBindings()
         WTK_ApplyMode()
