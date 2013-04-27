@@ -6,57 +6,57 @@ BINDING_NAME_WOODYSMOUSELOCKPAUSE    = "Suspend MouseLook While Pressed"
 
 WoodysToolkit_acctData = {}
 
-WtkAddon = {}
+WoodyToolkit = {}
 
-WtkAddon.utils = {}
+WoodyToolkit.utils = {}
 
-function WtkAddon.utils.createSet(list)
+function WoodyToolkit.utils.createSet(list)
     local set = {}
     for _, l in ipairs(list) do set[l] = true end
     return set
 end
 
-function WtkAddon.utils.printd(text)
+function WoodyToolkit.utils.printd(text)
     if not DEFAULT_CHAT_FRAME or not WoodysToolkit_debug then return end
     DEFAULT_CHAT_FRAME:AddMessage(text)
 end
 
-function WtkAddon.utils.status(bool)
+function WoodyToolkit.utils.status(bool)
     if bool then return "true" else return "false" end
 end
 
-WtkAddon.const = {}
+WoodyToolkit.const = {}
 
-WtkAddon.const.GOOD_DATAKEY_SET = WtkAddon.utils.createSet({
+WoodyToolkit.const.GOOD_DATAKEY_SET = WoodyToolkit.utils.createSet({
         "version",
         "bindings",
         "lockEnabled",
         "lockSuppressed",
     })
 
-WtkAddon.const.OVERRIDE_KEYID_LIST = {
+WoodyToolkit.const.OVERRIDE_KEYID_LIST = {
         "BUTTON1",
         "BUTTON2",
         "BUTTON3",
     }
 
-WtkAddon.const.OVERRIDE_DEFAULTS = {
+WoodyToolkit.const.OVERRIDE_DEFAULTS = {
         BUTTON1 = "WOODYSMOUSELOCKSTOP",
         BUTTON2 = "MOVEFORWARD",
     }
 
 
-WtkAddon.const.OVERRIDE_KEYID_SET = WtkAddon.utils.createSet(WtkAddon.const.OVERRIDE_KEYID_LIST)
+WoodyToolkit.const.OVERRIDE_KEYID_SET = WoodyToolkit.utils.createSet(WoodyToolkit.const.OVERRIDE_KEYID_LIST)
 
 
-WtkAddon.prototype = {}
+WoodyToolkit.prototype = {}
 
-WtkAddon.prototype.data = setmetatable({}, {
+WoodyToolkit.prototype.data = setmetatable({}, {
     __index = function(table, key)
         if key == "debug" then
             return WoodysToolkit_debug and true
-        elseif not WtkAddon.const.GOOD_DATAKEY_SET[key] then
-            WtkAddon.utils.printd("WARNING: Attempted get of non-whitelisted field: " .. key)
+        elseif not WoodyToolkit.const.GOOD_DATAKEY_SET[key] then
+            WoodyToolkit.utils.printd("WARNING: Attempted get of non-whitelisted field: " .. key)
         elseif type(WoodysToolkit_acctData) == "table" then
             return WoodysToolkit_acctData[key]
         end
@@ -64,8 +64,8 @@ WtkAddon.prototype.data = setmetatable({}, {
     __newindex = function(table, key, value)
         if key == "debug" then
             WoodysToolkit_debug = value and true
-        elseif not WtkAddon.const.GOOD_DATAKEY_SET[key] then
-            WtkAddon.utils.printd("WARNING: Attempted set of non-whitelisted field: " .. key)
+        elseif not WoodyToolkit.const.GOOD_DATAKEY_SET[key] then
+            WoodyToolkit.utils.printd("WARNING: Attempted set of non-whitelisted field: " .. key)
         else
             if type(WoodysToolkit_acctData) ~= "table" then
                 WoodysToolkit_acctData = {}
@@ -75,17 +75,17 @@ WtkAddon.prototype.data = setmetatable({}, {
     end
 })
 
-function WtkAddon.prototype.GetOverrideBindingKeys(self)
-    return WtkAddon.const.OVERRIDE_KEYID_LIST
+function WoodyToolkit.prototype.GetOverrideBindingKeys(self)
+    return WoodyToolkit.const.OVERRIDE_KEYID_LIST
 end
 
-function WtkAddon.prototype.GetOverrideBindingAction(self, keyid)
+function WoodyToolkit.prototype.GetOverrideBindingAction(self, keyid)
     local bindings = self.data.bindings
     if type(bindings) ~= "table" then
         bindings = {}
         self.data.bindings = bindings
     end
-    local defaultAction = WtkAddon.const.OVERRIDE_DEFAULTS[keyid]
+    local defaultAction = WoodyToolkit.const.OVERRIDE_DEFAULTS[keyid]
     local actionid = bindings[keyid]
     if not actionid or actionid == "" then
         actionid = defaultAction
@@ -93,12 +93,12 @@ function WtkAddon.prototype.GetOverrideBindingAction(self, keyid)
     return actionid
 end
 
-function WtkAddon.prototype.PutOverrideBinding(self, keyid, actionid)
-    local keyset = WtkAddon.const.OVERRIDE_KEYID_SET
+function WoodyToolkit.prototype.PutOverrideBinding(self, keyid, actionid)
+    local keyset = WoodyToolkit.const.OVERRIDE_KEYID_SET
     if not keyset[keyid] then
         return false
     end
-    local defaultAction = WtkAddon.const.OVERRIDE_DEFAULTS[keyid]
+    local defaultAction = WoodyToolkit.const.OVERRIDE_DEFAULTS[keyid]
     if type(actionid) ~= "string" or actionid == "" or actionid == defaultAction then
         actionid = nil
     end
@@ -113,24 +113,24 @@ function WtkAddon.prototype.PutOverrideBinding(self, keyid, actionid)
     return true
 end
 
-function WtkAddon.prototype.GetConfigPanelName(self)
+function WoodyToolkit.prototype.GetConfigPanelName(self)
     return "WoodysToolkit" -- .. GetAddOnMetadata("WoodysToolkit", "Version");
 end
 
-function WtkAddon.prototype.InitBindings(self)
+function WoodyToolkit.prototype.InitBindings(self)
     for index, keyid in ipairs(self:GetOverrideBindingKeys()) do
         local val = self:GetOverrideBindingAction(keyid)
         if not val or val == "" or type(val) ~= "string" then
             val = nil
-            WtkAddon.utils.printd('SetMouselookOverrideBinding("' .. keyid .. '", ' .. tostring(val) .. ')')
+            WoodyToolkit.utils.printd('SetMouselookOverrideBinding("' .. keyid .. '", ' .. tostring(val) .. ')')
         else
-            WtkAddon.utils.printd('SetMouselookOverrideBinding("' .. keyid .. '", "' .. val .. '")')
+            WoodyToolkit.utils.printd('SetMouselookOverrideBinding("' .. keyid .. '", "' .. val .. '")')
         end
         SetMouselookOverrideBinding(keyid, val)
     end
 end
 
-function WtkAddon.prototype.ApplyMode(self)
+function WoodyToolkit.prototype.ApplyMode(self)
     local shouldBeLooking = self.data.lockEnabled and not self.data.lockSuppressed
     if shouldBeLooking then
         MouselookStart()
@@ -139,81 +139,79 @@ function WtkAddon.prototype.ApplyMode(self)
     end
 end
 
-function WtkAddon.prototype.ResetAddonState(self)
+function WoodyToolkit.prototype.ResetAddonState(self)
     WoodysToolkit_acctData = {}
     self:InitBindings()
     self:ApplyMode()
 end
 
-function WtkAddon.prototype.StartMouseLock(self)
+function WoodyToolkit.prototype.StartMouseLock(self)
     self.data.lockEnabled = true
     self:ApplyMode()
 end
 
-function WtkAddon.prototype.StopMouseLock(self)
+function WoodyToolkit.prototype.StopMouseLock(self)
     if self.state.moving then return end
     self.data.lockEnabled = false
     self:ApplyMode()
 end
 
-WtkAddon.mt = {}
+WoodyToolkit.mt = {}
 
-function WtkAddon.new(o)
+function WoodyToolkit.new(o)
     if not o.state then
         o.state = {}
     end
-    setmetatable(o, WtkAddon.mt)
+    setmetatable(o, WoodyToolkit.mt)
     return o
 end
 
-WtkAddon.mt.__index = function(table, key)
-    return WtkAddon.prototype[key]
+WoodyToolkit.mt.__index = function(table, key)
+    return WoodyToolkit.prototype[key]
 end
 
-WtkAddon.mt.__newindex = function(table, key, value)
-    if WtkAddon.prototype[key] then
-        WtkAddon.utils.printd("WARNING: Attempted set of protected field: " .. key)
+WoodyToolkit.mt.__newindex = function(table, key, value)
+    if WoodyToolkit.prototype[key] then
+        WoodyToolkit.utils.printd("WARNING: Attempted set of protected field: " .. key)
     else
         rawset(table, key, value)
     end
 end
 
-local statedata = {}
-
-WoodysToolkit = WtkAddon.new({ state = statedata })
+WtkAddon = WoodyToolkit.new({})
 
 function WoodysToolkit_StartBindingImpl()
-    WoodysToolkit:StartMouseLock()
+    WtkAddon:StartMouseLock()
 end
 
 function WoodysToolkit_StopBindingImpl()
-    WoodysToolkit:StopMouseLock()
+    WtkAddon:StopMouseLock()
 end
 
 function WoodysToolkit_ToggleBindingImpl()
-    if WoodysToolkit.data.lockEnabled then
-        WoodysToolkit:StopMouseLock()
+    if WtkAddon.data.lockEnabled then
+        WtkAddon:StopMouseLock()
     else
-        WoodysToolkit:StartMouseLock()
+        WtkAddon:StartMouseLock()
     end
 end
 
 function WoodysToolkit_PauseBindingImpl(keystate)
-    WoodysToolkit.data.lockSuppressed = (keystate == "down")
-    WtkAddon.utils.printd("lockSuppressed: " .. WtkAddon.utils.status(WoodysToolkit.data.lockSuppressed))
-    WoodysToolkit:ApplyMode()
+    WtkAddon.data.lockSuppressed = (keystate == "down")
+    WoodyToolkit.utils.printd("lockSuppressed: " .. WoodyToolkit.utils.status(WtkAddon.data.lockSuppressed))
+    WtkAddon:ApplyMode()
 end
 
 do
     local function WoodysToolkit_MoveAndSteerStop()
-        WoodysToolkit.state.steering = false
-        WoodysToolkit:StopMouseLock()
-        WtkAddon.utils.printd('statedata.steering: ' .. WtkAddon.utils.status(WoodysToolkit.state.steering))
+        WtkAddon.state.steering = false
+        WtkAddon:StopMouseLock()
+        WoodyToolkit.utils.printd('WtkAddon.state.steering: ' .. WoodyToolkit.utils.status(WtkAddon.state.steering))
     end
 
     local function WoodysToolkit_HookHandler(statekey, stateval)
-        WoodysToolkit.state[statekey] = stateval
-        WtkAddon.utils.printd('WoodysToolkit.state.' .. statekey .. ': ' .. tostring(WoodysToolkit.state[statekey]))
+        WtkAddon.state[statekey] = stateval
+        WoodyToolkit.utils.printd('WtkAddon.state.' .. statekey .. ': ' .. tostring(WtkAddon.state[statekey]))
     end
 
     local function WoodysToolkit_HookIt(funcname, statekey, stateval)
@@ -235,20 +233,20 @@ do
     hooksecurefunc("MoveAndSteerStop", WoodysToolkit_MoveAndSteerStop);
 end
 
-WoodysToolkit.COMMANDS = {
+WtkAddon.COMMANDS = {
     debug = function(msg, command, rest)
         if rest == "true" or rest == "on" then
-            WoodysToolkit.data.debug = true
+            WtkAddon.data.debug = true
         elseif rest ~= "" then
-            WoodysToolkit.data.debug = false
+            WtkAddon.data.debug = false
         end
-        print("debug: " .. WtkAddon.utils.status(WoodysToolkit.data.debug))
+        print("debug: " .. WoodyToolkit.utils.status(WtkAddon.data.debug))
     end,
     config = function(msg, command, rest)
-        InterfaceOptionsFrame_OpenToCategory(WoodysToolkit:GetConfigPanelName());
+        InterfaceOptionsFrame_OpenToCategory(WtkAddon:GetConfigPanelName());
     end,
     reset = function(msg, command, rest)
-        WoodysToolkit:ResetAddonState()
+        WtkAddon:ResetAddonState()
     end,
     remove = function(msg, command, rest)
         if rest == "" then return true end
@@ -262,7 +260,7 @@ function WoodysToolkit_SlashCommand(msg, editbox)
     local command, rest = msg:match("^(%S*)%s*(.-)$");
     -- Any leading non-whitespace is captured into command;
     -- the rest (minus leading whitespace) is captured into rest.
-    local cmdfunc = WoodysToolkit.COMMANDS[command]
+    local cmdfunc = WtkAddon.COMMANDS[command]
     local showhelp = false
     if type(cmdfunc) == "function" then
         showhelp = cmdfunc(msg, command, rest)
@@ -273,13 +271,13 @@ function WoodysToolkit_SlashCommand(msg, editbox)
     if showhelp then
         -- If not handled above, display some sort of help message
         print("Usage: /woodystoolkit [reset||debug]");
-        WoodysToolkit.COMMANDS.config(msg, command, rest)
---        InterfaceOptionsFrame_OpenToCategory(WoodysToolkit:GetConfigPanelName());
+        WtkAddon.COMMANDS.config(msg, command, rest)
+--        InterfaceOptionsFrame_OpenToCategory(WtkAddon:GetConfigPanelName());
     end
 end
 
 function WoodysToolkit_OnLoad(self,...)
-    WtkAddon.utils.printd("WoodysToolkit_OnLoad: " .. type(self))
+    WoodyToolkit.utils.printd("WoodysToolkit_OnLoad: " .. type(self))
     WoodysToolkitFrame:RegisterEvent("ADDON_LOADED")
     WoodysToolkitFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
     SLASH_WoodysToolkit1, SLASH_WoodysToolkit2 = '/woodystoolkit', "/wtk";
@@ -287,10 +285,10 @@ function WoodysToolkit_OnLoad(self,...)
 end;
 
 function WoodysToolkit_OnEvent(self,event,...)
-    WtkAddon.utils.printd("on event: " .. event)
+    WoodyToolkit.utils.printd("on event: " .. event)
     if event == "PLAYER_ENTERING_WORLD" then
-        WoodysToolkit:InitBindings()
-        WoodysToolkit:ApplyMode()
+        WtkAddon:InitBindings()
+        WtkAddon:ApplyMode()
     end
 end
 
@@ -311,5 +309,5 @@ end
 -- if is_main(arg, ...) then
 --    print("Main file");
 --    WoodysToolkit_OnEvent(nil, "PLAYER_ENTERING_WORLD")
---    print("button1.action " .. WoodysToolkit.button1.action);
+--    print("button1.action " .. WtkAddon.button1.action);
 -- end
