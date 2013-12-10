@@ -7,5 +7,5 @@
 ## X-Category: Interface Enhancements
 ## LoadOnDemand: 0
 ## SavedVariables: WoodysToolkit_debug, WoodysToolkit_acctData
-#WoodysToolkit.xml
+
 WoodysEscape.lua
