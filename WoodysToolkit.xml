@@ -4,7 +4,6 @@
     <Script file="WoodyToolkit.lua"/>
     <Script file="WtkAddon.lua"/>
     <Script file="WoodysToolkitConfig.lua"/>
-    <Script file="WoodysEscape.lua"/>
 <!--
     <Font name="WoodysToolkitInputBoxFontGrey" inherits="GameFontNormal" virtual="true">
         <Color r="0.5" g="0.5" b="0.5"/>
