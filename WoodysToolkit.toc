@@ -4,8 +4,13 @@
 ## Author: Somdubai
 ## Notes: v1.0.0.50400 Miscellaneous tweaks.
 ## DefaultState: enabled
-## X-Category: Interface Enhancements
 ## LoadOnDemand: 0
-## SavedVariables: WoodysToolkit_debug, WoodysToolkit_acctData
+## SavedVariables: WoodysToolkitDB
+## OptionalDeps: Ace3
+## X-Embeds: Ace3
 
+embeds.xml
+i18n.xml
+
+WoodysToolkit.lua
 WoodysEscape.lua
