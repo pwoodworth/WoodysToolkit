@@ -4,14 +4,14 @@ _G["BINDING_NAME_TOGGLEMOUSELOOK"] = "Toggle Mouselook"
 _G["BINDING_NAME_LOCKMOUSELOOK"] = "Lock Mouselook"
 _G["BINDING_NAME_UNLOCKMOUSELOOK"] = "Unlock Mouselook"
 
-MouselookHandler = LibStub("AceAddon-3.0"):NewAddon("MouselookHandler", "AceConsole-3.0")
-MouselookHandler._G = _G
+WoodysToolkit = LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0")
+WoodysToolkit._G = _G
 
 -- Set the environment of the current function to the global table MouselookHandler.
 -- See: http://www.lua.org/pil/14.3.html
-setfenv(1, MouselookHandler)
+setfenv(1, WoodysToolkit)
 
-local MouselookHandler = _G.MouselookHandler
+local WoodysToolkit = _G.MouselookHandler
 local LibStub = _G.LibStub
 
 local L = LibStub("AceLocale-3.0"):GetLocale("MouselookHandler", true)
@@ -24,7 +24,7 @@ local IsMouselooking = _G.IsMouselooking
 local MouselookStart, MouselookStop = _G.MouselookStart, _G.MouselookStop
 local SetMouselookOverrideBinding = _G.SetMouselookOverrideBinding
 
-modName = "MouselookHandler"
+modName = "WoodysToolkit"
 
 local customFunction = nil
 function MouselookHandler:predFun() return false end
@@ -170,459 +170,49 @@ local function getUseOverrideBindings(info)
   return db.profile.useOverrideBindings
 end
 
-local function setOverrideBinding(info, val)
-  local bindingname = info[#info]
-  if val == "false" then
-    val = nil
-  end
-  db.profile.mouseOverrideBindings[bindingname] = val
-  applyUseOverrideBindings()
-end
-
-local function getOverrideBinding(info)
-  local bindingname = info[#info]
-  local val = db.profile.mouseOverrideBindings[bindingname]
-  if not val then
-    val = "false"
-  end
-  return val
-end
-
-local function getOverrideBindingChoices(info)
-  local bindings = {
-    "UNLOCKMOUSELOOK",
-    "MOVEFORWARD",
-    "MOVEBACKWARD",
-    "TOGGLEAUTORUN",
-    "STRAFELEFT",
-    "STRAFERIGHT"
-  }
-  local values = {
-    ["false"] = "<DEFAULT>",
-  }
-  for ii, binding in _G.ipairs(bindings) do
-    local val = _G.GetBindingText(binding, "BINDING_NAME_")
-    values[binding] = val
-  end
-  return values
-end
-
-local function validateCustomFunction(info, input)
-  --local chunk, errorMessage = _G.loadstring("return " .. input)
-  local chunk, errorMessage = _G.loadstring(input)
-  if not chunk then
-    MouselookHandler:Print(errorMessage)
-    return errorMessage
-  else
-    --local f = chunk()
-    chunk()
-    --if _G.type(f) ~= "function" then
-    if _G.type(predFun) ~= "function" then
-      MouselookHandler:Print("Your Lua code should define a function \'MouselookHandler:predFun\'!")
-      --return "Your Lua code should be an unnamed function!"
-      return "Your Lua code should define a function \'MouselookHandler:predFun\'!"
-    else
-      --customFunction = f
-      return true
-    end
-  end
-end
-
-local function setCustomFunction(info, input)
-  db.profile.customFunction = input
-end
-
-local function getCustomFunction(info)
-  return db.profile.customFunction
-end
-
-local function setMacroText(info, input)
-  _G.RegisterStateDriver(stateHandler, "mouselookstate", input)
-  db.profile.macroText = input
-end
-
-local function getMacroText(info)
-  return db.profile.macroText
-end
-
-local function setEventList(info, input)
-  for event in _G.string.gmatch(db.profile.eventList, "[^%s]+") do
-    customEventFrame:UnregisterEvent(event)
-  end
-  for event in _G.string.gmatch(input, "[^%s]+") do
-    customEventFrame:RegisterEvent(event)
-  end
-
-  db.profile.eventList = input
-end
-
-local function getEventList(info)
-  return db.profile.eventList
-end
-
 local options = {
   type = "group",
   name = L["options.name"],
   handler = MouselookHandler,
   childGroups = "tree",
   args = {
-    general = {
-      type = "group",
-      name = L["options.general.name"],
+    deferHeader = {
+      type = "header",
+      name = L["options.defer.header"],
+      order = 0,
+    },
+    deferDescription = {
+      type = "description",
+      name = L["options.defer.description"],
+      fontSize = "medium",
+      order = 1,
+    },
+    deferToggle = {
+      type = "toggle",
+      name = L["options.defer.name"],
+      width = "full",
+      set = function(info, val) db.profile.useDeferWorkaround = val end,
+      get = function(info) return db.profile.useDeferWorkaround  end,
       order = 2,
-      args = {
-        deferHeader = {
-          type = "header",
-          name = L["options.defer.header"],
-          order = 0,
-        },
-        deferDescription = {
-          type = "description",
-          name = L["options.defer.description"],
-          fontSize = "medium",
-          order = 1,
-        },
-        deferToggle = {
-          type = "toggle",
-          name = L["options.defer.name"],
-          width = "full",
-          set = function(info, val) db.profile.useDeferWorkaround = val end,
-          get = function(info) return db.profile.useDeferWorkaround  end,
-          order = 2,
-        },
-        bindHeader = {
-          type = "header",
-          name = L["options.bind.header"],
-          order = 3,
-        },
-        bindDescription = {
-          type = "description",
-          name = L["options.bind.description"],
-          fontSize = "medium",
-          order = 4,
-        },
-        bindToggle = {
-          type = "toggle",
-          name = L["options.bind.name"],
-          width = "full",
-          set = setUseOverrideBindings,
-          get = getUseOverrideBindings,
-          order = 5,
-        },
-        spellTargetingOverrideHeader = {
-          type = "header",
-          name = L["options.spellTargetingOverride.header"],
-          order = 6,
-        },
-        spellTargetingOverrideDescription = {
-          type = "description",
-          name = L["options.spellTargetingOverride.description"],
-          fontSize = "medium",
-          order = 7,
-        },
-        spellTargetingOverrideToggle = {
-          type = "toggle",
-          name = L["options.spellTargetingOverride.name"],
-          width = "full",
-          set = function(info, val) db.profile.useSpellTargetingOverride = val end,
-          get = function(info) return db.profile.useSpellTargetingOverride end,
-          order = 8,
-        },
-      },
     },
-    binds = {
-      type = "group",
-      name = L["options.keybindings.name"],
+    bindHeader = {
+      type = "header",
+      name = L["options.bind.header"],
       order = 3,
-      args = {
-        toggleHeader = {
-          type = "header",
-          name = _G["BINDING_NAME_TOGGLEMOUSELOOK"],
-          order = 0,
-        },
-        toggleDescription = {
-          type = "description",
-          name = "Toggles the default mouselook state on key up.",
-          width = "double",
-          fontSize = "medium",
-          order = 1,
-        },
-        toggle = {
-          type = "keybinding",
-          name = "",
-          desc = "Toggles the default mouselook state on key up.",
-          width = "half",
-          set = function(info, key)
-                  local oldKey = (_G.GetBindingKey("TOGGLEMOUSELOOK"))
-                  if oldKey then _G.SetBinding(oldKey) end
-                  _G.SetBinding(key, "TOGGLEMOUSELOOK")
-                  _G.SaveBindings(_G.GetCurrentBindingSet())
-                end,
-          get = function(info) return (_G.GetBindingKey("TOGGLEMOUSELOOK")) end,
-          order = 2,
-        },
-        invertHeader = {
-          type = "header",
-          name = _G["BINDING_NAME_INVERTMOUSELOOK"],
-          order = 3,
-        },
-        invertDescription = {
-          type = "description",
-          name = "Inverts mouselook while the key is being held.",
-          width = "double",
-          fontSize = "medium",
-          order = 4,
-        },
-        invert = {
-          type = "keybinding",
-          name = "",
-          desc = "Inverts mouselook while the key is being held.",
-          width = "half",
-          set = function(info, key)
-                  local oldKey = (_G.GetBindingKey("INVERTMOUSELOOK"))
-                  if oldKey then _G.SetBinding(oldKey) end
-                  _G.SetBinding(key, "INVERTMOUSELOOK")
-                  _G.SaveBindings(_G.GetCurrentBindingSet())
-                end,
-          get = function(info) return (_G.GetBindingKey("INVERTMOUSELOOK")) end,
-          order = 5,
-        },
-        lockHeader = {
-          type = "header",
-          name = _G["BINDING_NAME_LOCKMOUSELOOK"],
-          order = 6,
-        },
-        lockDescription = {
-          type = "description",
-          name = "Lock the mouselook state on key up.",
-          width = "double",
-          fontSize = "medium",
-          order = 7,
-        },
-        lock = {
-          type = "keybinding",
-          name = "",
-          desc = "Lock the mouselook state on key up.",
-          width = "half",
-          set = function(info, key)
-                  local oldKey = (_G.GetBindingKey("LOCKMOUSELOOK"))
-                  if oldKey then _G.SetBinding(oldKey) end
-                  _G.SetBinding(key, "LOCKMOUSELOOK")
-                  _G.SaveBindings(_G.GetCurrentBindingSet())
-                end,
-          get = function(info) return (_G.GetBindingKey("LOCKMOUSELOOK")) end,
-          order = 8,
-        },
-        unlockHeader = {
-          type = "header",
-          name = _G["BINDING_NAME_UNLOCKMOUSELOOK"],
-          order = 9,
-        },
-        unlockDescription = {
-          type = "description",
-          name = "Unlock the mouselook state on key up.",
-          width = "double",
-          fontSize = "medium",
-          order = 10,
-        },
-        unlock = {
-          type = "keybinding",
-          name = "",
-          desc = "Unlock the mouselook state on key up.",
-          width = "half",
-          set = function(info, key)
-                  local oldKey = (_G.GetBindingKey("UNLOCKMOUSELOOK"))
-                  if oldKey then _G.SetBinding(oldKey) end
-                  _G.SetBinding(key, "UNLOCKMOUSELOOK")
-                  _G.SaveBindings(_G.GetCurrentBindingSet())
-                end,
-          get = function(info) return (_G.GetBindingKey("UNLOCKMOUSELOOK")) end,
-          order = 11,
-        },
-        button1Header = {
-          type = "header",
-          name = "Mouselook Button Overrides",
-          order = 12,
-        },
-        overrideEnableToggle = {
-          type = "toggle",
-          name = L["options.bind.name"],
-          width = "full",
-          set = setUseOverrideBindings,
-          get = getUseOverrideBindings,
-          order = 21,
-        },
-        BUTTON1Description = {
-          type = "description",
-          name = "Mouselook Override BUTTON1",
-          width = "normal",
-          fontSize = "small",
-          order = 30,
-        },
-        BUTTON1 = {
-          type = "select",
-          style = "dropdown",
-          name = "",
-          desc = "Select the mouselook override for button 1.",
-          width = "normal",
-          values = getOverrideBindingChoices,
-          set = setOverrideBinding,
-          get = getOverrideBinding,
-          disabled = function()
-            return not getUseOverrideBindings()
-          end,
-          order = 31,
-        },
-        BUTTON1Spacing = {type = "description", order = 39, name = ""},
-        BUTTON2Description = {
-          type = "description",
-          name = "Mouselook Override BUTTON2",
-          width = "normal",
-          order = 40,
-        },
-        BUTTON2 = {
-          type = "select",
-          style = "dropdown",
-          name = "",
-          desc = "Select the mouselook override for button 2.",
-          values = getOverrideBindingChoices,
-          set = setOverrideBinding,
-          get = getOverrideBinding,
-          disabled = function()
-            return not getUseOverrideBindings()
-          end,
-          order = 41,
-        },
-        BUTTON2Spacing = {type = "description", order = 49, name = ""},
-        BUTTON3Description = {
-          type = "description",
-          name = "Mouselook Override BUTTON3",
-          width = "normal",
-          order = 50,
-        },
-        BUTTON3 = {
-          type = "select",
-          style = "dropdown",
-          name = "",
-          desc = "Select the mouselook override for button 3.",
-          width = "normal",
-          values = getOverrideBindingChoices,
-          set = setOverrideBinding,
-          get = getOverrideBinding,
-          disabled = function()
-            return not getUseOverrideBindings()
-          end,
-          order = 51,
-        },
-      },
     },
-    advanced = {
-      type = "group",
-      name = L["options.advanced.name"],
+    bindDescription = {
+      type = "description",
+      name = L["options.bind.description"],
+      fontSize = "medium",
       order = 4,
-      args = {
-        header1 = {
-          type = "header",
-          name = L["options.luachunk.header"],
-          order = 0,
-        },
-        desc1 = {
-          type = "description",
-          name = L["options.luachunk.description"],
-          fontSize = "medium",
-          order = 1,
-        },
-        eventList = {
-          type = "input",
-          name = L["options.luachunk.events.name"],
-          desc = L["options.luachunk.events.desc"],
-          width = "full",
-          set = setEventList,
-          get = getEventList,
-          order = 2,
-        },
-        macroConditional = {
-          type = "input",
-          name = L["options.luachunk.macros.name"],
-          desc = L["options.luachunk.macros.desc"],
-          width = "full",
-          set = setMacroText,
-          get = getMacroText,
-          order = 3,
-        },
-        header2 = {
-          type = "header",
-          name = "Reset advanced settings",
-          order = 4,
-        },
-        desc2 = {
-          type = "description",
-          name = "Reenter the default events, macro text and function.",
-          fontSize = "medium",
-          width = "double",
-          order = 5,
-        },
-        resetButton = {
-          type = "execute",
-          name = "Reset",
-          desc = "Reenter the default events, macro text and function.",
-          width = "half",
-          confirm = true,
-          confirmText = "Your customizations will be removed. Continue?",
-          func = function()
-                   setEventList(nil, databaseDefaults.profile.eventList)
-                   setMacroText(nil, databaseDefaults.profile.macroText)
-                   if validateCustomFunction(nil, databaseDefaults.profile.customFunction) == true then
-                     setCustomFunction(nil, databaseDefaults.profile.customFunction)
-                   end
-                 end,
-          order = 6,
-        },
-        advanced1 = {
-          type = "group",
-          name = L["options.luachunk.header"],
-          inline = true,
-          order = 4,
-          args = {
-            header1 = {
-              type = "header",
-              name = L["options.luachunk.header"],
-              order = 0,
-            },
-            customFunction = {
-              type = "input",
-              name = "",
-              multiline = 20,
-              width = "full",
-              validate = validateCustomFunction,
-              set = setCustomFunction,
-              get = getCustomFunction,
-              order = 1,
-            },
-            header2 = {
-              type = "header",
-              name = L["options.reloadui.header"],
-              order = 2,
-            },
-            desc1 = {
-              type = "description",
-              name = L["options.reloadui.description"],
-              fontSize = "medium",
-              width = "double",
-              order = 3,
-            },
-            reloadButton = {
-              type = "execute",
-              name = L["options.reloadui.name"],
-              width = "half",
-              func = function()
-                       _G.ReloadUI()
-                     end,
-              order = 4,
-            },
-          },
-        },
-      },
+    },
+    bindToggle = {
+      type = "toggle",
+      name = L["options.bind.name"],
+      width = "full",
+      set = setUseOverrideBindings,
+      get = getUseOverrideBindings,
+      order = 5,
     },
   },
 }
@@ -649,67 +239,16 @@ databaseDefaults = {
   },
 }
 
-databaseDefaults.profile.customFunction = [[
-function MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
-  return (enabled and not inverted) or
-    (not enabled and inverted)
-end
-]]
-
-local function migrateLegacyGlobalPreferences()
-  local curProfile = db:GetCurrentProfile()
-  local legacyGlobalKeys = {
-    "useSpellTargetingOverride",
-    "useDeferWorkaround",
-    "useOverrideBindings",
-    "macroText",
-    "eventList",
-    "customFunction",
-  }
-
-  -- First check if they have already customized the default profile
-  local defaultProfileUnmodified = false
-  if curProfile == "Default" then
-    defaultProfileUnmodified = true
-    for _, key in _G.pairs(legacyGlobalKeys) do
-      if db.profile[key] ~= databaseDefaults.profile[key] then
-        defaultProfileUnmodified = false
-      end
-    end
-  end
-
-  -- If they have any global settings which don't match the default put it in a Legacy profile
-  for _, key in _G.pairs(legacyGlobalKeys) do
-    if db.global[key] ~= nil and db.global[key] ~= databaseDefaults.profile[key] then
-      db:SetProfile("Legacy")
-      db.profile[key] = db.global[key]
-    end
-    db.global[key] = nil
-  end
-
-  if db:GetCurrentProfile() == "Legacy" then
-    db:SetProfile(curProfile)
-    -- If the default profile is unmodified then copy Legacy over
-    if defaultProfileUnmodified then
-      db:CopyProfile("Legacy")
-    end
-  end
-end
-
--- Called by AceAddon on ADDON_LOADED?
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
-function MouselookHandler:OnInitialize()
+function WoodysToolkit:OnInitialize()
   -- The ".toc" need say "## SavedVariables: MouselookHandlerDB".
-  self.db = LibStub("AceDB-3.0"):New("MouselookHandlerDB", databaseDefaults, true)
+  self.db = LibStub("AceDB-3.0"):New(addonName .. "DB", databaseDefaults, true)
 
   local currentVersion = _G.GetAddOnMetadata(modName, "Version")
-  if not self.db.global.version then
-    migrateLegacyGlobalPreferences()
-  end
   self.db.global.version = currentVersion
 
   if db.profile.newUser then
-    MouselookHandler:Print("This seems to be your first time using this AddOn. To get started " ..
+    WoodysToolkit:Print("This seems to be your first time using this AddOn. To get started " ..
       "you should bring up the configuration UI (/mh) and assign keys to the two actions " ..
       "provided.")
   end
@@ -771,18 +310,18 @@ function MouselookHandler:OnInitialize()
   update()
 end
 
-function MouselookHandler:RefreshDB()
+function WoodysToolkit:RefreshDB()
     MouselookHandler:Print("Refreshing DB Profile")
     applyUseOverrideBindings()
 end
 
 -- Called by AceAddon.
-function MouselookHandler:OnEnable()
+function WoodysToolkit:OnEnable()
   -- Nothing here yet.
 end
 
 -- Called by AceAddon.
-function MouselookHandler:OnDisable()
+function WoodysToolkit:OnDisable()
   -- Nothing here yet.
 end
 
