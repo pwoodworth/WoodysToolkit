@@ -12,5 +12,4 @@
 embeds.xml
 i18n.xml
 
-WoodysEscape.lua
 WoodysToolkit.lua
