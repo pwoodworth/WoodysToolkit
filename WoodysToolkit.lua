@@ -157,7 +157,7 @@ WoodysToolkit:RegisterEvent("PLAYER_LOGIN")
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function WoodysToolkit:OnInitialize()
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
-  self.db = LibStub("AceDB-3.0"):New(addonName .. "DB", databaseDefaults, true)
+  self.db = LibStub("AceDB-3.0"):New(MODNAME .. "DB", databaseDefaults, true)
 
   local currentVersion = _G.GetAddOnMetadata(MODNAME, "Version")
   self.db.global.version = currentVersion
