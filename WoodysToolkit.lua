@@ -39,7 +39,7 @@ databaseDefaults = {
 local function applySettings()
   local ESCAPE_BUTTON_NAME = "WoodysEscapeButton"
   if db.profile.escapeButtonToggle then
-    local b = _G[ESCAPE_BUTTON_NAME] or CreateFrame("Button", ESCAPE_BUTTON_NAME, UIParent, "SecureActionButtonTemplate")
+    local b = _G[ESCAPE_BUTTON_NAME] or _G.CreateFrame("Button", ESCAPE_BUTTON_NAME, UIParent, "SecureActionButtonTemplate")
     b:SetAttribute("type", "stop")
   end
   if db.profile.idbpcHackToggle then
