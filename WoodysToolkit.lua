@@ -5,6 +5,9 @@
 WoodysToolkit = LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
 WoodysToolkit._G = _G
 
+_G["BINDING_HEADER_WoodysToolkit"] = "Woody's Toolkit"
+setglobal("MACRO Cancel", "Stop casting, cancel targeting, and clear target.")
+
 -- Set the environment of the current function to the global table MouselookHandler.
 -- See: http://www.lua.org/pil/14.3.html
 setfenv(1, WoodysToolkit)
@@ -36,11 +39,25 @@ databaseDefaults = {
   },
 }
 
-local function applySettings()
-  local ESCAPE_BUTTON_NAME = "WoodysEscapeButton"
-  if db.profile.escapeButtonToggle then
+local function createStopButton()
+    local ESCAPE_BUTTON_NAME = "WoodysStopButton"
     local b = _G[ESCAPE_BUTTON_NAME] or _G.CreateFrame("Button", ESCAPE_BUTTON_NAME, UIParent, "SecureActionButtonTemplate")
     b:SetAttribute("type", "stop")
+end
+
+local function createClearMacro()
+    local body = "/stopcasting\n/cleartarget\n/click WoodysStopButton"
+    local idx = GetMacroIndexByName("Cancel")
+    if (idx == 0) then
+        CreateMacro("Cancel", "INV_Feather_02", body, nil)
+    else
+        EditMacro(idx, "Cancel", nil, body, 1, 1)
+    end
+end
+
+local function applySettings()
+  if db.profile.escapeButtonToggle then
+    createStopButton()
   end
   if db.profile.idbpcHackToggle then
     if not idbpcFunc then
