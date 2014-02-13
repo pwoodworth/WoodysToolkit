@@ -30,6 +30,8 @@ MODNAME = "WoodysToolkit"
 -- Settings
 --------------------------------------------------------------------------------
 
+wtkConfigFrame = nil
+
 databaseDefaults = {
   ["global"] = {
     ["version"] = nil,
@@ -238,10 +240,23 @@ local options = {
   handler = WoodysToolkit,
   childGroups = "tree",
   args = {
+    config = {
+      type = "execute",
+      name = L["options.config.name"],
+      guiHidden = true,
+      func = function()
+          if not _G.InCombatLockdown() then
+            _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
+            -- Called twice to workaround UI bug
+            _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
+          end
+        end,
+      order = 1,
+    },
     escapeButtonGroup = {
       type = "group",
       name = L["options.escapeButton.group.name"],
-      inline = true,
+      guiInline = true,
       order = 10,
       args = {
         escapeButtonHeader = {
@@ -262,7 +277,7 @@ local options = {
     viewportGroup = {
       type = "group",
       name = L["options.viewport.group.name"],
-      inline = true,
+      guiInline = true,
       order = 30,
       args = {
         viewportHeader = {
@@ -280,11 +295,11 @@ local options = {
         },
         viewportCoords = {
           type = "group",
-          name = "",
-          inline = true,
+          name = L["Viewport Coordinates"],
+          guiInline = true,
           disabled = function()
-                      return not getViewportToggle()
-                     end,
+              return not getViewportToggle()
+            end,
           order = 33,
           args = {
             top = {
@@ -341,8 +356,8 @@ local options = {
     },
     miscGroup = {
       type = "group",
-      name = "",
-      inline = true,
+      name = L["Miscellaneous"],
+      guiInline = true,
       order = 90,
       args = {
         header = {
@@ -422,21 +437,14 @@ function WoodysToolkit:OnInitialize()
   local profiles = AceDBOptions:GetOptionsTable(self.db)
   AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
 
-  local configFrame = AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
+  wtkConfigFrame = AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
   AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
-  configFrame.default = function()
+  wtkConfigFrame.default = function()
     self.db:ResetProfile()
   end
 
-  local function toggleOptionsUI()
-    if not _G.InCombatLockdown() then
-      _G.InterfaceOptionsFrame_OpenToCategory(configFrame)
-      -- Called twice to workaround UI bug
-      _G.InterfaceOptionsFrame_OpenToCategory(configFrame)
-    end
-  end
-  self:RegisterChatCommand("woodystoolkit", toggleOptionsUI)
-  self:RegisterChatCommand("wtk", toggleOptionsUI)
+  self:RegisterChatCommand("woodystoolkit", "ChatCommand")
+  self:RegisterChatCommand("wtk", "ChatCommand")
 
   applySettings()
 end
@@ -451,3 +459,17 @@ function WoodysToolkit:OnDisable()
   -- Nothing here yet.
 end
 
+function WoodysToolkit:ChatCommand(input)
+  -- Show the GUI if no input is supplied, otherwise handle the chat input.
+
+  -- Assuming "MyOptions" is the appName of a valid options table
+  if false and (not input or input:trim() == "") then
+    if not _G.InCombatLockdown() then
+      _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
+      -- Called twice to workaround UI bug
+      _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
+    end
+  else
+    LibStub("AceConfigCmd-3.0").HandleCommand(WoodysToolkit, "woodystoolkit", MODNAME, input)
+  end
+end
