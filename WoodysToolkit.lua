@@ -429,8 +429,10 @@ function WoodysToolkit:OnInitialize()
     self.db:ResetProfile()
   end
 
-  self:RegisterChatCommand("woodystoolkit", "ChatCommand")
-  self:RegisterChatCommand("wtk", "ChatCommand")
+  LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "woodystoolkit", MODNAME)
+  LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "wtk", MODNAME)
+--   self:RegisterChatCommand("woodystoolkit", "ChatCommand")
+--   self:RegisterChatCommand("wtk", "ChatCommand")
 
   applySettings()
 end
@@ -445,6 +447,6 @@ function WoodysToolkit:OnDisable()
   -- Nothing here yet.
 end
 
-function WoodysToolkit:ChatCommand(input)
-  LibStub("AceConfigCmd-3.0").HandleCommand(WoodysToolkit, "woodystoolkit", MODNAME, input)
-end
+-- function WoodysToolkit:ChatCommand(input)
+--   LibStub("AceConfigCmd-3.0").HandleCommand(WoodysToolkit, "woodystoolkit", MODNAME, input)
+-- end
