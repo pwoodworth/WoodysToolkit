@@ -111,20 +111,13 @@ end
 --------------------------------------------------------------------------------
 
 ViewportOverlay = nil
+originalViewport = nil
 
 local function getCurrentScreenResolution()
-  local curResString = ({_G.GetScreenResolutions()})[_G.GetCurrentResolution()]
-  print('The current screen resolution is ' .. curResString)
-  for token in string.gmatch(curResString, "[^x]+") do
-    print(token)
-  end
-
-  -- Your current Y resolution (e.g. 1920x1080, Y = 1080)
-  local currentYResolution = 1200
-
-  for k, v in string.gmatch(curResString, "(%w+)x(%w+)") do
-    print("w="..k.." h="..v)
-    return k, v
+  local resolution = ({_G.GetScreenResolutions()})[_G.GetCurrentResolution()]
+  for width, height in string.gmatch(resolution, "(%w+)x(%w+)") do
+--     print("w="..k.." h="..v)
+    return _G.tonumber(width), _G.tonumber(height)
   end
 end
 
@@ -137,6 +130,12 @@ local function getWorldFramePoint(point)
   end
 end
 
+local function getViewpointScaling()
+  local width, height = getCurrentScreenResolution()
+  local scaling = 768 / height
+  return scaling
+end
+
 local function setupViewport(top, bottom, left, right)
   if not ViewportOverlay then
     ViewportOverlay = _G.WorldFrame:CreateTexture(nil, "BACKGROUND")
@@ -145,37 +144,49 @@ local function setupViewport(top, bottom, left, right)
     ViewportOverlay:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", 1, -1)
   end
 
-  -- Your current Y resolution (e.g. 1920x1080, Y = 1080)
-  local _, currentYResolution = getCurrentScreenResolution()
-  -- End configuration
-
-  local scaling = 768 / currentYResolution
-
-  local tlX, tlY = getWorldFramePoint("TOPLEFT")
-  local brX, brY = getWorldFramePoint("BOTTOMRIGHT")
-  print("tlX="..tlX.." tlY="..tlY.." brX="..brX.." brY="..brY)
-  local tlXs, tlYs = tlX / scaling, tlY / scaling
-  local brXs, brYs = brX / scaling, brY / scaling
-  print("tlXs="..tlXs.." tlYs="..tlYs.." brXs="..brXs.." brYs="..brYs)
-
-  local topLeftX = (left * scaling)
-  local topLeftY = -(top * scaling)
-  local bottomRightX = -(right * scaling)
-  local bottomRightY = (bottom * scaling)
+  local topLeftX = left
+  local topLeftY = -(top)
+  local bottomRightX = -(right)
+  local bottomRightY = bottom
 
   _G.WorldFrame:SetPoint("TOPLEFT", topLeftX, topLeftY)
   _G.WorldFrame:SetPoint("BOTTOMRIGHT", bottomRightX, bottomRightY)
 end
 
+local function saveOriginalViewport()
+  if not originalViewport then
+    local tlX, tlY = getWorldFramePoint("TOPLEFT")
+    local brX, brY = getWorldFramePoint("BOTTOMRIGHT")
+    originalViewport = {
+      top = tlY,
+      bottom = brY,
+      left = tlX,
+      right = brX
+    }
+  end
+end
+
+local function resetViewport()
+  if originalViewport then
+    local top = -(originalViewport["top"])
+    local bottom = originalViewport["bottom"]
+    local left = originalViewport["left"]
+    local right = -(originalViewport["right"])
+    setupViewport(top, bottom, left, right)
+    originalViewport = nil
+  end
+end
+
 local function applyViewport()
   if db.profile.viewportToggle then
+    saveOriginalViewport()
     local top = db.profile.viewport["top"]
     local bottom = db.profile.viewport["bottom"]
     local left = db.profile.viewport["left"]
     local right = db.profile.viewport["right"]
     setupViewport(top, bottom, left, right)
   else
-    setupViewport(0, 0, 0, 0)
+    resetViewport()
   end
 end
 
@@ -185,6 +196,8 @@ local function getViewportCoordinate(info)
   if not val then
     val = 0
   end
+  local scaling = getViewpointScaling()
+  val = _G.math.floor((val / scaling) + 0.5)
   return val
 end
 
@@ -193,6 +206,8 @@ local function setViewportCoordinate(info, val)
   if not val then
     val = 0
   end
+  local scaling = getViewpointScaling()
+  val = _G.math.floor((val * scaling) + 0.5)
   db.profile.viewport[key] = val
   applyViewport()
 end
@@ -223,120 +238,137 @@ local options = {
   handler = WoodysToolkit,
   childGroups = "tree",
   args = {
-    escapeButtonHeader = {
-      type = "header",
-      name = L["options.escapeButton.header"],
-      order = 0,
+    escapeButtonGroup = {
+      type = "group",
+      name = L["options.escapeButton.group.name"],
+      inline = true,
+      order = 10,
+      args = {
+        escapeButtonHeader = {
+          type = "header",
+          name = L["options.escapeButton.header"],
+          order = 0,
+        },
+        escapeButtonToggle = {
+          type = "toggle",
+          name = L["options.escapeButton.name"],
+          width = "full",
+          set = setEscapeButtonToggle,
+          get = getEscapeButtonToggle,
+          order = 2,
+        },
+      },
     },
-    escapeButtonDescription = {
-      type = "description",
-      name = L["options.escapeButton.description"],
-      fontSize = "medium",
-      order = 1,
-    },
-    escapeButtonToggle = {
-      type = "toggle",
-      name = L["options.escapeButton.name"],
-      width = "full",
-      set = setEscapeButtonToggle,
-      get = getEscapeButtonToggle,
-      order = 2,
-    },
-    idbpcHackHeader = {
-      type = "header",
-      name = L["options.idbpcHack.header"],
-      order = 3,
-    },
-    idbpcHackDescription = {
-      type = "description",
-      name = L["options.idbpcHack.description"],
-      fontSize = "medium",
-      order = 4,
-    },
-    idbpcHackToggle = {
-      type = "toggle",
-      name = L["options.idbpcHack.name"],
-      width = "full",
-      set = setIdbpcHackToggle,
-      get = getIdbpcHackToggle,
-      order = 5,
-    },
-    idbpcHackHeader = {
-      type = "header",
-      name = L["options.viewport.header"],
+    viewportGroup = {
+      type = "group",
+      name = L["options.viewport.group.name"],
+      inline = true,
       order = 30,
+      args = {
+        viewportHeader = {
+          type = "header",
+          name = L["options.viewport.header"],
+          order = 30,
+        },
+        viewportToggle = {
+          type = "toggle",
+          name = L["options.viewport.name"],
+          width = "full",
+          get = getViewportToggle,
+          set = setViewportToggle,
+          order = 32,
+        },
+        viewportCoords = {
+          type = "group",
+          name = "",
+          inline = true,
+          disabled = function()
+                      return not getViewportToggle()
+                     end,
+          order = 33,
+          args = {
+            top = {
+              type = "range",
+              name = L["Top"],
+              width = "full",
+              get = getViewportCoordinate,
+              set = setViewportCoordinate,
+              min = 0,
+              max = ({getCurrentScreenResolution()})[2] / 2,
+              step = 1,
+              bigStep = 5,
+              order = 34,
+            },
+            bottom = {
+              type = "range",
+              name = L["Bottom"],
+              width = "full",
+              get = getViewportCoordinate,
+              set = setViewportCoordinate,
+              min = 0,
+              max = ({getCurrentScreenResolution()})[2] / 2,
+              step = 1,
+              bigStep = 5,
+              order = 36,
+            },
+            left = {
+              type = "range",
+              name = L["Left"],
+              width = "full",
+              get = getViewportCoordinate,
+              set = setViewportCoordinate,
+              min = 0,
+              max = ({getCurrentScreenResolution()})[1] / 2,
+              step = 1,
+              bigStep = 5,
+              order = 38,
+            },
+            right = {
+              type = "range",
+              name = L["Right"],
+              width = "full",
+              get = getViewportCoordinate,
+              set = setViewportCoordinate,
+              min = 0,
+              max = ({getCurrentScreenResolution()})[1] / 2,
+              step = 1,
+              bigStep = 5,
+              order = 39,
+            }
+          }
+        },
+      },
     },
-    idbpcHackDescription = {
-      type = "description",
-      name = L["options.viewport.description"],
-      fontSize = "medium",
-      order = 31,
-    },
-    viewportToggle = {
-      type = "toggle",
-      name = L["options.viewport.name"],
-      width = "full",
-      get = getViewportToggle,
-      set = setViewportToggle,
-      order = 32,
-    },
-    top = {
-      type = "range",
-      name = L["options.viewport.top"],
-      width = "full",
-      get = getViewportCoordinate,
-      set = setViewportCoordinate,
-      min = 0,
-      max = 600,
-      step = 1,
-      bigStep = 10,
-      order = 34,
-    },
-    bottom = {
-      type = "range",
-      name = L["options.viewport.top"],
-      width = "full",
-      get = getViewportCoordinate,
-      set = setViewportCoordinate,
-      min = 0,
-      max = 600,
-      step = 1,
-      bigStep = 10,
-      order = 36,
-    },
-    left = {
-      type = "range",
-      name = L["options.viewport.top"],
-      width = "full",
-      get = getViewportCoordinate,
-      set = setViewportCoordinate,
-      min = 0,
-      max = 600,
-      step = 1,
-      bigStep = 10,
-      order = 38,
-    },
-    right = {
-      type = "range",
-      name = L["options.viewport.top"],
-      width = "full",
-      get = getViewportCoordinate,
-      set = setViewportCoordinate,
-      min = 0,
-      max = 600,
-      step = 1,
-      bigStep = 10,
-      order = 39,
-    },
-    reloadButton = {
-      type = "execute",
-      name = L["options.reloadui.name"],
-      width = "half",
-      func = function()
-        _G.ReloadUI()
-      end,
+    miscGroup = {
+      type = "group",
+      name = "",
+      inline = true,
       order = 90,
-    },
+      args = {
+        header = {
+          type = "header",
+          name = L["options.misc.header.name"],
+          order = 10,
+        },
+        idbpcHackToggle = {
+          type = "toggle",
+          name = L["options.idbpcHack.name"],
+          width = "full",
+          set = setIdbpcHackToggle,
+          get = getIdbpcHackToggle,
+          order = 20,
+        },
+        reloadButton = {
+          type = "execute",
+          name = L["options.reloadui.name"],
+          width = nil,
+          func = function()
+            _G.ReloadUI()
+          end,
+          order = 90,
+        }
+      }
+    }
   },
 }
 
