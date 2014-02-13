@@ -253,137 +253,123 @@ local options = {
         end,
       order = 1,
     },
-    escapeButtonGroup = {
-      type = "group",
-      name = L["options.escapeButton.group.name"],
-      guiInline = true,
+    escapeButtonHeader = {
+      type = "header",
+      name = L["options.escapeButton.header"],
       order = 10,
-      args = {
-        escapeButtonHeader = {
-          type = "header",
-          name = L["options.escapeButton.header"],
-          order = 0,
-        },
-        escapeButtonToggle = {
-          type = "toggle",
-          name = L["options.escapeButton.name"],
-          width = "full",
-          set = setEscapeButtonToggle,
-          get = getEscapeButtonToggle,
-          order = 2,
-        },
-      },
     },
-    viewportGroup = {
+    escapeButton = {
+      type = "toggle",
+      name = L["options.escapeButton.name"],
+      width = "full",
+      set = setEscapeButtonToggle,
+      get = getEscapeButtonToggle,
+      order = 11,
+    },
+    viewport = {
       type = "group",
-      name = L["options.viewport.group.name"],
+      name = L["Viewport"],
       guiInline = true,
-      order = 30,
+      order = 20,
       args = {
-        viewportHeader = {
+        header = {
           type = "header",
           name = L["options.viewport.header"],
-          order = 30,
+          order = 1,
         },
-        viewportToggle = {
+        toggle = {
           type = "toggle",
           name = L["options.viewport.name"],
           width = "full",
           get = getViewportToggle,
           set = setViewportToggle,
-          order = 32,
+          order = 2,
         },
-        viewportCoords = {
-          type = "group",
-          name = L["Viewport Coordinates"],
-          guiInline = true,
+        top = {
+          type = "range",
+          name = L["Top"],
           disabled = function()
               return not getViewportToggle()
             end,
-          order = 33,
-          args = {
-            top = {
-              type = "range",
-              name = L["Top"],
-              width = "full",
-              get = getViewportCoordinate,
-              set = setViewportCoordinate,
-              min = 0,
-              max = ({getCurrentScreenResolution()})[2] / 2,
-              step = 1,
-              bigStep = 5,
-              order = 34,
-            },
-            bottom = {
-              type = "range",
-              name = L["Bottom"],
-              width = "full",
-              get = getViewportCoordinate,
-              set = setViewportCoordinate,
-              min = 0,
-              max = ({getCurrentScreenResolution()})[2] / 2,
-              step = 1,
-              bigStep = 5,
-              order = 36,
-            },
-            left = {
-              type = "range",
-              name = L["Left"],
-              width = "full",
-              get = getViewportCoordinate,
-              set = setViewportCoordinate,
-              min = 0,
-              max = ({getCurrentScreenResolution()})[1] / 2,
-              step = 1,
-              bigStep = 5,
-              order = 38,
-            },
-            right = {
-              type = "range",
-              name = L["Right"],
-              width = "full",
-              get = getViewportCoordinate,
-              set = setViewportCoordinate,
-              min = 0,
-              max = ({getCurrentScreenResolution()})[1] / 2,
-              step = 1,
-              bigStep = 5,
-              order = 39,
-            }
-          }
+          width = "full",
+          get = getViewportCoordinate,
+          set = setViewportCoordinate,
+          min = 0,
+          max = ({getCurrentScreenResolution()})[2] / 2,
+          step = 1,
+          bigStep = 5,
+          order = 34,
+        },
+        bottom = {
+          type = "range",
+          name = L["Bottom"],
+          disabled = function()
+              return not getViewportToggle()
+            end,
+          width = "full",
+          get = getViewportCoordinate,
+          set = setViewportCoordinate,
+          min = 0,
+          max = ({getCurrentScreenResolution()})[2] / 2,
+          step = 1,
+          bigStep = 5,
+          order = 36,
+        },
+        left = {
+          type = "range",
+          name = L["Left"],
+          disabled = function()
+              return not getViewportToggle()
+            end,
+          width = "full",
+          get = getViewportCoordinate,
+          set = setViewportCoordinate,
+          min = 0,
+          max = ({getCurrentScreenResolution()})[1] / 2,
+          step = 1,
+          bigStep = 5,
+          order = 38,
+        },
+        right = {
+          type = "range",
+          name = L["Right"],
+          disabled = function()
+              return not getViewportToggle()
+            end,
+          width = "full",
+          get = getViewportCoordinate,
+          set = setViewportCoordinate,
+          min = 0,
+          max = ({getCurrentScreenResolution()})[1] / 2,
+          step = 1,
+          bigStep = 5,
+          order = 39,
         },
       },
     },
-    miscGroup = {
-      type = "group",
-      name = L["Miscellaneous"],
-      guiInline = true,
+    miscHeader = {
+      type = "header",
+      name = L["options.misc.header.name"],
       order = 90,
-      args = {
-        header = {
-          type = "header",
-          name = L["options.misc.header.name"],
-          order = 10,
-        },
-        idbpcHackToggle = {
-          type = "toggle",
-          name = L["options.idbpcHack.name"],
-          width = "full",
-          set = setIdbpcHackToggle,
-          get = getIdbpcHackToggle,
-          order = 20,
-        },
-        reloadButton = {
-          type = "execute",
-          name = L["options.reloadui.name"],
-          width = nil,
-          func = function()
-            _G.ReloadUI()
-          end,
-          order = 90,
-        }
-      }
-    }
+    },
+    idbpcHack = {
+      type = "toggle",
+      name = L["options.idbpcHack.name"],
+      width = "full",
+      set = setIdbpcHackToggle,
+      get = getIdbpcHackToggle,
+      order = 91,
+    },
+    reloadButton = {
+      type = "execute",
+      name = L["options.reloadui.name"],
+      cmdHidden = true,
+      width = nil,
+      func = function()
+        _G.ReloadUI()
+      end,
+      order = 92,
+    },
   },
 }
 
@@ -460,16 +446,5 @@ function WoodysToolkit:OnDisable()
 end
 
 function WoodysToolkit:ChatCommand(input)
-  -- Show the GUI if no input is supplied, otherwise handle the chat input.
-
-  -- Assuming "MyOptions" is the appName of a valid options table
-  if false and (not input or input:trim() == "") then
-    if not _G.InCombatLockdown() then
-      _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
-      -- Called twice to workaround UI bug
-      _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
-    end
-  else
-    LibStub("AceConfigCmd-3.0").HandleCommand(WoodysToolkit, "woodystoolkit", MODNAME, input)
-  end
+  LibStub("AceConfigCmd-3.0").HandleCommand(WoodysToolkit, "woodystoolkit", MODNAME, input)
 end
