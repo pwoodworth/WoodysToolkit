@@ -12,4 +12,5 @@
 embeds.xml
 i18n.xml
 
+Viewport.lua
 WoodysToolkit.lua
