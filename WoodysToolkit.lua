@@ -21,6 +21,9 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
 
+print = print or _G.print
+string = string or _G.string
+
 MODNAME = "WoodysToolkit"
 
 --------------------------------------------------------------------------------
@@ -35,6 +38,12 @@ databaseDefaults = {
     ["escapeButtonToggle"] = false,
     ["idbpcHackToggle"] = false,
     ["viewportToggle"] = false,
+    ["viewport"] = {
+      top = 0,
+      bottom = 0,
+      left = 0,
+      right = 0
+    },
   },
 }
 
@@ -103,45 +112,91 @@ end
 
 ViewportOverlay = nil
 
-local function setupViewport()
-  if not ViewportOverlay then
-    ViewportOverlay = WorldFrame:CreateTexture(nil, "BACKGROUND")
-    ViewportOverlay:SetTexture(0, 0, 0, 1)
-    ViewportOverlay:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -1, 1)
-    ViewportOverlay:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", 1, -1)
-  end
-
-  -- Configuration
-  local top = 0 -- Pixels from top
-  local bottom = 200 -- Pixels from bottom
-  local left = 0 -- Pixels from left
-  local right = 0 -- Pixels from right
-
-  local curResString = ({GetScreenResolutions()})[GetCurrentResolution()]
+local function getCurrentScreenResolution()
+  local curResString = ({_G.GetScreenResolutions()})[_G.GetCurrentResolution()]
   print('The current screen resolution is ' .. curResString)
   for token in string.gmatch(curResString, "[^x]+") do
     print(token)
   end
 
+  -- Your current Y resolution (e.g. 1920x1080, Y = 1080)
+  local currentYResolution = 1200
+
   for k, v in string.gmatch(curResString, "(%w+)x(%w+)") do
     print("w="..k.." h="..v)
+    return k, v
+  end
+end
+
+local function getWorldFramePoint(point)
+  for ii = 1, _G.WorldFrame:GetNumPoints(), 1 do
+    local apoint, relativeTo, relativePoint, xOfs, yOfs = _G.WorldFrame:GetPoint(ii)
+    if point == apoint then
+      return xOfs, yOfs
+    end
+  end
+end
+
+local function setupViewport(top, bottom, left, right)
+  if not ViewportOverlay then
+    ViewportOverlay = _G.WorldFrame:CreateTexture(nil, "BACKGROUND")
+    ViewportOverlay:SetTexture(0, 0, 0, 1)
+    ViewportOverlay:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -1, 1)
+    ViewportOverlay:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", 1, -1)
   end
 
   -- Your current Y resolution (e.g. 1920x1080, Y = 1080)
-  local currentYResolution = 1200
+  local _, currentYResolution = getCurrentScreenResolution()
   -- End configuration
 
   local scaling = 768 / currentYResolution
 
-  WorldFrame:SetPoint("TOPLEFT", (left * scaling), -(top * scaling))
-  WorldFrame:SetPoint("BOTTOMRIGHT", -(right * scaling), (bottom * scaling))
+  local tlX, tlY = getWorldFramePoint("TOPLEFT")
+  local brX, brY = getWorldFramePoint("BOTTOMRIGHT")
+  print("tlX="..tlX.." tlY="..tlY.." brX="..brX.." brY="..brY)
+  local tlXs, tlYs = tlX / scaling, tlY / scaling
+  local brXs, brYs = brX / scaling, brY / scaling
+  print("tlXs="..tlXs.." tlYs="..tlYs.." brXs="..brXs.." brYs="..brYs)
+
+  local topLeftX = (left * scaling)
+  local topLeftY = -(top * scaling)
+  local bottomRightX = -(right * scaling)
+  local bottomRightY = (bottom * scaling)
+
+  _G.WorldFrame:SetPoint("TOPLEFT", topLeftX, topLeftY)
+  _G.WorldFrame:SetPoint("BOTTOMRIGHT", bottomRightX, bottomRightY)
 end
 
 local function applyViewport()
   if db.profile.viewportToggle then
-    setupViewport()
+    local top = db.profile.viewport["top"]
+    local bottom = db.profile.viewport["bottom"]
+    local left = db.profile.viewport["left"]
+    local right = db.profile.viewport["right"]
+    setupViewport(top, bottom, left, right)
+  else
+    setupViewport(0, 0, 0, 0)
   end
 end
+
+local function getViewportCoordinate(info)
+  local key = info[#info]
+  local val = db.profile.viewport[key]
+  if not val then
+    val = 0
+  end
+  return val
+end
+
+local function setViewportCoordinate(info, val)
+  local key = info[#info]
+  if not val then
+    val = 0
+  end
+  db.profile.viewport[key] = val
+  applyViewport()
+end
+
 
 local function setViewportToggle(info, val)
   db.profile.viewportToggle = val
@@ -155,26 +210,6 @@ end
 --------------------------------------------------------------------------------
 -- General
 --------------------------------------------------------------------------------
-
---[[
-local function setOverrideBinding(info, val)
-  local bindingname = info[#info]
-  if val == "false" then
-    val = nil
-  end
-  db.profile.mouseOverrideBindings[bindingname] = val
-  applyUseOverrideBindings()
-end
-
-local function getOverrideBinding(info)
-  local bindingname = info[#info]
-  local val = db.profile.mouseOverrideBindings[bindingname]
-  if not val then
-    val = "false"
-  end
-  return val
-end
---]]
 
 local function applySettings()
   applyStopButton()
@@ -244,6 +279,54 @@ local options = {
       get = getViewportToggle,
       set = setViewportToggle,
       order = 32,
+    },
+    top = {
+      type = "range",
+      name = L["options.viewport.top"],
+      width = "full",
+      get = getViewportCoordinate,
+      set = setViewportCoordinate,
+      min = 0,
+      max = 600,
+      step = 1,
+      bigStep = 10,
+      order = 34,
+    },
+    bottom = {
+      type = "range",
+      name = L["options.viewport.top"],
+      width = "full",
+      get = getViewportCoordinate,
+      set = setViewportCoordinate,
+      min = 0,
+      max = 600,
+      step = 1,
+      bigStep = 10,
+      order = 36,
+    },
+    left = {
+      type = "range",
+      name = L["options.viewport.top"],
+      width = "full",
+      get = getViewportCoordinate,
+      set = setViewportCoordinate,
+      min = 0,
+      max = 600,
+      step = 1,
+      bigStep = 10,
+      order = 38,
+    },
+    right = {
+      type = "range",
+      name = L["options.viewport.top"],
+      width = "full",
+      get = getViewportCoordinate,
+      set = setViewportCoordinate,
+      min = 0,
+      max = 600,
+      step = 1,
+      bigStep = 10,
+      order = 39,
     },
     reloadButton = {
       type = "execute",
