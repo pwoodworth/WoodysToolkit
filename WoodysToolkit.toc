@@ -8,6 +8,6 @@
 ## SavedVariables: WoodysToolkitDB
 ## Dependencies: Ace3
 
-i18n.xml
+i18n-enUS.lua
 
 WoodysToolkit.lua

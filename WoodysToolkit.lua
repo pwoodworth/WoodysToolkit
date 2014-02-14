@@ -6,7 +6,6 @@ WoodysToolkit = LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.
 WoodysToolkit._G = _G
 
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
-setglobal("MACRO wtkstop", "Stop casting, cancel targeting, and clear target.")
 
 -- Set the environment of the current function to the global table WoodysToolkit.
 -- See: http://www.lua.org/pil/14.3.html
@@ -39,8 +38,8 @@ databaseDefaults = {
   ["profile"] = {
     ["stopButtonToggle"] = false,
     ["idbpcHackToggle"] = false,
-    ["viewportToggle"] = false,
     ["viewport"] = {
+      enable = false,
       top = 0,
       bottom = 0,
       left = 0,
@@ -77,19 +76,23 @@ end
 -- Stop Button
 --------------------------------------------------------------------------------
 
+local STOP_BUTTON_NAME = "WoodysStopButton"
+local STOP_MACRO_NAME = "wtkstop"
+
+_G.setglobal("MACRO "..STOP_MACRO_NAME, "Stop casting, cancel targeting, and clear target.")
+
 local function createStopButton()
-    local ESCAPE_BUTTON_NAME = "WoodysStopButton"
-    local b = _G[ESCAPE_BUTTON_NAME] or _G.CreateFrame("Button", ESCAPE_BUTTON_NAME, UIParent, "SecureActionButtonTemplate")
+    local b = _G[STOP_BUTTON_NAME] or _G.CreateFrame("Button", STOP_BUTTON_NAME, UIParent, "SecureActionButtonTemplate")
     b:SetAttribute("type", "stop")
 end
 
 local function createStopMacro()
-    local body = "/stopcasting\n/cleartarget\n/click WoodysStopButton"
-    local idx = GetMacroIndexByName("Cancel")
+    local body = "/stopcasting\n/cleartarget\n/click "..STOP_BUTTON_NAME
+    local idx = _G.GetMacroIndexByName(STOP_MACRO_NAME)
     if (idx == 0) then
-        CreateMacro("wtkstop", "INV_Feather_02", body, nil)
+        _G.CreateMacro(STOP_MACRO_NAME, "INV_Feather_02", body, nil)
     else
-        EditMacro(idx, "wtkstop", nil, body, 1, 1)
+        _G.EditMacro(idx, STOP_MACRO_NAME, nil, body, 1, 1)
     end
 end
 
@@ -181,7 +184,7 @@ local function resetViewport()
 end
 
 local function applyViewport()
-  if db.profile.viewportToggle then
+  if db.profile.viewport.enable then
     saveOriginalViewport()
     local top = db.profile.viewport["top"]
     local bottom = db.profile.viewport["bottom"]
@@ -215,14 +218,13 @@ local function setViewportCoordinate(info, val)
   applyViewport()
 end
 
-
 local function setViewportToggle(info, val)
-  db.profile.viewportToggle = val
+  db.profile.viewport.enable = val
   applyViewport()
 end
 
 local function getViewportToggle(info)
-  return db.profile.viewportToggle
+  return db.profile.viewport.enable
 end
 
 --------------------------------------------------------------------------------
