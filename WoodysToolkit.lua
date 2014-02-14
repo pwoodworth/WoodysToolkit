@@ -8,7 +8,7 @@ WoodysToolkit._G = _G
 _G["BINDING_HEADER_WoodysToolkit"] = "Woody's Toolkit"
 setglobal("MACRO Cancel", "Stop casting, cancel targeting, and clear target.")
 
--- Set the environment of the current function to the global table MouselookHandler.
+-- Set the environment of the current function to the global table WoodysToolkit.
 -- See: http://www.lua.org/pil/14.3.html
 setfenv(1, WoodysToolkit)
 
