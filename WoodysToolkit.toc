@@ -6,10 +6,8 @@
 ## DefaultState: enabled
 ## LoadOnDemand: 0
 ## SavedVariables: WoodysToolkitDB
-## OptionalDeps: Ace3
-## X-Embeds: Ace3
+## Dependencies: Ace3
 
-embeds.xml
 i18n.xml
 
 WoodysToolkit.lua
