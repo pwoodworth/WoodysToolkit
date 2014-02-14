@@ -1,5 +1,5 @@
 <Bindings>
-  <Binding name="MACRO Cancel" description="Stop casting, cancel targeting, and clear target." header="WOODYSTOOLKIT">
+  <Binding name="MACRO wtkstop" description="Stop casting, cancel targeting, and clear target." header="WOODYSTOOLKIT">
     -- Clear
   </Binding>
 </Bindings>

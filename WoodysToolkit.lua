@@ -5,8 +5,8 @@
 WoodysToolkit = LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
 WoodysToolkit._G = _G
 
-_G["BINDING_HEADER_WoodysToolkit"] = "Woody's Toolkit"
-setglobal("MACRO Cancel", "Stop casting, cancel targeting, and clear target.")
+_G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
+setglobal("MACRO wtkstop", "Stop casting, cancel targeting, and clear target.")
 
 -- Set the environment of the current function to the global table WoodysToolkit.
 -- See: http://www.lua.org/pil/14.3.html
@@ -37,7 +37,7 @@ databaseDefaults = {
     ["version"] = nil,
   },
   ["profile"] = {
-    ["escapeButtonToggle"] = false,
+    ["stopButtonToggle"] = false,
     ["idbpcHackToggle"] = false,
     ["viewportToggle"] = false,
     ["viewport"] = {
@@ -83,29 +83,30 @@ local function createStopButton()
     b:SetAttribute("type", "stop")
 end
 
-local function createClearMacro()
+local function createStopMacro()
     local body = "/stopcasting\n/cleartarget\n/click WoodysStopButton"
     local idx = GetMacroIndexByName("Cancel")
     if (idx == 0) then
-        CreateMacro("Cancel", "INV_Feather_02", body, nil)
+        CreateMacro("wtkstop", "INV_Feather_02", body, nil)
     else
-        EditMacro(idx, "Cancel", nil, body, 1, 1)
+        EditMacro(idx, "wtkstop", nil, body, 1, 1)
     end
 end
 
 local function applyStopButton()
-  if db.profile.escapeButtonToggle then
+  if db.profile.stopButtonToggle then
     createStopButton()
+    createStopMacro()
   end
 end
 
-local function setEscapeButtonToggle(info, val)
-  db.profile.escapeButtonToggle = val
+local function setStopButtonToggle(info, val)
+  db.profile.stopButtonToggle = val
   applyStopButton()
 end
 
-local function getEscapeButtonToggle(info)
-  return db.profile.escapeButtonToggle
+local function getStopButtonToggle(info)
+  return db.profile.stopButtonToggle
 end
 
 --------------------------------------------------------------------------------
@@ -253,17 +254,17 @@ local options = {
         end,
       order = 1,
     },
-    escapeButtonHeader = {
+    stopButtonHeader = {
       type = "header",
       name = L["options.escapeButton.header"],
       order = 10,
     },
-    escapeButton = {
+    stopButton = {
       type = "toggle",
       name = L["options.escapeButton.name"],
       width = "full",
-      set = setEscapeButtonToggle,
-      get = getEscapeButtonToggle,
+      set = setStopButtonToggle,
+      get = getStopButtonToggle,
       order = 11,
     },
     viewport = {
