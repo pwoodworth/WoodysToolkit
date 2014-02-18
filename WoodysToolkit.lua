@@ -265,6 +265,18 @@ end
 MyAddOn.sellButton:SetText(L["Sell Junk"])
 MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
 
+local function extractLink(link)
+  -- remove all trailing whitespace
+  link = strtrim(link)
+  -- extract name from an itemlink
+  local isLink, _, name = string_find(link, "^|c%x+|H.+|h.(.*)\].+")
+  -- if it's not an itemlink, guess it's name of an item
+  if not isLink then
+    name = link
+  end
+  return link, isLink, name
+end
+
 function MyAddOn:AddProfit(profit)
   if profit then
     self.total = self.total + profit
@@ -377,18 +389,6 @@ function MyAddOn:PrintGold()
   if silver > 0 or gold > 0 or copper > 0 then
     self:Print(L["Gained"] .. ": " .. ret)
   end
-end
-
-local function extractLink(link)
-  -- remove all trailing whitespace
-  link = strtrim(link)
-  -- extract name from an itemlink
-  local isLink, _, name = string_find(link, "^|c%x+|H.+|h.(.*)\].+")
-  -- if it's not an itemlink, guess it's name of an item
-  if not isLink then
-    name = link
-  end
-  return link, isLink, name
 end
 
 function MyAddOn:JunkAdd(link)
