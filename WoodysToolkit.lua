@@ -36,6 +36,9 @@ local GetItemInfo = _G.GetItemInfo
 local PickupContainerItem = _G.PickupContainerItem
 local PickupMerchantItem = _G.PickupMerchantItem
 local IsAddOnLoaded = _G.IsAddOnLoaded
+local select = _G.select
+local COPPER_PER_SILVER = _G.COPPER_PER_SILVER
+local SILVER_PER_GOLD = _G.SILVER_PER_GOLD
 
 MODNAME = "WoodysToolkit"
 
@@ -254,20 +257,20 @@ end
 -- SellJunk
 --------------------------------------------------------------------------------
 
---MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
+-- MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
 --
---if IsAddOnLoaded("GnomishVendorShrinker") then
---  MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
---else
---  MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
---end
+-- if IsAddOnLoaded("GnomishVendorShrinker") then
+--   MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
+-- else
+--   MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
+-- end
 --
---MyAddOn.sellButton:SetText(L["Sell Junk"])
---MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+-- MyAddOn.sellButton:SetText(L["Sell Junk"])
+-- MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
 
 local function extractLink(link)
   -- remove all trailing whitespace
-  link = strtrim(link)
+  link = _G.strtrim(link)
   -- extract name from an itemlink
   local isLink, _, name = string_find(link, "^|c%x+|H.+|h.(.*)\].+")
   -- if it's not an itemlink, guess it's name of an item
@@ -295,8 +298,8 @@ function MyAddOn:JunkSell()
   local max12 = MyAddOn.db.profile.selljunk.max12
 
   for bag = 0, 4 do
-    for slot = 1, GetContainerNumSlots(bag) do
-      local item = GetContainerItemLink(bag, slot)
+    for slot = 1, _G.GetContainerNumSlots(bag) do
+      local item = _G.GetContainerItemLink(bag, slot)
       if item then
         -- is it grey quality item?
         local grey = string_find(item, "|cff9d9d9d")
@@ -309,7 +312,7 @@ function MyAddOn:JunkSell()
             PickupContainerItem(bag, slot)
             PickupMerchantItem()
             if showSpam then
-              self:Print(L["Sold"] .. ": " .. item)
+              print(L["Sold"] .. ": " .. item)
             end
 
             if max12 then
@@ -320,8 +323,10 @@ function MyAddOn:JunkSell()
             end
           else
             if showSpam then
-              self:Print(L["Would've Destroyed"] .. ": " .. item)
+              print(L["Would've Destroyed"] .. ": " .. item)
             end
+--             PickupContainerItem(bag, slot)
+--             _G.DeleteCursorItem()
           end
         end
       end
@@ -776,8 +781,10 @@ function WoodysToolkit:PLAYER_LOGIN()
   -- Nothing here yet.
 end
 
-function MyAddOn:MERCHANT_SHOW()
-  if MyAddOn.db.profile.auto then
+function WoodysToolkit:MERCHANT_SHOW()
+  _G.print("GOT HERE!")
+  if MyAddOn.db.profile.selljunk.auto then
+    _G.print("GOT HERE2!")
     self:JunkSell()
   end
 end
@@ -785,6 +792,7 @@ end
 WoodysToolkit:RegisterEvent("ADDON_LOADED")
 WoodysToolkit:RegisterEvent("PLAYER_ENTERING_WORLD")
 WoodysToolkit:RegisterEvent("PLAYER_LOGIN")
+WoodysToolkit:RegisterEvent("MERCHANT_SHOW")
 
 --------------------------------------------------------------------------------
 -- </ in-game configuration UI code > ------------------------------------------
