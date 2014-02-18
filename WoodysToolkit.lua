@@ -418,7 +418,7 @@ function MyAddOn:JunkRem(link)
     end
 
     -- extract name from itemlink (only for compatibility with old saved variables)
-    isLink, _, exception = string_find(v, "^|c%x+|H.+|h.(.*)\].+")
+    local _, isLink, exception = extractLink(v)
     if isLink then
       -- comparing exception list entry with given name
       if exception:lower() == name:lower() then
@@ -452,7 +452,7 @@ function MyAddOn:isJunkException(link)
       end
 
       -- extract name from itemlink (only for compatibility with old saved variables)
-      isLink, _, exception = string_find(v, "^|c%x+|H.+|h.(.*)\].+")
+      local _, isLink, exception = extractLink(v)
       if isLink then
         -- comparing exception list entry with given name
         if exception:lower() == name:lower() then
