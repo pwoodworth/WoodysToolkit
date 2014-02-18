@@ -254,16 +254,16 @@ end
 -- SellJunk
 --------------------------------------------------------------------------------
 
-MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
-
-if IsAddOnLoaded("GnomishVendorShrinker") then
-  MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
-else
-  MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
-end
-
-MyAddOn.sellButton:SetText(L["Sell Junk"])
-MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+--MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
+--
+--if IsAddOnLoaded("GnomishVendorShrinker") then
+--  MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
+--else
+--  MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
+--end
+--
+--MyAddOn.sellButton:SetText(L["Sell Junk"])
+--MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
 
 local function extractLink(link)
   -- remove all trailing whitespace
