@@ -2,7 +2,6 @@
 -- AddOn Initialization
 --------------------------------------------------------------------------------
 
-
 WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
 local _G = getfenv(0)
 WoodysToolkit._G = WoodysToolkit._G or _G
@@ -23,12 +22,24 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
 
-print = print or _G.print
-string = string or _G.string
+-- upvalues
+local print = print or _G.print
+local string = string or _G.string
+local floor = _G.floor
+local mod = _G.mod
+local string_find = _G.string.find
+local pairs = _G.pairs
+local wipe = _G.wipe
+local DeleteCursorItem = _G.DeleteCursorItem
+local GetContainerItemInfo = _G.GetContainerItemInfo
+local GetItemInfo = _G.GetItemInfo
+local PickupContainerItem = _G.PickupContainerItem
+local PickupMerchantItem = _G.PickupMerchantItem
+local IsAddOnLoaded = _G.IsAddOnLoaded
 
 MODNAME = "WoodysToolkit"
 
-local myaddon = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 --------------------------------------------------------------------------------
 -- Settings
@@ -243,36 +254,18 @@ end
 -- SellJunk
 --------------------------------------------------------------------------------
 
-myaddon.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
+MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
 
 if IsAddOnLoaded("GnomishVendorShrinker") then
-  myaddon.sellButton:SetPoint("TOPRIGHT", -23, 0)
+  MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
 else
-  myaddon.sellButton:SetPoint("TOPLEFT", 60, -32)
+  MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
 end
 
-myaddon.sellButton:SetText(L["Sell Junk"])
-myaddon.sellButton:SetScript("OnClick", function() WoodysToolkit:Sell() end)
+MyAddOn.sellButton:SetText(L["Sell Junk"])
+MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
 
--- upvalues
-local floor = _G.floor
-local mod = _G.mod
-local string_find = _G.string.find
-local pairs = _G.pairs
-local wipe = _G.wipe
-local DeleteCursorItem = _G.DeleteCursorItem
-local GetContainerItemInfo = _G.GetContainerItemInfo
-local GetItemInfo = _G.GetItemInfo
-local PickupContainerItem = _G.PickupContainerItem
-local PickupMerchantItem = _G.PickupMerchantItem
-
-function myaddon:MERCHANT_SHOW()
-  if myaddon.db.profile.auto then
-    self:Sell()
-  end
-end
-
-function myaddon:AddProfit(profit)
+function MyAddOn:AddProfit(profit)
   if profit then
     self.total = self.total + profit
   end
@@ -283,11 +276,11 @@ end
 --   - grey quality, unless it's in exception list         --
 --   - better than grey quality, if it's in exception list --
 -------------------------------------------------------------
-function myaddon:Sell()
+function MyAddOn:JunkSell()
   local limit = 0
   local currPrice
-  local showSpam = myaddon.db.profile.selljunk.showSpam
-  local max12 = myaddon.db.profile.selljunk.max12
+  local showSpam = MyAddOn.db.profile.selljunk.showSpam
+  local max12 = MyAddOn.db.profile.selljunk.max12
 
   for bag = 0, 4 do
     for slot = 1, GetContainerNumSlots(bag) do
@@ -296,11 +289,11 @@ function myaddon:Sell()
         -- is it grey quality item?
         local grey = string_find(item, "|cff9d9d9d")
 
-        if (grey and (not myaddon:isException(item))) or ((not grey) and (myaddon:isException(item))) then
+        if (grey and (not MyAddOn:isJunkException(item))) or ((not grey) and (MyAddOn:isJunkException(item))) then
           currPrice = select(11, GetItemInfo(item)) * select(2, GetContainerItemInfo(bag, slot))
           -- this should get rid of problems with grey items, that cant be sell to a vendor
           if currPrice > 0 then
-            myaddon:AddProfit(currPrice)
+            MyAddOn:AddProfit(currPrice)
             PickupContainerItem(bag, slot)
             PickupMerchantItem()
             if showSpam then
@@ -330,13 +323,13 @@ end
 --   - grey quality, unless it's in exception list         --
 --   - better than grey quality, if it's in exception list --
 -------------------------------------------------------------
-function myaddon:Destroy(count)
+function MyAddOn:JunkDestroy(count)
   local limit = 9001 -- it's over NINE THOUSAND!!!
   if count ~= nil then
     limit = count
   end
 
-  local showSpam = myaddon.db.profile.selljunk.showSpam
+  local showSpam = MyAddOn.db.profile.selljunk.showSpam
 
   for bag = 0,4 do
     for slot = 1,GetContainerNumSlots(bag) do
@@ -345,7 +338,7 @@ function myaddon:Destroy(count)
         -- is it grey quality item?
         local grey = string_find(item,"|cff9d9d9d")
 
-        if (grey and (not myaddon:isException(item))) or ((not grey) and (myaddon:isException(item))) then
+        if (grey and (not MyAddOn:isJunkException(item))) or ((not grey) and (MyAddOn:isJunkException(item))) then
           PickupContainerItem(bag, slot)
           DeleteCursorItem()
           if showSpam then
@@ -369,7 +362,7 @@ function myaddon:Destroy(count)
   self.total = 0
 end
 
-function myaddon:PrintGold()
+function MyAddOn:PrintGold()
   local ret = ""
   local gold = floor(self.total / (COPPER_PER_SILVER * SILVER_PER_GOLD));
   local silver = floor((self.total - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
@@ -386,43 +379,33 @@ function myaddon:PrintGold()
   end
 end
 
-function myaddon:Add(link)
-
+local function extractLink(link)
   -- remove all trailing whitespace
   link = strtrim(link)
-
   -- extract name from an itemlink
-  local found, _, name = string_find(link, "^|c%x+|H.+|h.(.*)\].+")
-
+  local isLink, _, name = string_find(link, "^|c%x+|H.+|h.(.*)\].+")
   -- if it's not an itemlink, guess it's name of an item
-  if not found then
+  if not isLink then
     name = link
   end
+  return link, isLink, name
+end
 
+function MyAddOn:JunkAdd(link)
+  local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
   for k,v in pairs(exceptions) do
     if v == name or v == link then
       return
     end
   end
-
   -- append name of the item to global exception list
   exceptions[#exceptions + 1] = name
   self:Print(L["Added"] .. ": " .. link)
 end
 
-function myaddon:Rem(link)
-  -- remove all trailing whitespace
-  link = strtrim(link)
-
-  -- extract name from an itemlink
-  local isLink, _, name = string_find(link, "^|c%x+|H.+|h.(.*)\].+")
-
-  -- if it's not an itemlink, guess it's name of an item
-  if not isLink then
-    name = link
-  end
-
+function MyAddOn:JunkRem(link)
+  local link, isLink, name = extractLink(link)
   -- looping through exceptions
   local found = false
   local exception
@@ -455,20 +438,11 @@ function myaddon:Rem(link)
   end
 end
 
-function myaddon:isException(link)
-  local exception = nil
-
-  -- extracting name of an item from the itemlink
-  local isLink, _, name = string_find(link, "^|c%x+|H.+|h.(.*)\].+")
-
-  -- it's not an itemlink, so guess it's name of the item
-  if not isLink then
-    name = link
-  end
-
+function MyAddOn:isJunkException(link)
+  local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
+  local exception = nil
   if exceptions then
-
     -- looping through global exceptions
     for k, v in pairs(exceptions) do
 
@@ -492,43 +466,22 @@ function myaddon:isException(link)
   return false
 end
 
-function myaddon:ClearDB()
+function MyAddOn:ClearDB()
   wipe(self.db.profile.selljunk.exceptions)
   self:Print(L["Exceptions succesfully cleared."])
-end
-
-function myaddon:HandleSlashCommands(input)
-  local arg1, arg2 = self:GetArgs(input, 2, 1, input)
-  if arg1 == 'destroy' then
-    self:Destroy(arg2)
-  elseif arg1 == 'add' and arg2 ~= nil then
-    if arg2:find('|Hitem') == nil then
-      self:Print(L["Command accepts only itemlinks."])
-    else
-      self:Add(arg2, true)
-    end
-  elseif (arg1 == 'rem' or arg1 == 'remove') and arg2 ~= nil then
-    if arg2:find('|Hitem') == nil then
-      self:Print(L["Command accepts only itemlinks."])
-    else
-      self:Rem(arg2, true)
-    end
-  else
-    InterfaceOptionsFrame_OpenToCategory(myaddon.optionsFrame)
-  end
 end
 
 --------------------------------------------------------------------------------
 -- General
 --------------------------------------------------------------------------------
 
+local options = nil
+
 local function applySettings()
   applyStopButton()
   applyIdpcFuncHack()
   applyViewport()
 end
-
-local options = nil
 
 local function copyTable(src, dst)
   local dst = dst or {}
@@ -538,7 +491,7 @@ local function copyTable(src, dst)
   return dst
 end
 
-function myaddon:CreateOptions()
+function MyAddOn:CreateOptions()
   local options = {
     type = "group",
     name = L["options.name"],
@@ -696,7 +649,7 @@ function myaddon:CreateOptions()
                 type = "toggle",
                 name = L["Automatically sell junk"],
                 desc = L["Toggles the automatic selling of junk when the merchant window is opened."],
-                get = function() return myaddon.db.profile.selljunk.auto end,
+                get = function() return MyAddOn.db.profile.selljunk.auto end,
                 set = function() self.db.profile.selljunk.auto = not self.db.profile.selljunk.auto end,
               },
               divider2 = {
@@ -709,7 +662,7 @@ function myaddon:CreateOptions()
                 type = "toggle",
                 name = L["Sell max. 12 items"],
                 desc = L["This is failsafe mode. Will sell only 12 items in one pass. In case of an error, all items can be bought back from vendor."],
-                get = function() return myaddon.db.profile.selljunk.max12 end,
+                get = function() return MyAddOn.db.profile.selljunk.max12 end,
                 set = function() self.db.profile.selljunk.max12 = not self.db.profile.selljunk.max12 end,
               },
               divider3 = {
@@ -722,7 +675,7 @@ function myaddon:CreateOptions()
                 type = "toggle",
                 name = L["Show gold gained"],
                 desc = L["Shows gold gained from selling trash."],
-                get = function() return myaddon.db.profile.selljunk.printGold end,
+                get = function() return MyAddOn.db.profile.selljunk.printGold end,
                 set = function() self.db.profile.selljunk.printGold = not self.db.profile.selljunk.printGold end,
               },
               divider4 = {
@@ -735,8 +688,8 @@ function myaddon:CreateOptions()
                 type = "toggle",
                 name = L["Show 'item sold' spam"],
                 desc = L["Prints itemlinks to chat, when automatically selling items."],
-                get = function() return myaddon.db.profile.selljunk.showSpam end,
-                set = function() myaddon.db.profile.selljunk.showSpam = not myaddon.db.profile.selljunk.showSpam end,
+                get = function() return MyAddOn.db.profile.selljunk.showSpam end,
+                set = function() MyAddOn.db.profile.selljunk.showSpam = not MyAddOn.db.profile.selljunk.showSpam end,
               },
               divider5 = {
                 order = 9,
@@ -748,7 +701,7 @@ function myaddon:CreateOptions()
                 type = "execute",
                 name = L["Clear"],
                 desc = L["Removes all exceptions."],
-                func = function() myaddon:ClearDB() end,
+                func = function() MyAddOn:ClearDB() end,
               },
               divider6 = {
                 order = 12,
@@ -771,7 +724,7 @@ function myaddon:CreateOptions()
                 name = L["Add item"] .. ':',
                 usage = L["<Item Link>"],
                 get = false,
-                set = function(info, v) myaddon:Add(v) end,
+                set = function(info, v) MyAddOn:JunkAdd(v) end,
               },
               rem = {
                 order = 16,
@@ -779,7 +732,7 @@ function myaddon:CreateOptions()
                 name = L["Remove item"] .. ':',
                 usage = L["<Item Link>"],
                 get = false,
-                set = function(info, v) myaddon:Rem(v) end,
+                set = function(info, v) MyAddOn:JunkRem(v) end,
               },
             }
           }
@@ -790,10 +743,10 @@ function myaddon:CreateOptions()
   return options
 end
 
-function myaddon:PopulateOptions()
+function MyAddOn:PopulateOptions()
   if not options then
     options = {}
-    copyTable(myaddon:CreateOptions(), options)
+    copyTable(MyAddOn:CreateOptions(), options)
   end
 end
 
@@ -819,6 +772,12 @@ function WoodysToolkit:PLAYER_LOGIN()
   -- Nothing here yet.
 end
 
+function MyAddOn:MERCHANT_SHOW()
+  if MyAddOn.db.profile.auto then
+    self:JunkSell()
+  end
+end
+
 WoodysToolkit:RegisterEvent("ADDON_LOADED")
 WoodysToolkit:RegisterEvent("PLAYER_ENTERING_WORLD")
 WoodysToolkit:RegisterEvent("PLAYER_LOGIN")
@@ -841,6 +800,7 @@ function WoodysToolkit:OnInitialize()
   self:RefreshDB()
 
   -- See: wowace.com/addons/ace3/pages/getting-started/#w-registering-the-options
+  self:PopulateOptions()
   AceConfig:RegisterOptionsTable(MODNAME, options)
 
   -- Register the Ac3 profile options table
@@ -878,3 +838,24 @@ end
 -- function WoodysToolkit:ChatCommand(input)
 --   LibStub("AceConfigCmd-3.0").HandleCommand(WoodysToolkit, "woodystoolkit", MODNAME, input)
 -- end
+
+function MyAddOn:HandleSlashCommands(input)
+  local arg1, arg2 = self:GetArgs(input, 2, 1, input)
+  if arg1 == 'destroy' then
+    self:JunkDestroy(arg2)
+  elseif arg1 == 'add' and arg2 ~= nil then
+    if arg2:find('|Hitem') == nil then
+      self:Print(L["Command accepts only itemlinks."])
+    else
+      self:JunkAdd(arg2, true)
+    end
+  elseif (arg1 == 'rem' or arg1 == 'remove') and arg2 ~= nil then
+    if arg2:find('|Hitem') == nil then
+      self:Print(L["Command accepts only itemlinks."])
+    else
+      self:JunkRem(arg2, true)
+    end
+  else
+    InterfaceOptionsFrame_OpenToCategory(MyAddOn.optionsFrame)
+  end
+end
