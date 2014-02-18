@@ -318,6 +318,10 @@ function MyAddOn:JunkSell()
                 return
               end
             end
+          else
+            if showSpam then
+              self:Print(L["Would've Destroyed"] .. ": " .. item)
+            end
           end
         end
       end
