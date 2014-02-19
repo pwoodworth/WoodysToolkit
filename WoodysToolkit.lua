@@ -51,7 +51,10 @@ local function createDatabaseDefaults()
   }
 
   for k, v in pairs(mPlugins) do
-    databaseDefaults["profile"][k] = v.defaults
+    if v.defaults then
+      databaseDefaults["global"][k] = v.defaults.global
+      databaseDefaults["profile"][k] = v.defaults.profile
+    end
   end
 
   return databaseDefaults
@@ -266,15 +269,11 @@ function WoodysToolkit:OnInitialize()
   AceConfig:RegisterOptionsTable(MODNAME, options)
 
   -- Register the Ace3 profile options table
-  local profiles = AceDBOptions:GetOptionsTable(self.db)
-  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
   mConfigFrame = mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
-  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
   mConfigFrame.default = function()
     self.db:ResetProfile()
   end
 
-  print("profiles.name: "..profiles.name)
   local orderidx = 100
   for k, v in pairs(mPlugins) do
     orderidx = orderidx + 10
@@ -290,6 +289,9 @@ function WoodysToolkit:OnInitialize()
     AceConfigDialog:AddToBlizOptions(MODNAME .. "_" .. pluginOptions.name, pluginOptions.name, MODNAME)
   end
 
+  local profiles = AceDBOptions:GetOptionsTable(self.db)
+  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
+  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
 
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "woodystoolkit", MODNAME)
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "wtk", MODNAME)
@@ -300,7 +302,6 @@ end
 -- Called by AceAddon.
 function WoodysToolkit:OnEnable()
   self:RegisterEvent("MERCHANT_SHOW")
-  self.total = 0
 end
 
 -- Called by AceAddon.

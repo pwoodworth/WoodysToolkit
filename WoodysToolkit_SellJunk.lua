@@ -53,8 +53,8 @@ local function createSellButton()
   else
     MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
   end
-  MyAddOn.sellButton:SetText(L["Sell Junk"])
-  MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+  MyAddOn.sellButton:SetText(L["Destroy Junk"])
+  MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell(true) end)
 end
 
 local function extractLink(link)
@@ -86,75 +86,36 @@ local function isJunkInList(exceptions, link)
   return false
 end
 
-function MyAddOn:AddProfit(profit)
-  if profit then
-    self.total = self.total + profit
+
+local function isJunkException(link)
+  local link, isLink, name = extractLink(link)
+  local exceptions = MyAddOn.db.profile.selljunk.exceptions
+  local found = isJunkInList(exceptions, link)
+  if found then
+    return true
   end
+  return false
 end
 
 local function getJunkSaleValue(item, bag, slot)
   local grey = string_find(item, "|cff9d9d9d")
-  local isException = MyAddOn:isJunkException(item)
+  local isException = isJunkException(item)
   if (grey and (not isException)) or ((not grey) and (isException)) then
     local currPrice = select(11, GetItemInfo(item)) * select(2, GetContainerItemInfo(bag, slot))
     -- this should get rid of problems with grey items, that cant be sell to a vendor
-    if currPrice > 0 then
-      return currPrice
-    end
+    return true, (currPrice > 0), currPrice
+--    if currPrice > 0 then
+--      return currPrice
+--    end
   end
-  return 0
+  return false, false, 0
 end
 
--------------------------------------------------------------
--- Sells items:                                            --
---   - grey quality, unless it's in exception list         --
---   - better than grey quality, if it's in exception list --
--------------------------------------------------------------
-function MyAddOn:JunkSell(noMerchant)
-  local limit = 0
-  local showSpam = MyAddOn.db.profile.selljunk.showSpam
-  local max12 = MyAddOn.db.profile.selljunk.max12
-  for bag = 0, 4 do
-    for slot = 1, _G.GetContainerNumSlots(bag) do
-      local item = _G.GetContainerItemLink(bag, slot)
-      if item then
-        local currPrice = getJunkSaleValue(item, bag, slot)
-        if MyAddOn:IsJunkDestroyable(item) then
-          --          PickupContainerItem(bag, slot)
-          --          _G.DeleteCursorItem()
-          if showSpam then
-            print(L["Destroyed"] .. ": " .. item)
-          end
-        elseif (currPrice > 0) then
-          MyAddOn:AddProfit(currPrice)
-          PickupContainerItem(bag, slot)
-          PickupMerchantItem()
-          if showSpam then
-            print(L["Sold"] .. ": " .. item)
-          end
-
-          if max12 then
-            limit = limit + 1
-            if limit == 12 then
-              return
-            end
-          end
-        end
-      end
-    end
-  end
-
-  if self.db.profile.selljunk.printGold then
-    self:PrintGold()
-  end
-  self.total = 0
-end
-
-function MyAddOn:PrintGold()
+local function printGold(total)
   local ret = ""
-  local gold = floor(self.total / (COPPER_PER_SILVER * SILVER_PER_GOLD));
-  local silver = floor((self.total - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
-  local copper = mod(self.total, COPPER_PER_SILVER);
+  local gold = floor(total / (COPPER_PER_SILVER * SILVER_PER_GOLD));
+  local silver = floor((total - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER);
+  local copper = mod(total, COPPER_PER_SILVER);
   if gold > 0 then
     ret = gold .. " " .. L["gold"] .. " "
   end
@@ -163,7 +124,59 @@ function MyAddOn:PrintGold()
   end
   ret = ret .. copper .. " " .. L["copper"]
   if silver > 0 or gold > 0 or copper > 0 then
-    self:Print(L["Gained"] .. ": " .. ret)
+    MyAddOn:Print(L["Gained"] .. ": " .. ret)
+  end
+end
+
+-------------------------------------------------------------
+-- Sells items:                                            --
+--   - grey quality, unless it's in exception list         --
+--   - better than grey quality, if it's in exception list --
+-------------------------------------------------------------
+function MyAddOn:JunkSell(destroy)
+  local limit = 0
+  local showSpam = MyAddOn.db.profile.selljunk.showSpam
+  local max12 = MyAddOn.db.profile.selljunk.max12
+  local profit = 0
+  for bag = 0, 4 do
+    for slot = 1, _G.GetContainerNumSlots(bag) do
+      local item = _G.GetContainerItemLink(bag, slot)
+      if item then
+        local isJunk, sellable, currPrice = getJunkSaleValue(item, bag, slot)
+        if isJunk then
+          if sellable then
+            profit = profit + currPrice
+            PickupContainerItem(bag, slot)
+            PickupMerchantItem()
+            if showSpam then
+              print(L["Sold"] .. ": " .. item)
+            end
+            if max12 then
+              limit = limit + 1
+              if limit == 12 then
+                return
+              end
+            end
+          else
+            if destroy then
+--              PickupContainerItem(bag, slot)
+--              _G.DeleteCursorItem()
+              if showSpam then
+                print(L["Destroyed"] .. ": " .. item)
+              end
+            else
+              if showSpam then
+                print(L["Would Destroy"] .. ": " .. item)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  if self.db.profile.selljunk.printGold then
+    printGold(profit)
   end
 end
 
@@ -184,56 +197,12 @@ function MyAddOn:JunkRem(link)
   end
 end
 
-function MyAddOn:DestroyAdd(link)
-  local link, isLink, name = extractLink(link)
-  local exceptions = self.db.profile.selljunk.destroyables
-  exceptions[name] = link
-  self:Print(L["Added Destroyable"] .. ": " .. link)
-end
-
-function MyAddOn:DestroyRem(link)
-  local link, isLink, name = extractLink(link)
-  local exceptions = self.db.profile.selljunk.destroyables
-  local found = isJunkInList(exceptions, link)
-  if found then
-    destroyables[name] = nil
-    self:Print(L["Removed Destroyable"]..": "..link)
-  end
-end
-
-function MyAddOn:isJunkException(link)
-  local link, isLink, name = extractLink(link)
-  local exceptions = self.db.profile.selljunk.exceptions
-  local found = isJunkInList(exceptions, link)
-  if found then
-    return true
-  end
-  return false
-end
-
-function MyAddOn:IsJunkDestroyable(link)
-  local link, isLink, name = extractLink(link)
-  local exceptions = self.db.profile.selljunk.destroyables
-  local found = isJunkInList(exceptions, link)
-  if found then
-    return true
-  end
-  return false
-end
-
 function MyAddOn:ListExceptions()
   local exceptions = self.db.profile.selljunk.exceptions
   if exceptions then
     for k, v in pairs(exceptions) do
       local link, isLink, name = extractLink(v)
       self:Print(L["Exception"]..": "..link)
-    end
-  end
-  local exceptions = self.db.profile.selljunk.destroyables
-  if exceptions then
-    for k, v in pairs(exceptions) do
-      local link, isLink, name = extractLink(v)
-      self:Print(L["Destroyable"]..": "..link)
     end
   end
 end
@@ -244,27 +213,32 @@ function MyAddOn:JunkClearDB()
   self:Print(L["Exceptions succesfully cleared."])
 end
 
+--------------------------------------------------------------------------------
+-- Plugin Setup
+--------------------------------------------------------------------------------
 
-local sellJunkPlugin = {
+local thisPlugin = {
   name = "SellJunk",
   defaults = {
-    auto = false,
-    max12 = true,
-    printGold = true,
-    showSpam = true,
-    exceptions = {},
-    destroyables = {},
-  },
+    profile = {
+      auto = false,
+      max12 = true,
+      printGold = true,
+      showSpam = true,
+      exceptions = {},
+      destroyables = {},
+    },
+  }
 }
 
-function sellJunkPlugin:MERCHANT_SHOW()
+function thisPlugin:MERCHANT_SHOW()
   createSellButton()
   if MyAddOn.db.profile.selljunk.auto then
     MyAddOn:JunkSell()
   end
 end
 
-function sellJunkPlugin:CreateOptions()
+function thisPlugin:CreateOptions()
   local options = {
     divider1 = {
       order = 1,
@@ -277,7 +251,7 @@ function sellJunkPlugin:CreateOptions()
       name = L["Automatically sell junk"],
       desc = L["Toggles the automatic selling of junk when the merchant window is opened."],
       get = function() return MyAddOn.db.profile.selljunk.auto end,
-      set = function() self.db.profile.selljunk.auto = not self.db.profile.selljunk.auto end,
+      set = function() MyAddOn.db.profile.selljunk.auto = not MyAddOn.db.profile.selljunk.auto end,
     },
     divider2 = {
       order = 3,
@@ -290,7 +264,7 @@ function sellJunkPlugin:CreateOptions()
       name = L["Sell max. 12 items"],
       desc = L["This is failsafe mode. Will sell only 12 items in one pass. In case of an error, all items can be bought back from vendor."],
       get = function() return MyAddOn.db.profile.selljunk.max12 end,
-      set = function() self.db.profile.selljunk.max12 = not self.db.profile.selljunk.max12 end,
+      set = function() MyAddOn.db.profile.selljunk.max12 = not MyAddOn.db.profile.selljunk.max12 end,
     },
     divider3 = {
       order = 5,
@@ -303,7 +277,7 @@ function sellJunkPlugin:CreateOptions()
       name = L["Show gold gained"],
       desc = L["Shows gold gained from selling trash."],
       get = function() return MyAddOn.db.profile.selljunk.printGold end,
-      set = function() self.db.profile.selljunk.printGold = not self.db.profile.selljunk.printGold end,
+      set = function() MyAddOn.db.profile.selljunk.printGold = not MyAddOn.db.profile.selljunk.printGold end,
     },
     divider4 = {
       order = 7,
@@ -368,40 +342,9 @@ function sellJunkPlugin:CreateOptions()
       get = false,
       set = function(info, v) MyAddOn:JunkRem(v) end,
     },
-    divider20 = {
-      order = 20,
-      type = "description",
-      name = "",
-    },
-    header20 = {
-      order = 21,
-      type = "header",
-      name = L["Destroys"],
-    },
-    note20 = {
-      order = 22,
-      type = "description",
-      name = L["Drag item into this window to add/remove it from destroy list"],
-    },
-    addTrash = {
-      order = 23,
-      type = "input",
-      name = L["Add item"] .. ':',
-      usage = L["<Item Link>"],
-      get = false,
-      set = function(info, v) MyAddOn:DestroyAdd(v) end,
-    },
-    remTrash = {
-      order = 24,
-      type = "input",
-      name = L["Remove item"] .. ':',
-      usage = L["<Item Link>"],
-      get = false,
-      set = function(info, v) MyAddOn:DestroyRem(v) end,
-    },
   }
   return options
 end
 
 mPlugins = mPlugins or {}
-mPlugins["selljunk"] = sellJunkPlugin
+mPlugins["selljunk"] = thisPlugin

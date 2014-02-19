@@ -152,12 +152,14 @@ end
 local thisPlugin = {
   name = "Viewport",
   defaults = {
-    enable = false,
-    top = 0,
-    bottom = 0,
-    left = 0,
-    right = 0
-  },
+    profile = {
+      enable = false,
+      top = 0,
+      bottom = 0,
+      left = 0,
+      right = 0
+    },
+  }
 }
 
 function thisPlugin:ApplySettings()
