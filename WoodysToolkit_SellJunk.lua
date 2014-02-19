@@ -260,152 +260,145 @@ local sellJunkPlugin = {
 function sellJunkPlugin:MERCHANT_SHOW()
   createSellButton()
   if MyAddOn.db.profile.selljunk.auto then
-    self:JunkSell()
+    MyAddOn:JunkSell()
   end
 end
 
 function sellJunkPlugin:CreateOptions()
   local options = {
-    general = {
+    divider1 = {
       order = 1,
-      type = "group",
-      name = "global",
-      args = {
-        divider1 = {
-          order = 1,
-          type = "description",
-          name = "",
-        },
-        auto = {
-          order = 2,
-          type = "toggle",
-          name = L["Automatically sell junk"],
-          desc = L["Toggles the automatic selling of junk when the merchant window is opened."],
-          get = function() return MyAddOn.db.profile.selljunk.auto end,
-          set = function() self.db.profile.selljunk.auto = not self.db.profile.selljunk.auto end,
-        },
-        divider2 = {
-          order = 3,
-          type = "description",
-          name = "",
-        },
-        max12 = {
-          order = 4,
-          type = "toggle",
-          name = L["Sell max. 12 items"],
-          desc = L["This is failsafe mode. Will sell only 12 items in one pass. In case of an error, all items can be bought back from vendor."],
-          get = function() return MyAddOn.db.profile.selljunk.max12 end,
-          set = function() self.db.profile.selljunk.max12 = not self.db.profile.selljunk.max12 end,
-        },
-        divider3 = {
-          order = 5,
-          type = "description",
-          name = "",
-        },
-        printGold = {
-          order = 6,
-          type = "toggle",
-          name = L["Show gold gained"],
-          desc = L["Shows gold gained from selling trash."],
-          get = function() return MyAddOn.db.profile.selljunk.printGold end,
-          set = function() self.db.profile.selljunk.printGold = not self.db.profile.selljunk.printGold end,
-        },
-        divider4 = {
-          order = 7,
-          type = "description",
-          name = "",
-        },
-        showSpam = {
-          order = 8,
-          type = "toggle",
-          name = L["Show 'item sold' spam"],
-          desc = L["Prints itemlinks to chat, when automatically selling items."],
-          get = function() return MyAddOn.db.profile.selljunk.showSpam end,
-          set = function() MyAddOn.db.profile.selljunk.showSpam = not MyAddOn.db.profile.selljunk.showSpam end,
-        },
-        divider5 = {
-          order = 9,
-          type = "header",
-          name = L["Clear exceptions"],
-        },
-        clearglobal = {
-          order = 10,
-          type = "execute",
-          name = L["Clear"],
-          desc = L["Removes all exceptions."],
-          func = function() MyAddOn:JunkClearDB() end,
-        },
-        listglobal = {
-          order = 11,
-          type = "execute",
-          name = L["List"],
-          desc = L["List all exceptions."],
-          func = function() MyAddOn:ListExceptions() end,
-        },
-        divider6 = {
-          order = 12,
-          type = "description",
-          name = "",
-        },
-        header1 = {
-          order = 13,
-          type = "header",
-          name = L["Exceptions"],
-        },
-        note1 = {
-          order = 14,
-          type = "description",
-          name = L["Drag item into this window to add/remove it from exception list"],
-        },
-        add = {
-          order = 15,
-          type = "input",
-          name = L["Add item"] .. ':',
-          usage = L["<Item Link>"],
-          get = false,
-          set = function(info, v) MyAddOn:JunkAdd(v) end,
-        },
-        rem = {
-          order = 16,
-          type = "input",
-          name = L["Remove item"] .. ':',
-          usage = L["<Item Link>"],
-          get = false,
-          set = function(info, v) MyAddOn:JunkRem(v) end,
-        },
-        divider20 = {
-          order = 20,
-          type = "description",
-          name = "",
-        },
-        header20 = {
-          order = 21,
-          type = "header",
-          name = L["Destroys"],
-        },
-        note20 = {
-          order = 22,
-          type = "description",
-          name = L["Drag item into this window to add/remove it from destroy list"],
-        },
-        addTrash = {
-          order = 23,
-          type = "input",
-          name = L["Add item"] .. ':',
-          usage = L["<Item Link>"],
-          get = false,
-          set = function(info, v) MyAddOn:DestroyAdd(v) end,
-        },
-        remTrash = {
-          order = 24,
-          type = "input",
-          name = L["Remove item"] .. ':',
-          usage = L["<Item Link>"],
-          get = false,
-          set = function(info, v) MyAddOn:DestroyRem(v) end,
-        },
-      }
-    }
+      type = "description",
+      name = "",
+    },
+    auto = {
+      order = 2,
+      type = "toggle",
+      name = L["Automatically sell junk"],
+      desc = L["Toggles the automatic selling of junk when the merchant window is opened."],
+      get = function() return MyAddOn.db.profile.selljunk.auto end,
+      set = function() self.db.profile.selljunk.auto = not self.db.profile.selljunk.auto end,
+    },
+    divider2 = {
+      order = 3,
+      type = "description",
+      name = "",
+    },
+    max12 = {
+      order = 4,
+      type = "toggle",
+      name = L["Sell max. 12 items"],
+      desc = L["This is failsafe mode. Will sell only 12 items in one pass. In case of an error, all items can be bought back from vendor."],
+      get = function() return MyAddOn.db.profile.selljunk.max12 end,
+      set = function() self.db.profile.selljunk.max12 = not self.db.profile.selljunk.max12 end,
+    },
+    divider3 = {
+      order = 5,
+      type = "description",
+      name = "",
+    },
+    printGold = {
+      order = 6,
+      type = "toggle",
+      name = L["Show gold gained"],
+      desc = L["Shows gold gained from selling trash."],
+      get = function() return MyAddOn.db.profile.selljunk.printGold end,
+      set = function() self.db.profile.selljunk.printGold = not self.db.profile.selljunk.printGold end,
+    },
+    divider4 = {
+      order = 7,
+      type = "description",
+      name = "",
+    },
+    showSpam = {
+      order = 8,
+      type = "toggle",
+      name = L["Show 'item sold' spam"],
+      desc = L["Prints itemlinks to chat, when automatically selling items."],
+      get = function() return MyAddOn.db.profile.selljunk.showSpam end,
+      set = function() MyAddOn.db.profile.selljunk.showSpam = not MyAddOn.db.profile.selljunk.showSpam end,
+    },
+    divider5 = {
+      order = 9,
+      type = "header",
+      name = L["Clear exceptions"],
+    },
+    clearglobal = {
+      order = 10,
+      type = "execute",
+      name = L["Clear"],
+      desc = L["Removes all exceptions."],
+      func = function() MyAddOn:JunkClearDB() end,
+    },
+    listglobal = {
+      order = 11,
+      type = "execute",
+      name = L["List"],
+      desc = L["List all exceptions."],
+      func = function() MyAddOn:ListExceptions() end,
+    },
+    divider6 = {
+      order = 12,
+      type = "description",
+      name = "",
+    },
+    header1 = {
+      order = 13,
+      type = "header",
+      name = L["Exceptions"],
+    },
+    note1 = {
+      order = 14,
+      type = "description",
+      name = L["Drag item into this window to add/remove it from exception list"],
+    },
+    add = {
+      order = 15,
+      type = "input",
+      name = L["Add item"] .. ':',
+      usage = L["<Item Link>"],
+      get = false,
+      set = function(info, v) MyAddOn:JunkAdd(v) end,
+    },
+    rem = {
+      order = 16,
+      type = "input",
+      name = L["Remove item"] .. ':',
+      usage = L["<Item Link>"],
+      get = false,
+      set = function(info, v) MyAddOn:JunkRem(v) end,
+    },
+    divider20 = {
+      order = 20,
+      type = "description",
+      name = "",
+    },
+    header20 = {
+      order = 21,
+      type = "header",
+      name = L["Destroys"],
+    },
+    note20 = {
+      order = 22,
+      type = "description",
+      name = L["Drag item into this window to add/remove it from destroy list"],
+    },
+    addTrash = {
+      order = 23,
+      type = "input",
+      name = L["Add item"] .. ':',
+      usage = L["<Item Link>"],
+      get = false,
+      set = function(info, v) MyAddOn:DestroyAdd(v) end,
+    },
+    remTrash = {
+      order = 24,
+      type = "input",
+      name = L["Remove item"] .. ':',
+      usage = L["<Item Link>"],
+      get = false,
+      set = function(info, v) MyAddOn:DestroyRem(v) end,
+    },
   }
   return options
 end

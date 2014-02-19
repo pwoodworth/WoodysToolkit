@@ -7,8 +7,6 @@ local _G = getfenv(0)
 WoodysToolkit._G = WoodysToolkit._G or _G
 setfenv(1, WoodysToolkit)
 
-_G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
-
 MODNAME = "WoodysToolkit"
 
 local WoodysToolkit = _G.WoodysToolkit
@@ -46,6 +44,8 @@ local select = _G.select
 --------------------------------------------------------------------------------
 -- Settings
 --------------------------------------------------------------------------------
+
+_G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
 
 mPlugins = mPlugins or {}
 
@@ -418,20 +418,6 @@ end
 function MyAddOn:PopulateOptions()
   local options = {}
   copyTable(MyAddOn:CreateOptions(), options)
-  local orderidx = 100
-  for k, v in pairs(mPlugins) do
-    orderidx = orderidx + 10
-    local pluginOptions = {
-      order = orderidx,
-      type = "group",
-      name = v["name"] or k,
-      guiInline = true,
-      args = {
-      }
-    }
-    copyTable(v:CreateOptions(), pluginOptions.args)
-    options.args[k] = pluginOptions
-  end
   return options
 end
 
@@ -490,7 +476,7 @@ function WoodysToolkit:OnInitialize()
   local options = self:PopulateOptions()
   AceConfig:RegisterOptionsTable(MODNAME, options)
 
-  -- Register the Ac3 profile options table
+  -- Register the Ace3 profile options table
   local profiles = AceDBOptions:GetOptionsTable(self.db)
   AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
 
@@ -499,6 +485,23 @@ function WoodysToolkit:OnInitialize()
   mConfigFrame.default = function()
     self.db:ResetProfile()
   end
+
+  print("profiles.name: "..profiles.name)
+  local orderidx = 100
+  for k, v in pairs(mPlugins) do
+    orderidx = orderidx + 10
+    local pluginOptions = {
+      order = orderidx,
+      type = "group",
+      name = v["name"] or k,
+      args = {
+      }
+    }
+    copyTable(v:CreateOptions(), pluginOptions.args)
+    AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_" .. pluginOptions.name, pluginOptions)
+    AceConfigDialog:AddToBlizOptions(MODNAME .. "_" .. pluginOptions.name, pluginOptions.name, MODNAME)
+  end
+
 
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "woodystoolkit", MODNAME)
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "wtk", MODNAME)
