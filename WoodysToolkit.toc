@@ -12,3 +12,4 @@ i18n-enUS.lua
 
 WoodysToolkit.lua
 WoodysToolkit_SellJunk.lua
+WoodysToolkit_Viewport.lua
