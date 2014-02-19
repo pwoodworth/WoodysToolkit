@@ -415,14 +415,6 @@ function MyAddOn:CreateOptions()
         end,
         order = 92,
       },
-      selljunk = {
-        order = 100,
-        type = "group",
-        name = "SellJunk",
-        guiInline = true,
-        args = {
-        }
-      }
     },
   }
   return options
@@ -432,7 +424,20 @@ function MyAddOn:PopulateOptions()
   if not options then
     options = {}
     copyTable(MyAddOn:CreateOptions(), options)
-    copyTable(mPlugins.selljunk:CreateOptions(), options.args.selljunk.args)
+    local orderidx = 100
+    for k, v in pairs(mPlugins) do
+      orderidx = orderidx + 10
+      local pluginOptions = {
+        order = orderidx,
+        type = "group",
+        name = v["name"] or k,
+        guiInline = true,
+        args = {
+        }
+      }
+      copyTable(v:CreateOptions(), pluginOptions.args)
+      options.args[k] = pluginOptions
+    end
   end
 end
 
@@ -459,10 +464,10 @@ function WoodysToolkit:PLAYER_LOGIN()
 end
 
 function WoodysToolkit:MERCHANT_SHOW()
---  self:MERCHANT_SHOW2()
-  createSellButton()
-  if MyAddOn.db.profile.selljunk.auto then
-    self:JunkSell()
+  for _, plugin in pairs(mPlugins) do
+    if plugin["MERCHANT_SHOW"] then
+      plugin:MERCHANT_SHOW()
+    end
   end
 end
 

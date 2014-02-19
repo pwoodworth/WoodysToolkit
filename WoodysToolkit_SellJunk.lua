@@ -245,7 +245,16 @@ function MyAddOn:JunkClearDB()
 end
 
 
-local sellJunkPlugin = {}
+local sellJunkPlugin = {
+  name = "SellJunk",
+}
+
+function sellJunkPlugin:MERCHANT_SHOW()
+  createSellButton()
+  if MyAddOn.db.profile.selljunk.auto then
+    self:JunkSell()
+  end
+end
 
 function sellJunkPlugin:CreateOptions()
   local options = {
