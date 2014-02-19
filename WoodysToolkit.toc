@@ -11,3 +11,4 @@
 i18n-enUS.lua
 
 WoodysToolkit.lua
+WoodysToolkitConfig.lua

@@ -13,6 +13,8 @@ setfenv(1, WoodysToolkit)
 
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
 
+MODNAME = "WoodysToolkit"
+
 local WoodysToolkit = _G.WoodysToolkit
 local LibStub = _G.LibStub
 
@@ -21,6 +23,8 @@ local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
+
+local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 -- upvalues
 local print = print or _G.print
@@ -40,9 +44,7 @@ local select = _G.select
 local COPPER_PER_SILVER = _G.COPPER_PER_SILVER
 local SILVER_PER_GOLD = _G.SILVER_PER_GOLD
 
-MODNAME = "WoodysToolkit"
 
-local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 --------------------------------------------------------------------------------
 -- Settings
@@ -258,16 +260,19 @@ end
 -- SellJunk
 --------------------------------------------------------------------------------
 
--- MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
---
--- if IsAddOnLoaded("GnomishVendorShrinker") then
---   MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
--- else
---   MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
--- end
---
--- MyAddOn.sellButton:SetText(L["Sell Junk"])
--- MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+local function createSellButton()
+  if MyAddOn.sellButton then
+    return
+  end
+  MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
+  if IsAddOnLoaded("GnomishVendorShrinker") then
+     MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
+  else
+     MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
+  end
+  MyAddOn.sellButton:SetText(L["Sell Junk"])
+  MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+end
 
 local function extractLink(link)
   -- remove all trailing whitespace
@@ -910,6 +915,8 @@ function WoodysToolkit:PLAYER_LOGIN()
 end
 
 function WoodysToolkit:MERCHANT_SHOW()
+--  self:MERCHANT_SHOW2()
+--  createSellButton()
   if MyAddOn.db.profile.selljunk.auto then
     self:JunkSell()
   end
@@ -918,7 +925,7 @@ end
 WoodysToolkit:RegisterEvent("ADDON_LOADED")
 WoodysToolkit:RegisterEvent("PLAYER_ENTERING_WORLD")
 WoodysToolkit:RegisterEvent("PLAYER_LOGIN")
-WoodysToolkit:RegisterEvent("MERCHANT_SHOW")
+--WoodysToolkit:RegisterEvent("MERCHANT_SHOW")
 
 --------------------------------------------------------------------------------
 -- </ in-game configuration UI code > ------------------------------------------
