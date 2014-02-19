@@ -9,7 +9,7 @@ WoodysToolkit._G = WoodysToolkit._G or _G
 
 -- Set the environment of the current function to the global table WoodysToolkit.
 -- See: http://www.lua.org/pil/14.3.html
-setmetatable(WoodysToolkit, getmetatable(WoodysToolkit) or {__index = _G})
+--setmetatable(WoodysToolkit, getmetatable(WoodysToolkit) or {__index = _G})
 setfenv(1, WoodysToolkit)
 
 local howdy2 = _G.getfenv(1)
@@ -47,7 +47,7 @@ function WoodysToolkit:MERCHANT_SHOW2()
   print("howdy: "..(_G.tostring(howdy == WoodysToolkit)))
   print("howdy2: "..(_G.tostring(howdy2 == WoodysToolkit)))
   print("MyAddOn: "..(_G.tostring(MyAddOn == WoodysToolkit)))
-  local ameta = getmetatable(WoodysToolkit)
+  local ameta = _G.getmetatable(WoodysToolkit)
   print("metaidx: "..(_G.tostring(ameta["__index"] == _G)))
 
 --  if MyAddOn.db.profile.selljunk.auto then

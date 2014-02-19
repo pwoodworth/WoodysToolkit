@@ -8,7 +8,7 @@ WoodysToolkit._G = WoodysToolkit._G or _G
 
 -- Set the environment of the current function to the global table WoodysToolkit.
 -- See: http://www.lua.org/pil/14.3.html
-setmetatable(WoodysToolkit, getmetatable(WoodysToolkit) or {__index = _G})
+--setmetatable(WoodysToolkit, getmetatable(WoodysToolkit) or {__index = _G})
 setfenv(1, WoodysToolkit)
 
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
@@ -286,10 +286,40 @@ local function extractLink(link)
   return link, isLink, name
 end
 
+local function isJunkInList(exceptions, link)
+  local link, isLink, name = extractLink(link)
+  if exceptions then
+    -- looping through global exceptions
+    for k, v in pairs(exceptions) do
+      if isLink then
+        if v == link then
+          return true
+        end
+      elseif k:lower() == name:lower() then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 function MyAddOn:AddProfit(profit)
   if profit then
     self.total = self.total + profit
   end
+end
+
+local function getJunkSaleValue(item, bag, slot)
+  local grey = string_find(item, "|cff9d9d9d")
+  local isException = MyAddOn:isJunkException(item)
+  if (grey and (not isException)) or ((not grey) and (isException)) then
+    local currPrice = select(11, GetItemInfo(item)) * select(2, GetContainerItemInfo(bag, slot))
+    -- this should get rid of problems with grey items, that cant be sell to a vendor
+    if currPrice > 0 then
+      return currPrice
+    end
+  end
+  return 0
 end
 
 -------------------------------------------------------------
@@ -297,89 +327,37 @@ end
 --   - grey quality, unless it's in exception list         --
 --   - better than grey quality, if it's in exception list --
 -------------------------------------------------------------
-function MyAddOn:JunkSell()
+function MyAddOn:JunkSell(noMerchant)
   local limit = 0
-  local currPrice
   local showSpam = MyAddOn.db.profile.selljunk.showSpam
   local max12 = MyAddOn.db.profile.selljunk.max12
-
   for bag = 0, 4 do
     for slot = 1, _G.GetContainerNumSlots(bag) do
       local item = _G.GetContainerItemLink(bag, slot)
       if item then
-        -- is it grey quality item?
-        local grey = string_find(item, "|cff9d9d9d")
-
+        local currPrice = getJunkSaleValue(item, bag, slot)
         if MyAddOn:IsJunkDestroyable(item) then
 --          PickupContainerItem(bag, slot)
 --          _G.DeleteCursorItem()
           if showSpam then
             print(L["Destroyed"] .. ": " .. item)
           end
-        elseif (grey and (not MyAddOn:isJunkException(item))) or ((not grey) and (MyAddOn:isJunkException(item))) then
-          currPrice = select(11, GetItemInfo(item)) * select(2, GetContainerItemInfo(bag, slot))
-          -- this should get rid of problems with grey items, that cant be sell to a vendor
-          if currPrice > 0 then
-            MyAddOn:AddProfit(currPrice)
-            PickupContainerItem(bag, slot)
-            PickupMerchantItem()
-            if showSpam then
-              print(L["Sold"] .. ": " .. item)
-            end
-
-            if max12 then
-              limit = limit + 1
-              if limit == 12 then
-                return
-              end
-            end
-          end
-        end
-      end
-    end
-  end
-
-  if self.db.profile.selljunk.printGold then
-    self:PrintGold()
-  end
-  self.total = 0
-end
-
--------------------------------------------------------------
--- Destroys items:                                         --
---   - grey quality, unless it's in exception list         --
---   - better than grey quality, if it's in exception list --
--------------------------------------------------------------
-function MyAddOn:JunkDestroy(count)
-  local limit = 9001 -- it's over NINE THOUSAND!!!
-  if count ~= nil then
-    limit = count
-  end
-
-  local showSpam = MyAddOn.db.profile.selljunk.showSpam
-
-  for bag = 0,4 do
-    for slot = 1,GetContainerNumSlots(bag) do
-      local item = GetContainerItemLink(bag,slot)
-      if item then
-        -- is it grey quality item?
-        local grey = string_find(item,"|cff9d9d9d")
-
-        if (grey and (not MyAddOn:isJunkException(item))) or ((not grey) and (MyAddOn:isJunkException(item))) then
+        elseif (currPrice > 0) then
+          MyAddOn:AddProfit(currPrice)
           PickupContainerItem(bag, slot)
-          DeleteCursorItem()
+          PickupMerchantItem()
           if showSpam then
-            self:Print(L["Destroyed"]..": "..item)
+            print(L["Sold"] .. ": " .. item)
           end
-          limit = limit - 1
-          if limit == 0 then
-            break
+
+          if max12 then
+            limit = limit + 1
+            if limit == 12 then
+              return
+            end
           end
         end
       end
-    end
-    if limit == 0 then
-      break
     end
   end
 
@@ -409,146 +387,54 @@ end
 function MyAddOn:JunkAdd(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
-  for k,v in pairs(exceptions) do
-    if v == name or v == link then
-      return
-    end
-  end
-  -- append name of the item to global exception list
-  exceptions[#exceptions + 1] = name
+  exceptions[name] = link
   self:Print(L["Added"] .. ": " .. link)
 end
 
 function MyAddOn:JunkRem(link)
   local link, isLink, name = extractLink(link)
-  -- looping through exceptions
-  local found = false
-  local exception
   local exceptions = self.db.profile.selljunk.exceptions
-  for k,v in pairs(exceptions) do
-    found = false
-    -- comparing exception list entry with given name
-    if v:lower() == name:lower() then
-      found = true
-    end
-
-    -- extract name from itemlink (only for compatibility with old saved variables)
-    local _, isLink, exception = extractLink(v)
-    if isLink then
-      -- comparing exception list entry with given name
-      if exception:lower() == name:lower() then
-        found = true
-      end
-    end
-
-    if found then
-      if exceptions[k + 1] then
-        exceptions[k] = exceptions[k + 1]
-      else
-        exceptions[k] = nil
-      end
-      self:Print(L["Removed"]..": "..link)
-      break
-    end
+  local found = isJunkInList(exceptions, link)
+  if found then
+    exceptions[name] = nil
+    self:Print(L["Removed"]..": "..link)
   end
 end
 
 function MyAddOn:DestroyAdd(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.destroyables
-  for k,v in pairs(exceptions) do
-    if k == name or v == link then
-      return
-    end
-  end
-  -- append name of the item to global exception list
---  exceptions[#exceptions + 1] = name
   exceptions[name] = link
   self:Print(L["Added Destroyable"] .. ": " .. link)
 end
 
 function MyAddOn:DestroyRem(link)
   local link, isLink, name = extractLink(link)
-  -- looping through exceptions
-  local found = false
-  local exception
   local exceptions = self.db.profile.selljunk.destroyables
-  for k, v in pairs(exceptions) do
-    found = false
-    -- comparing exception list entry with given name
-    if v:lower() == name:lower() then
-      found = true
-    end
-
-    -- extract name from itemlink (only for compatibility with old saved variables)
-    local _, isLink, exception = extractLink(v)
-    if isLink then
-      -- comparing exception list entry with given name
-      if exception:lower() == name:lower() then
-        found = true
-      end
-    end
-
-    if found then
-      destroyables[k] = nil
-      self:Print(L["Removed Destroyable"]..": "..link)
-      break
-    end
+  local found = isJunkInList(exceptions, link)
+  if found then
+    destroyables[name] = nil
+    self:Print(L["Removed Destroyable"]..": "..link)
   end
 end
 
 function MyAddOn:isJunkException(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
-  local exception = nil
-  if exceptions then
-    -- looping through global exceptions
-    for k, v in pairs(exceptions) do
-
-      -- comparing exception list entry with given name
-      if v:lower() == name:lower() then
-        return true
-      end
-
-      -- extract name from itemlink (only for compatibility with old saved variables)
-      local _, isLink, exception = extractLink(v)
-      if isLink then
-        -- comparing exception list entry with given name
-        if exception:lower() == name:lower() then
-          return true
-        end
-      end
-    end
+  local found = isJunkInList(exceptions, link)
+  if found then
+    return true
   end
-
-  -- item not found in exception list
   return false
 end
 
 function MyAddOn:IsJunkDestroyable(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.destroyables
-  if exceptions then
-    -- looping through global exceptions
-    for k, v in pairs(exceptions) do
-
-      -- comparing exception list entry with given name
-      if k:lower() == name:lower() then
-        return true
-      end
-
-      -- extract name from itemlink (only for compatibility with old saved variables)
-      local _, isLink, exception = extractLink(v)
-      if isLink then
-        -- comparing exception list entry with given name
-        if exception:lower() == name:lower() then
-          return true
-        end
-      end
-    end
+  local found = isJunkInList(exceptions, link)
+  if found then
+    return true
   end
-
-  -- item not found in exception list
   return false
 end
 
@@ -987,7 +873,7 @@ end
 function MyAddOn:HandleSlashCommands(input)
   local arg1, arg2 = self:GetArgs(input, 2, 1, input)
   if arg1 == 'destroy' then
-    self:JunkDestroy(arg2)
+    self:JunkSell(true)
   elseif arg1 == 'add' and arg2 ~= nil then
     if arg2:find('|Hitem') == nil then
       self:Print(L["Command accepts only itemlinks."])
