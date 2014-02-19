@@ -11,4 +11,4 @@
 i18n-enUS.lua
 
 WoodysToolkit.lua
-WoodysToolkitConfig.lua
+WoodysToolkit_SellJunk.lua
