@@ -70,6 +70,7 @@ databaseDefaults = {
       printGold = true,
       showSpam = true,
       exceptions = {},
+      destroyables = {},
     },
   },
 }
@@ -304,7 +305,13 @@ function MyAddOn:JunkSell()
         -- is it grey quality item?
         local grey = string_find(item, "|cff9d9d9d")
 
-        if (grey and (not MyAddOn:isJunkException(item))) or ((not grey) and (MyAddOn:isJunkException(item))) then
+        if MyAddOn:IsJunkDestroyable(item) then
+--          PickupContainerItem(bag, slot)
+--          _G.DeleteCursorItem()
+          if showSpam then
+            print(L["Destroyed"] .. ": " .. item)
+          end
+        elseif (grey and (not MyAddOn:isJunkException(item))) or ((not grey) and (MyAddOn:isJunkException(item))) then
           currPrice = select(11, GetItemInfo(item)) * select(2, GetContainerItemInfo(bag, slot))
           -- this should get rid of problems with grey items, that cant be sell to a vendor
           if currPrice > 0 then
@@ -321,12 +328,6 @@ function MyAddOn:JunkSell()
                 return
               end
             end
-          else
-            if showSpam then
-              print(L["Would've Destroyed"] .. ": " .. item)
-            end
---             PickupContainerItem(bag, slot)
---             _G.DeleteCursorItem()
           end
         end
       end
@@ -447,6 +448,50 @@ function MyAddOn:JunkRem(link)
   end
 end
 
+function MyAddOn:DestroyAdd(link)
+  local link, isLink, name = extractLink(link)
+  local exceptions = self.db.profile.selljunk.destroyables
+  for k,v in pairs(exceptions) do
+    if k == name or v == link then
+      return
+    end
+  end
+  -- append name of the item to global exception list
+--  exceptions[#exceptions + 1] = name
+  exceptions[name] = link
+  self:Print(L["Added Destroyable"] .. ": " .. link)
+end
+
+function MyAddOn:DestroyRem(link)
+  local link, isLink, name = extractLink(link)
+  -- looping through exceptions
+  local found = false
+  local exception
+  local exceptions = self.db.profile.selljunk.destroyables
+  for k, v in pairs(exceptions) do
+    found = false
+    -- comparing exception list entry with given name
+    if v:lower() == name:lower() then
+      found = true
+    end
+
+    -- extract name from itemlink (only for compatibility with old saved variables)
+    local _, isLink, exception = extractLink(v)
+    if isLink then
+      -- comparing exception list entry with given name
+      if exception:lower() == name:lower() then
+        found = true
+      end
+    end
+
+    if found then
+      destroyables[k] = nil
+      self:Print(L["Removed Destroyable"]..": "..link)
+      break
+    end
+  end
+end
+
 function MyAddOn:isJunkException(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
@@ -475,7 +520,52 @@ function MyAddOn:isJunkException(link)
   return false
 end
 
+function MyAddOn:IsJunkDestroyable(link)
+  local link, isLink, name = extractLink(link)
+  local exceptions = self.db.profile.selljunk.destroyables
+  if exceptions then
+    -- looping through global exceptions
+    for k, v in pairs(exceptions) do
+
+      -- comparing exception list entry with given name
+      if k:lower() == name:lower() then
+        return true
+      end
+
+      -- extract name from itemlink (only for compatibility with old saved variables)
+      local _, isLink, exception = extractLink(v)
+      if isLink then
+        -- comparing exception list entry with given name
+        if exception:lower() == name:lower() then
+          return true
+        end
+      end
+    end
+  end
+
+  -- item not found in exception list
+  return false
+end
+
+function MyAddOn:ListExceptions()
+  local exceptions = self.db.profile.selljunk.exceptions
+  if exceptions then
+    for k, v in pairs(exceptions) do
+      local link, isLink, name = extractLink(v)
+      self:Print(L["Exception"]..": "..link)
+    end
+  end
+  local exceptions = self.db.profile.selljunk.destroyables
+  if exceptions then
+    for k, v in pairs(exceptions) do
+      local link, isLink, name = extractLink(v)
+      self:Print(L["Destroyable"]..": "..link)
+    end
+  end
+end
+
 function MyAddOn:ClearDB()
+  wipe(self.db.profile.selljunk.destroyables)
   wipe(self.db.profile.selljunk.exceptions)
   self:Print(L["Exceptions succesfully cleared."])
 end
@@ -712,6 +802,13 @@ function MyAddOn:CreateOptions()
                 desc = L["Removes all exceptions."],
                 func = function() MyAddOn:ClearDB() end,
               },
+              listglobal = {
+                order = 11,
+                type = "execute",
+                name = L["List"],
+                desc = L["List all exceptions."],
+                func = function() MyAddOn:ListExceptions() end,
+              },
               divider6 = {
                 order = 12,
                 type = "description",
@@ -742,6 +839,37 @@ function MyAddOn:CreateOptions()
                 usage = L["<Item Link>"],
                 get = false,
                 set = function(info, v) MyAddOn:JunkRem(v) end,
+              },
+              divider20 = {
+                order = 20,
+                type = "description",
+                name = "",
+              },
+              header20 = {
+                order = 21,
+                type = "header",
+                name = L["Destroys"],
+              },
+              note20 = {
+                order = 22,
+                type = "description",
+                name = L["Drag item into this window to add/remove it from destroy list"],
+              },
+              addTrash = {
+                order = 23,
+                type = "input",
+                name = L["Add item"] .. ':',
+                usage = L["<Item Link>"],
+                get = false,
+                set = function(info, v) MyAddOn:DestroyAdd(v) end,
+              },
+              remTrash = {
+                order = 24,
+                type = "input",
+                name = L["Remove item"] .. ':',
+                usage = L["<Item Link>"],
+                get = false,
+                set = function(info, v) MyAddOn:DestroyRem(v) end,
               },
             }
           }
@@ -782,9 +910,7 @@ function WoodysToolkit:PLAYER_LOGIN()
 end
 
 function WoodysToolkit:MERCHANT_SHOW()
-  _G.print("GOT HERE!")
   if MyAddOn.db.profile.selljunk.auto then
-    _G.print("GOT HERE2!")
     self:JunkSell()
   end
 end

@@ -1,3 +1,7 @@
+--[[
+COMBAT_LOG_EVENT_UNFILTERED, PLAYER_ENTERING_WORLD, ACTIONBAR_UPDATE_COOLDOWN, SPELL_UPDATE_COOLDOWN
+--]]
+
 that = function(event, _, logevent, _, ...)
   local reverse = false
   local trigger = false
