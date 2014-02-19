@@ -47,6 +47,9 @@ function WoodysToolkit:MERCHANT_SHOW2()
   print("howdy: "..(_G.tostring(howdy == WoodysToolkit)))
   print("howdy2: "..(_G.tostring(howdy2 == WoodysToolkit)))
   print("MyAddOn: "..(_G.tostring(MyAddOn == WoodysToolkit)))
+  local ameta = getmetatable(WoodysToolkit)
+  print("metaidx: "..(_G.tostring(ameta["__index"] == _G)))
+
 --  if MyAddOn.db.profile.selljunk.auto then
 --    self:JunkSell()
 --  end

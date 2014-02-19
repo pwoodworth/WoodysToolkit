@@ -264,7 +264,7 @@ local function createSellButton()
   if MyAddOn.sellButton then
     return
   end
-  MyAddOn.sellButton = _G.CreateFrame("Button", nil, MerchantFrame, "OptionsButtonTemplate")
+  MyAddOn.sellButton = _G.CreateFrame("Button", nil, _G.MerchantFrame, "OptionsButtonTemplate")
   if IsAddOnLoaded("GnomishVendorShrinker") then
      MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
   else
@@ -915,8 +915,8 @@ function WoodysToolkit:PLAYER_LOGIN()
 end
 
 function WoodysToolkit:MERCHANT_SHOW()
---  self:MERCHANT_SHOW2()
---  createSellButton()
+  self:MERCHANT_SHOW2()
+  createSellButton()
   if MyAddOn.db.profile.selljunk.auto then
     self:JunkSell()
   end
