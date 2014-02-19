@@ -5,10 +5,6 @@
 WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
 local _G = getfenv(0)
 WoodysToolkit._G = WoodysToolkit._G or _G
-
--- Set the environment of the current function to the global table WoodysToolkit.
--- See: http://www.lua.org/pil/14.3.html
---setmetatable(WoodysToolkit, getmetatable(WoodysToolkit) or {__index = _G})
 setfenv(1, WoodysToolkit)
 
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
@@ -31,18 +27,19 @@ local print = print or _G.print
 local string = string or _G.string
 local floor = _G.floor
 local mod = _G.mod
-local string_find = _G.string.find
 local pairs = _G.pairs
 local wipe = _G.wipe
-local DeleteCursorItem = _G.DeleteCursorItem
-local GetContainerItemInfo = _G.GetContainerItemInfo
-local GetItemInfo = _G.GetItemInfo
-local PickupContainerItem = _G.PickupContainerItem
-local PickupMerchantItem = _G.PickupMerchantItem
-local IsAddOnLoaded = _G.IsAddOnLoaded
 local select = _G.select
-local COPPER_PER_SILVER = _G.COPPER_PER_SILVER
-local SILVER_PER_GOLD = _G.SILVER_PER_GOLD
+
+--local string_find = _G.string.find
+--local DeleteCursorItem = _G.DeleteCursorItem
+--local GetContainerItemInfo = _G.GetContainerItemInfo
+--local GetItemInfo = _G.GetItemInfo
+--local PickupContainerItem = _G.PickupContainerItem
+--local PickupMerchantItem = _G.PickupMerchantItem
+--local IsAddOnLoaded = _G.IsAddOnLoaded
+--local COPPER_PER_SILVER = _G.COPPER_PER_SILVER
+--local SILVER_PER_GOLD = _G.SILVER_PER_GOLD
 
 
 
@@ -52,43 +49,43 @@ local SILVER_PER_GOLD = _G.SILVER_PER_GOLD
 
 mPlugins = mPlugins or {}
 
-wtkConfigFrame = nil
+mConfigFrame = nil
 
-databaseDefaults = {
-  ["global"] = {
-    ["version"] = nil,
-  },
-  ["profile"] = {
-    ["stopButtonToggle"] = false,
-    ["idbpcHackToggle"] = false,
-    ["viewport"] = {
-      enable = false,
-      top = 0,
-      bottom = 0,
-      left = 0,
-      right = 0
+local function createDatabaseDefaults()
+  local databaseDefaults = {
+    ["global"] = {
+      ["version"] = nil,
     },
-    selljunk = {
-      auto = false,
-      max12 = true,
-      printGold = true,
-      showSpam = true,
-      exceptions = {},
-      destroyables = {},
+    ["profile"] = {
+      ["stopButtonToggle"] = false,
+      ["idbpcHackToggle"] = false,
+      ["viewport"] = {
+        enable = false,
+        top = 0,
+        bottom = 0,
+        left = 0,
+        right = 0
+      },
     },
-  },
-}
+  }
+
+  for k, v in pairs(mPlugins) do
+    databaseDefaults["profile"][k] = v.defaults
+  end
+
+  return databaseDefaults
+end
 
 --------------------------------------------------------------------------------
 -- IDPC Function Hack
 --------------------------------------------------------------------------------
 
-idbpcFunc = nil
+mIdbpcFunc = nil
 
 local function applyIdpcFuncHack()
   if db.profile.idbpcHackToggle then
-    if not idbpcFunc then
-      idbpcFunc = _G.C_StorePublic.IsDisabledByParentalControls
+    if not mIdbpcFunc then
+      mIdbpcFunc = _G.C_StorePublic.IsDisabledByParentalControls
       _G.C_StorePublic.IsDisabledByParentalControls = function () return false end
     end
   end
@@ -148,7 +145,7 @@ end
 --------------------------------------------------------------------------------
 
 ViewportOverlay = nil
-originalViewport = nil
+mOriginalViewport = nil
 
 local function getCurrentScreenResolution()
   local resolution = ({_G.GetScreenResolutions()})[_G.GetCurrentResolution()]
@@ -191,10 +188,10 @@ local function setupViewport(top, bottom, left, right)
 end
 
 local function saveOriginalViewport()
-  if not originalViewport then
+  if not mOriginalViewport then
     local tlX, tlY = getWorldFramePoint("TOPLEFT")
     local brX, brY = getWorldFramePoint("BOTTOMRIGHT")
-    originalViewport = {
+    mOriginalViewport = {
       top = tlY,
       bottom = brY,
       left = tlX,
@@ -204,13 +201,13 @@ local function saveOriginalViewport()
 end
 
 local function resetViewport()
-  if originalViewport then
-    local top = -(originalViewport["top"])
-    local bottom = originalViewport["bottom"]
-    local left = originalViewport["left"]
-    local right = -(originalViewport["right"])
+  if mOriginalViewport then
+    local top = -(mOriginalViewport["top"])
+    local bottom = mOriginalViewport["bottom"]
+    local left = mOriginalViewport["left"]
+    local right = -(mOriginalViewport["right"])
     setupViewport(top, bottom, left, right)
-    originalViewport = nil
+    mOriginalViewport = nil
   end
 end
 
@@ -262,8 +259,6 @@ end
 -- General
 --------------------------------------------------------------------------------
 
-local options = nil
-
 local function applySettings()
   applyStopButton()
   applyIdpcFuncHack()
@@ -291,9 +286,9 @@ function MyAddOn:CreateOptions()
         guiHidden = true,
         func = function()
             if not _G.InCombatLockdown() then
-              _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
+              _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
               -- Called twice to workaround UI bug
-              _G.InterfaceOptionsFrame_OpenToCategory(wtkConfigFrame)
+              _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
             end
           end,
         order = 1,
@@ -421,24 +416,23 @@ function MyAddOn:CreateOptions()
 end
 
 function MyAddOn:PopulateOptions()
-  if not options then
-    options = {}
-    copyTable(MyAddOn:CreateOptions(), options)
-    local orderidx = 100
-    for k, v in pairs(mPlugins) do
-      orderidx = orderidx + 10
-      local pluginOptions = {
-        order = orderidx,
-        type = "group",
-        name = v["name"] or k,
-        guiInline = true,
-        args = {
-        }
+  local options = {}
+  copyTable(MyAddOn:CreateOptions(), options)
+  local orderidx = 100
+  for k, v in pairs(mPlugins) do
+    orderidx = orderidx + 10
+    local pluginOptions = {
+      order = orderidx,
+      type = "group",
+      name = v["name"] or k,
+      guiInline = true,
+      args = {
       }
-      copyTable(v:CreateOptions(), pluginOptions.args)
-      options.args[k] = pluginOptions
-    end
+    }
+    copyTable(v:CreateOptions(), pluginOptions.args)
+    options.args[k] = pluginOptions
   end
+  return options
 end
 
 function WoodysToolkit:RefreshDB()
@@ -451,7 +445,6 @@ end
 --------------------------------------------------------------------------------
 
 function WoodysToolkit:ADDON_LOADED()
-  --_G.print("Woody's Toolkit loaded!")
   self:UnregisterEvent("ADDON_LOADED")
 end
 
@@ -483,7 +476,7 @@ WoodysToolkit:RegisterEvent("PLAYER_LOGIN")
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function WoodysToolkit:OnInitialize()
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
-  self.db = LibStub("AceDB-3.0"):New(MODNAME .. "DB", databaseDefaults, true)
+  self.db = LibStub("AceDB-3.0"):New(MODNAME .. "DB", createDatabaseDefaults(), true)
 
   local currentVersion = _G.GetAddOnMetadata(MODNAME, "Version")
   self.db.global.version = currentVersion
@@ -494,26 +487,21 @@ function WoodysToolkit:OnInitialize()
   self:RefreshDB()
 
   -- See: wowace.com/addons/ace3/pages/getting-started/#w-registering-the-options
-  self:PopulateOptions()
+  local options = self:PopulateOptions()
   AceConfig:RegisterOptionsTable(MODNAME, options)
 
   -- Register the Ac3 profile options table
   local profiles = AceDBOptions:GetOptionsTable(self.db)
   AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
 
-  wtkConfigFrame = AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
+  mConfigFrame = mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
   AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
-  wtkConfigFrame.default = function()
+  mConfigFrame.default = function()
     self.db:ResetProfile()
   end
 
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "woodystoolkit", MODNAME)
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "wtk", MODNAME)
---   self:RegisterChatCommand("woodystoolkit", "ChatCommand")
---   self:RegisterChatCommand("wtk", "ChatCommand")
-
-  self:RegisterChatCommand("selljunk", "HandleSlashCommands")
-  self:RegisterChatCommand("sj", "HandleSlashCommands")
 
   applySettings()
 end
@@ -527,29 +515,4 @@ end
 -- Called by AceAddon.
 function WoodysToolkit:OnDisable()
   -- Nothing here yet.
-end
-
--- function WoodysToolkit:ChatCommand(input)
---   LibStub("AceConfigCmd-3.0").HandleCommand(WoodysToolkit, "woodystoolkit", MODNAME, input)
--- end
-
-function MyAddOn:HandleSlashCommands(input)
-  local arg1, arg2 = self:GetArgs(input, 2, 1, input)
-  if arg1 == 'destroy' then
-    self:JunkSell(true)
-  elseif arg1 == 'add' and arg2 ~= nil then
-    if arg2:find('|Hitem') == nil then
-      self:Print(L["Command accepts only itemlinks."])
-    else
-      self:JunkAdd(arg2, true)
-    end
-  elseif (arg1 == 'rem' or arg1 == 'remove') and arg2 ~= nil then
-    if arg2:find('|Hitem') == nil then
-      self:Print(L["Command accepts only itemlinks."])
-    else
-      self:JunkRem(arg2, true)
-    end
-  else
-    InterfaceOptionsFrame_OpenToCategory(MyAddOn.optionsFrame)
-  end
 end

@@ -247,6 +247,14 @@ end
 
 local sellJunkPlugin = {
   name = "SellJunk",
+  defaults = {
+    auto = false,
+    max12 = true,
+    printGold = true,
+    showSpam = true,
+    exceptions = {},
+    destroyables = {},
+  },
 }
 
 function sellJunkPlugin:MERCHANT_SHOW()
