@@ -53,8 +53,27 @@ local function createSellButton()
   else
     MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
   end
-  MyAddOn.sellButton:SetText(L["Destroy Junk"])
-  MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell(true) end)
+  MyAddOn.sellButton:SetText(L["Sell Junk"])
+  MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+
+  _G.StaticPopupDialogs["WoodysToolkit_DestroyConfirmation"] = {
+    text = "Do you want to destroy %s?",
+    button1 = "Yes",
+    button2 = "No",
+    OnAccept = function (self, bag, slot)
+      local item = _G.GetContainerItemLink(bag, slot)
+      if item then
+        PickupContainerItem(bag, slot)
+        DeleteCursorItem()
+        local showSpam = MyAddOn.db.profile.selljunk.showSpam
+        if showSpam then
+          print(L["Destroyed"] .. ": " .. item)
+        end
+      end
+    end,
+    timeout = 30,
+    hideOnEscape = true,
+  }
 end
 
 local function extractLink(link)
@@ -133,8 +152,9 @@ end
 --   - grey quality, unless it's in exception list         --
 --   - better than grey quality, if it's in exception list --
 -------------------------------------------------------------
-function MyAddOn:JunkSell(destroy)
+function MyAddOn:JunkSell()
   local limit = 0
+  local destroy = MyAddOn.db.profile.selljunk.destroy
   local showSpam = MyAddOn.db.profile.selljunk.showSpam
   local max12 = MyAddOn.db.profile.selljunk.max12
   local profit = 0
@@ -159,10 +179,10 @@ function MyAddOn:JunkSell(destroy)
             end
           else
             if destroy then
---              PickupContainerItem(bag, slot)
---              _G.DeleteCursorItem()
-              if showSpam then
-                print(L["Destroyed"] .. ": " .. item)
+              local dialog = _G.StaticPopup_Show("WoodysToolkit_DestroyConfirmation", item)
+              if (dialog) then
+                dialog.data  = bag
+                dialog.data2 = slot
               end
             else
               if showSpam then
@@ -222,6 +242,7 @@ local thisPlugin = {
   defaults = {
     profile = {
       auto = false,
+      destroy = true,
       max12 = true,
       printGold = true,
       showSpam = true,
