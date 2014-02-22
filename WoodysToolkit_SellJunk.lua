@@ -97,7 +97,8 @@ local function isJunkInList(exceptions, link)
         if v == link then
           return true
         end
-      elseif k:lower() == name:lower() then
+      end
+      if k:lower() == name:lower() then
         return true
       end
     end
