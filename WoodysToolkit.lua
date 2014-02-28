@@ -10,6 +10,7 @@ setfenv(1, WoodysToolkit)
 MODNAME = "WoodysToolkit"
 
 local WoodysToolkit = _G.WoodysToolkit
+local MOD = WoodysToolkit
 local LibStub = _G.LibStub
 
 local L = LibStub("AceLocale-3.0"):GetLocale("WoodysToolkit", true)
@@ -43,6 +44,7 @@ local function createDatabaseDefaults()
   local databaseDefaults = {
     ["global"] = {
       ["version"] = nil,
+      Minimap = { hide = false, minimapPos = 180, radius = 80, }, -- saved DBIcon minimap settings
     },
     ["profile"] = {
       ["stopButtonToggle"] = false,
@@ -129,6 +131,18 @@ end
 -- General
 --------------------------------------------------------------------------------
 
+local function toggleOptions()
+    if not _G.InCombatLockdown() then
+      _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
+      -- Called twice to workaround UI bug
+      _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
+    end
+end
+
+function MOD:ToggleOptions()
+  toggleOptions()
+end
+
 local function applySettings()
   applyStopButton()
   applyIdpcFuncHack()
@@ -158,13 +172,7 @@ function MyAddOn:CreateOptions()
         type = "execute",
         name = L["options.config.name"],
         guiHidden = true,
-        func = function()
-            if not _G.InCombatLockdown() then
-              _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
-              -- Called twice to workaround UI bug
-              _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
-            end
-          end,
+        func = toggleOptions,
         order = 1,
       },
       stopButtonHeader = {
@@ -259,6 +267,62 @@ WoodysToolkit:RegisterEvent("DUEL_REQUESTED")
 -- </ in-game configuration UI code > ------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Check if the options panel is loaded, if not then get it loaded and ask it to toggle open/close status
+function MOD:OptionsPanel()
+--     if not optionsLoaded then
+--         optionsLoaded = true
+--         local loaded, reason = LoadAddOn(MOD_Options)
+--         if not loaded then
+--             print(L["Failed to load "] .. tostring(MOD_Options) .. ": " .. tostring(reason))
+-- 			optionsFailed = true
+--         end
+-- 	end
+	if not optionsFailed then
+	  MOD:ToggleOptions()
+	end
+end
+
+-- Tie into LibDataBroker
+function MOD:InitializeLDB()
+	local LDB = LibStub("LibDataBroker-1.1", true)
+	if not LDB then return end
+	MOD.ldb = LDB:NewDataObject("WoodysToolkit", {
+		type = "launcher",
+		text = "Woody's Toolkit",
+		icon = "Interface\\Icons\\Trade_Engineering",
+		-- icon = [[Interface\AddOns\Raven\Raven]],
+		OnClick = function(_, msg)
+			MOD:OptionsPanel()
+-- 			if msg == "RightButton" then
+-- 				if IsShiftKeyDown() then
+-- 					MOD.db.profile.hideBlizz = not MOD.db.profile.hideBlizz
+-- 					MOD.db.profile.hideConsolidated = MOD.db.profile.hideBlizz
+-- 				else
+-- 					MOD:ToggleBarGroupLocks()
+-- 				end
+-- 			elseif msg == "LeftButton" then
+-- 				if IsShiftKeyDown() then
+-- 					MOD.db.profile.enabled = not MOD.db.profile.enabled
+-- 				else
+-- 					MOD:OptionsPanel()
+-- 				end
+-- 			end
+-- 			doUpdate = true
+		end,
+		OnTooltipShow = function(tooltip)
+			if not tooltip or not tooltip.AddLine then return end
+			tooltip:AddLine(L["WTK"])
+			tooltip:AddLine(L["WTK left click"])
+			tooltip:AddLine(L["WTK right click"])
+			tooltip:AddLine(L["WTK shift left click"])
+			tooltip:AddLine(L["WTK shift right click"])
+		end,
+	})
+	MOD.ldbi = LibStub("LibDBIcon-1.0", true)
+	if MOD.ldbi then MOD.ldbi:Register("WoodysToolkit", MOD.ldb, MOD.db.global.Minimap) end
+end
+
+
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function WoodysToolkit:OnInitialize()
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
@@ -303,6 +367,8 @@ function WoodysToolkit:OnInitialize()
 
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "woodystoolkit", MODNAME)
   LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "wtk", MODNAME)
+
+  self:InitializeLDB()
 
   applySettings()
 end
