@@ -35,11 +35,7 @@ local MouselookStart, MouselookStop = _G.MouselookStart, _G.MouselookStop
 
 local modName = "MouselookHandler"
 
-local stateHandler, customEventFrame
-
-function MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
-  return (enabled and not inverted) or (not enabled and inverted)
-end
+local customEventFrame
 
 local shouldMouselook = false
 
@@ -47,6 +43,10 @@ turnOrActionActive, cameraOrSelectOrMoveActive = false, false
 clauseText = nil
 
 enabled, inverted = false, false
+
+function MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
+  return (enabled and not inverted) or (not enabled and inverted)
+end
 
 local function defer()
   if not db.profile.useDeferWorkaround then return end
@@ -193,29 +193,6 @@ end
 -- configured.
 local selectedKey
 
-local function setMacroText(info, input)
-  _G.RegisterStateDriver(stateHandler, "mouselookstate", input)
-  db.profile.macroText = input
-end
-
-local function getMacroText(info)
-  return db.profile.macroText
-end
-
-local function setEventList(info, input)
-  for event in _G.string.gmatch(db.profile.eventList, "[^%s]+") do
-    customEventFrame:UnregisterEvent(event)
-  end
-  for event in _G.string.gmatch(input, "[^%s]+") do
-    customEventFrame:RegisterEvent(event)
-  end
-  db.profile.eventList = input
-end
-
-local function getEventList(info)
-  return db.profile.eventList
-end
-
 -- Array containing all the keys from db.profile.mouseOverrideBindings.
 local overrideKeys = {}
 
@@ -236,36 +213,14 @@ local bindText = [[Enable to define a set of keybindings that only apply while m
 
 local spellTargetingOverrideText = [[Disable mouselook while a spell is awaiting a target.]]
 
-local options = {
-  type = "group",
-  name = "MouselookHandler Options",
-  handler = MouselookHandler,
-  childGroups = "tree",
-  args = {
-  },
-}
-
-----------------------------------------------------------------------------------------------------
--- </ in-game configuration UI code > --------------------------------------------------------------
-----------------------------------------------------------------------------------------------------
-
-databaseDefaults = {
-  ["global"] = {
-    ["version"] = nil,
-  },
-  ["profile"] = {
-    ["newUser"] = true,
-    ["useSpellTargetingOverride"] = true,
-    ["useDeferWorkaround"] = true,
-    ["useOverrideBindings"] = true,
-    ["mouseOverrideBindings"] = {
-        ["BUTTON1"] = "STRAFELEFT",
-        ["BUTTON2"] = "STRAFERIGHT",
-    },
-    macroText = "",
-    eventList = ""
-  },
-}
+--local options = {
+--  type = "group",
+--  name = "MouselookHandler Options",
+--  handler = MouselookHandler,
+--  childGroups = "tree",
+--  args = {
+--  },
+--}
 
 --------------------------------------------------------------------------------
 -- Plugin Setup
@@ -283,8 +238,6 @@ local thisPlugin = {
         ["BUTTON1"] = "STRAFELEFT",
         ["BUTTON2"] = "STRAFERIGHT",
       },
-      macroText = "",
-      eventList = "",
     },
   }
 }
@@ -298,29 +251,6 @@ function thisPlugin:OnInitialize()
     end
   end
   _G.table.sort(overrideKeys)
-
-
-  --------------------------------------------------------------------------------------------------
-  stateHandler = _G.CreateFrame("Frame", modName .. "stateHandler", UIParent,
-    "SecureHandlerStateTemplate")
-  function stateHandler:onMouselookState(newstate)
-    _G["MouselookHandler"]["clauseText"] = newstate
-    _G["MouselookHandler"].update()
-  end
-  stateHandler:SetAttribute("_onstate-mouselookstate", [[
-    self:CallMethod("onMouselookState", newstate)
-  ]])
-  _G.RegisterStateDriver(stateHandler, "mouselookstate", db.profile.macroText)
-  ------------------------------------------------------------------------------
-  customEventFrame = _G.CreateFrame("Frame", modName .. "customEventFrame")
-  customEventFrame:SetScript("OnEvent", function(self, event, ...)
-    _G["MouselookHandler"].update(event, ...)
-  end)
-  for event in _G.string.gmatch(db.profile.eventList, "[^%s]+") do
-    customEventFrame:RegisterEvent(event)
-  end
-  --------------------------------------------------------------------------------------------------
-
   update()
 end
 
@@ -569,24 +499,6 @@ function thisPlugin:CreateOptions()
           fontSize = "medium",
           order = 1,
         },
-        eventList = {
-          type = "input",
-          name = "Event list",
-          desc = "Your function will be updated every time one of these events fires. Separate with spaces.",
-          width = "full",
-          set = setEventList,
-          get = getEventList,
-          order = 2,
-        },
-        macroConditional = {
-          type = "input",
-          name = "Macro conditions",
-          desc = "Your function will be reevaluated whenever the macro conditions entered here change.",
-          width = "full",
-          set = setMacroText,
-          get = getMacroText,
-          order = 3,
-        },
         header2 = {
           type = "header",
           name = "Reset advanced settings",
@@ -598,19 +510,6 @@ function thisPlugin:CreateOptions()
           fontSize = "medium",
           width = "double",
           order = 5,
-        },
-        resetButton = {
-          type = "execute",
-          name = "Reset",
-          desc = "Reenter the default events, macro text and function.",
-          width = "half",
-          confirm = true,
-          confirmText = "Your customizations will be removed. Continue?",
-          func = function()
-            setEventList(nil, databaseDefaults.profile.eventList)
-            setMacroText(nil, databaseDefaults.profile.macroText)
-          end,
-          order = 6,
         },
         advanced1 = {
           type = "group",
