@@ -46,6 +46,7 @@ function MyAddOn:predFun(enabled, inverted, clauseText, event, ...)
 end
 
 local function defer()
+  local db = MyAddOn.db
   if not db.profile.useDeferWorkaround then return end
   for i = 1, 5 do
     if _G.IsMouseButtonDown(i) then return true end
@@ -157,6 +158,7 @@ handlerFrame:RegisterEvent("ADDON_LOADED")
 --------------------------------------------------------------------------------
 
 local function applyOverrideBindings(info, val)
+  local db = MyAddOn.db
   if db.profile.useOverrideBindings then
     for key, command in _G.pairs(db.profile.mouseOverrideBindings) do
       _G.SetMouselookOverrideBinding(key, command == "" and nil or command)
@@ -169,11 +171,13 @@ local function applyOverrideBindings(info, val)
 end
 
 local function setUseOverrideBindings(info, val)
+  local db = MyAddOn.db
   db.profile.useOverrideBindings = val
   applyOverrideBindings()
 end
 
 local function getUseOverrideBindings(info)
+  local db = MyAddOn.db
   return db.profile.useOverrideBindings
 end
 
@@ -246,6 +250,7 @@ local thisPlugin = {
 }
 
 function thisPlugin:OnInitialize()
+  local db = MyAddOn.db
   for k, _ in _G.pairs(db.profile.mouseOverrideBindings) do
     if not (_G.type(k) == "string") then
       db.profile.mouseOverrideBindings[k] = nil
@@ -262,6 +267,7 @@ function thisPlugin:ApplySettings()
 end
 
 function thisPlugin:CreateOptions()
+  local db = MyAddOn.db
   local options = {
     general = {
       type = "group",
