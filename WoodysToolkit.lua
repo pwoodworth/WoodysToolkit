@@ -338,6 +338,13 @@ function WoodysToolkit:OnInitialize()
 
   -- See: wowace.com/addons/ace3/pages/getting-started/#w-registering-the-options
   local options = self:PopulateOptions()
+
+  for _, plugin in pairs(mPlugins) do
+    if plugin["OnInitialize"] then
+      plugin:OnInitialize()
+    end
+  end
+
   AceConfig:RegisterOptionsTable(MODNAME, options)
 
   -- Register the Ace3 profile options table

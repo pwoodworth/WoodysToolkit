@@ -35,10 +35,13 @@ local MouselookStart, MouselookStop = _G.MouselookStart, _G.MouselookStop
 
 local modName = "MouselookHandler"
 
-local customFunction, stateHandler, customEventFrame
-function MouselookHandler:predFun()
-  return false
+local stateHandler, customEventFrame
+
+function MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
+  return (enabled and not inverted) or (not enabled and inverted)
 end
+
+local shouldMouselook = false
 
 turnOrActionActive, cameraOrSelectOrMoveActive = false, false
 clauseText = nil
@@ -73,10 +76,11 @@ local function rematch()
 end
 
 function update(event, ...)
-  --shouldMouselook = customFunction(enabled, inverted, clauseText, event, ...)
   local shouldMouselookOld = shouldMouselook
   shouldMouselook = MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
-  if shouldMouselook ~= shouldMouselookOld then rematch() end
+  if shouldMouselook ~= shouldMouselookOld then
+    rematch()
+  end
 end
 
 function invert()
@@ -189,30 +193,6 @@ end
 -- configured.
 local selectedKey
 
-local function validateCustomFunction(info, input)
-  local chunk, errorMessage = _G.loadstring(input)
-  if not chunk then
-    MouselookHandler:Print(errorMessage)
-    return errorMessage
-  else
-    chunk()
-    if _G.type(predFun) ~= "function" then
-      MouselookHandler:Print("Your Lua code should define a function \'MouselookHandler:predFun\'!")
-      return "Your Lua code should define a function \'MouselookHandler:predFun\'!"
-    else
-      return true
-    end
-  end
-end
-
-local function setCustomFunction(info, input)
-  db.profile.customFunction = input
-end
-
-local function getCustomFunction(info)
-  return db.profile.customFunction
-end
-
 local function setMacroText(info, input)
   _G.RegisterStateDriver(stateHandler, "mouselookstate", input)
   db.profile.macroText = input
@@ -287,38 +267,29 @@ databaseDefaults = {
   },
 }
 
-databaseDefaults.profile.customFunction = [[
-function MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
-  return (enabled and not inverted) or
-    (not enabled and inverted)
-end
-]]
+--------------------------------------------------------------------------------
+-- Plugin Setup
+--------------------------------------------------------------------------------
 
+local thisPlugin = {
+  name = "Mouse",
+  defaults = {
+    profile = {
+      ["newUser"] = true,
+      ["useSpellTargetingOverride"] = true,
+      ["useDeferWorkaround"] = true,
+      ["useOverrideBindings"] = true,
+      ["mouseOverrideBindings"] = {
+        ["BUTTON1"] = "STRAFELEFT",
+        ["BUTTON2"] = "STRAFERIGHT",
+      },
+      macroText = "",
+      eventList = "",
+    },
+  }
+}
 
--- Called by AceAddon on ADDON_LOADED?
--- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
-function MouselookHandler:OnInitialize()
-  -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
-  self.db = LibStub("AceDB-3.0"):New("WoodysToolkitDB", databaseDefaults, true)
-
-  local currentVersion = _G.GetAddOnMetadata(modName, "Version")
-  self.db.global.version = currentVersion
-
-  if db.profile.newUser then
-    MouselookHandler:Print("This seems to be your first time using this AddOn. To get started " ..
-      "you should bring up the configuration UI (/mh) and assign keys to the two actions " ..
-      "provided.")
-  end
-
-  self.db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
-  self.db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
-  self.db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
-  self:RefreshDB()
-
-  if validateCustomFunction(nil, db.profile.customFunction) == true then
-    setCustomFunction(nil, db.profile.customFunction)
-  end
-
+function thisPlugin:OnInitialize()
   for k, _ in _G.pairs(db.profile.mouseOverrideBindings) do
     if not (_G.type(k) == "string") then
       db.profile.mouseOverrideBindings[k] = nil
@@ -328,38 +299,6 @@ function MouselookHandler:OnInitialize()
   end
   _G.table.sort(overrideKeys)
 
-  options.args.profiles = AceDBOptions:GetOptionsTable(self.db)
-  options.args.profiles.order = 121
-  local function changeFontSize(optionsGroup)
-    --_G.assert(optionsGroup.type == "group")
-    --_G.assert(optionsGroup.args)
-    for k, v in _G.pairs(optionsGroup.args) do
-      if _G.type(v) == "table" then
-        if v.type and v.type == "description" then
-          optionsGroup.args[k].fontSize = "medium"
-        elseif v.type and v.type == "group" then
-          changeFontSize(v)
-        end
-      end
-    end
-  end
-  changeFontSize(options.args.profiles)
-  options.args.profiles.args.addedHeader = {
-    type = "header",
-    name = "Profiles",
-    order = 0,
-  },
-
-  -- See wowace.com/addons/ace3/pages/getting-started/#w-registering-the-options.
-  AceConfig:RegisterOptionsTable(modName, options)
-  AceConfigRegistry:RegisterOptionsTable("MouselookHandler_Profiles", options.args.profiles)
-  AceConfigDialog:SetDefaultSize(modName, 800, 600)
-
-  -- http://www.wowace.com/addons/ace3/pages/api/ace-config-dialog-3-0/
-  local configFrame = AceConfigDialog:AddToBlizOptions("MouselookHandler", "MouselookHandler")
-  configFrame.default = function()
-    self.db:ResetProfile()
-  end
 
   --------------------------------------------------------------------------------------------------
   stateHandler = _G.CreateFrame("Frame", modName .. "stateHandler", UIParent,
@@ -385,52 +324,8 @@ function MouselookHandler:OnInitialize()
   update()
 end
 
-function MouselookHandler:RefreshDB()
-    --MouselookHandler:Print("Refreshing DB Profile")
-    applyOverrideBindings()
-end
-
--- Called by AceAddon.
-function MouselookHandler:OnEnable()
-  -- Nothing here yet.
-end
-
--- Called by AceAddon.
-function MouselookHandler:OnDisable()
-  -- Nothing here yet.
-end
-
---------------------------------------------------------------------------------
--- Plugin Setup
---------------------------------------------------------------------------------
-
-local thisPlugin = {
-  name = "Mouse",
-  defaults = {
-    profile = {
-      ["newUser"] = true,
-      ["useSpellTargetingOverride"] = true,
-      ["useDeferWorkaround"] = true,
-      ["useOverrideBindings"] = true,
-      ["mouseOverrideBindings"] = {
-        ["BUTTON1"] = "STRAFELEFT",
-        ["BUTTON2"] = "STRAFERIGHT",
-      },
-      macroText = "",
-      eventList = "",
-    },
-  }
-}
-
-thisPlugin.defaults.profile.customFunction = [[
-function MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
-  return (enabled and not inverted) or
-    (not enabled and inverted)
-end
-]]
-
 function thisPlugin:ApplySettings()
-  applyViewport()
+  applyOverrideBindings()
 end
 
 function thisPlugin:CreateOptions()
@@ -714,9 +609,6 @@ function thisPlugin:CreateOptions()
           func = function()
             setEventList(nil, databaseDefaults.profile.eventList)
             setMacroText(nil, databaseDefaults.profile.macroText)
-            if validateCustomFunction(nil, databaseDefaults.profile.customFunction) == true then
-              setCustomFunction(nil, databaseDefaults.profile.customFunction)
-            end
           end,
           order = 6,
         },
@@ -724,21 +616,6 @@ function thisPlugin:CreateOptions()
           type = "group",
           name = "Lua chunk",
           args = {
-            header1 = {
-              type = "header",
-              name = "Lua chunk",
-              order = 0,
-            },
-            customFunction = {
-              type = "input",
-              name = "",
-              multiline = 20,
-              width = "full",
-              validate = validateCustomFunction,
-              set = setCustomFunction,
-              get = getCustomFunction,
-              order = 1,
-            },
             header2 = {
               type = "header",
               name = "Reload UI",
