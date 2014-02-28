@@ -27,24 +27,21 @@ local AceDBOptions = LibStub("AceDBOptions-3.0")
 
 local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
-
-local MouselookHandler = _G.WoodysToolkit
-
 local IsMouselooking = _G.IsMouselooking
 local MouselookStart, MouselookStop = _G.MouselookStart, _G.MouselookStop
-
-local modName = "MouselookHandler"
 
 local customEventFrame
 
 local shouldMouselook = false
 
-turnOrActionActive, cameraOrSelectOrMoveActive = false, false
+turnOrActionActive = false
+cameraOrSelectOrMoveActive = false
 clauseText = nil
 
-enabled, inverted = false, false
+mMouseLockEnabled = false
+mMouseLockInverted = false
 
-function MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
+function MyAddOn:predFun(enabled, inverted, clauseText, event, ...)
   return (enabled and not inverted) or (not enabled and inverted)
 end
 
@@ -60,7 +57,8 @@ end
 local function rematch()
   if defer() then return end
   if db.profile.useSpellTargetingOverride and _G.SpellIsTargeting() then
-    MouselookStop(); return
+    MouselookStop()
+    return
   end
   if turnOrActionActive or cameraOrSelectOrMoveActive then return end
 
@@ -75,40 +73,40 @@ local function rematch()
   end
 end
 
-function update(event, ...)
+local function updateLock(event, ...)
   local shouldMouselookOld = shouldMouselook
-  shouldMouselook = MouselookHandler:predFun(enabled, inverted, clauseText, event, ...)
+  shouldMouselook = MyAddOn:predFun(mMouseLockEnabled, mMouseLockInverted, clauseText, event, ...)
   if shouldMouselook ~= shouldMouselookOld then
     rematch()
   end
 end
 
-function invert()
-  inverted = true
-  update()
+function LockInvert()
+  mMouseLockInverted = true
+  updateLock()
 end
 
-function revert()
-  inverted = false
-  update()
+function LockRevert()
+  mMouseLockInverted = false
+  updateLock()
 end
 
-function toggle()
-  enabled = not enabled
-  update()
+function LockToggle()
+  mMouseLockEnabled = not mMouseLockEnabled
+  updateLock()
 end
 
-function lock()
-  enabled = true
-  update()
+function LockEnable()
+  mMouseLockEnabled = true
+  updateLock()
 end
 
-function unlock()
-  enabled = false
-  update()
+function LockDisable()
+  mMouseLockEnabled = false
+  updateLock()
 end
 
-local handlerFrame = _G.CreateFrame("Frame", modName .. "handlerFrame")
+local handlerFrame = _G.CreateFrame("Frame", MODNAME .. "handlerFrame")
 
 -- http://www.wowinterface.com/forums/showthread.php?p=267998
 handlerFrame:SetScript("OnEvent", function(self, event, ...)
@@ -146,7 +144,6 @@ function handlerFrame:PLAYER_LOGIN()
 end
 
 function handlerFrame:ADDON_LOADED()
-  --_G.print("MouselookHandler loaded!")
   self:UnregisterEvent("ADDON_LOADED")
   self.ADDON_LOADED = nil
 end
@@ -184,8 +181,14 @@ end
 -- http://www.wowace.com/addons/ace3/pages/ace-config-3-0-options-tables/#w-callback-arguments
 
 local suggestedCommands = {}
-for _, v in _G.ipairs({"UNLOCKMOUSELOOK", "MOVEFORWARD", "MOVEBACKWARD", "TOGGLEAUTORUN",
-  "STRAFELEFT", "STRAFERIGHT"}) do
+for _, v in _G.ipairs({
+  "UNLOCKMOUSELOOK",
+  "MOVEFORWARD",
+  "MOVEBACKWARD",
+  "TOGGLEAUTORUN",
+  "STRAFELEFT",
+  "STRAFERIGHT",
+}) do
   suggestedCommands[v] = _G.GetBindingText(v, "BINDING_NAME_")
 end
 
@@ -251,7 +254,7 @@ function thisPlugin:OnInitialize()
     end
   end
   _G.table.sort(overrideKeys)
-  update()
+  updateLock()
 end
 
 function thisPlugin:ApplySettings()
@@ -483,7 +486,7 @@ function thisPlugin:CreateOptions()
               "be compiled and ran when loading the addon " ..
               "(and when you change the Lua chunk). " ..
               "It must define a function " ..
-              "\'MouselookHandler:predFun\' which will control " ..
+              "\'MyAddOn:predFun\' which will control " ..
               "when mouselook is started and stopped and " ..
               "gets called with these arguments:\n" ..
               " - the current default mouselook state (boolean),\n" ..
