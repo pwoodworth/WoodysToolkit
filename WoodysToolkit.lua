@@ -47,6 +47,7 @@ local function createDatabaseDefaults()
     ["profile"] = {
       ["stopButtonToggle"] = false,
       ["idbpcHackToggle"] = false,
+      autoDuelDecline = true,
     },
   }
 
@@ -234,6 +235,13 @@ function WoodysToolkit:PLAYER_LOGIN()
   -- Nothing here yet.
 end
 
+function WoodysToolkit:DUEL_REQUESTED(event, name)
+  if self.db.profile.autoDuelDecline then
+	HideUIPanel(StaticPopup1);
+	CancelDuel();
+  end
+end
+
 function WoodysToolkit:MERCHANT_SHOW()
   for _, plugin in pairs(mPlugins) do
     if plugin["MERCHANT_SHOW"] then
@@ -245,7 +253,7 @@ end
 WoodysToolkit:RegisterEvent("ADDON_LOADED")
 WoodysToolkit:RegisterEvent("PLAYER_ENTERING_WORLD")
 WoodysToolkit:RegisterEvent("PLAYER_LOGIN")
---WoodysToolkit:RegisterEvent("MERCHANT_SHOW")
+WoodysToolkit:RegisterEvent("DUEL_REQUESTED")
 
 --------------------------------------------------------------------------------
 -- </ in-game configuration UI code > ------------------------------------------
