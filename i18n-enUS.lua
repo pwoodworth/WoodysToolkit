@@ -19,6 +19,12 @@ L["options.viewport.coords.name"] = [[Viewport Coordinates]]
 L["options.misc.header.name"] = "Miscellaneous"
 L["options.reloadui.name"] = "Reload UI"
 
+-- L["WTK"] = true
+L["WTK"] = "Woody's Toolkit"
+L["WTK left click"] = "|cffffff00Left-click|r to open/close options menu"
+L["WTK right click"] = "|cffffff00Right-click|r to toggle locking all bar groups"
+L["WTK shift left click"] = "|cffffff00Shift-left-click|r to enable/disable Woody's Toolkit"
+L["WTK shift right click"] = "|cffffff00Shift-right-click|r to toggle Blizzard buffs"
 
 L["Added"] = "Added"
 L["Add item"] = "Add item"

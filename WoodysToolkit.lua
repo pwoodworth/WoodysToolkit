@@ -245,8 +245,8 @@ end
 
 function WoodysToolkit:DUEL_REQUESTED(event, name)
   if self.db.profile.autoDuelDecline then
-	HideUIPanel(StaticPopup1);
-	CancelDuel();
+    HideUIPanel(StaticPopup1);
+    CancelDuel();
   end
 end
 
@@ -269,57 +269,57 @@ WoodysToolkit:RegisterEvent("DUEL_REQUESTED")
 
 -- Check if the options panel is loaded, if not then get it loaded and ask it to toggle open/close status
 function MOD:OptionsPanel()
---     if not optionsLoaded then
---         optionsLoaded = true
---         local loaded, reason = LoadAddOn(MOD_Options)
---         if not loaded then
---             print(L["Failed to load "] .. tostring(MOD_Options) .. ": " .. tostring(reason))
--- 			optionsFailed = true
---         end
--- 	end
-	if not optionsFailed then
-	  MOD:ToggleOptions()
-	end
+  --     if not optionsLoaded then
+  --         optionsLoaded = true
+  --         local loaded, reason = LoadAddOn(MOD_Options)
+  --         if not loaded then
+  --             print(L["Failed to load "] .. tostring(MOD_Options) .. ": " .. tostring(reason))
+  -- 			optionsFailed = true
+  --         end
+  -- 	end
+  if not optionsFailed then
+    MOD:ToggleOptions()
+  end
 end
 
 -- Tie into LibDataBroker
 function MOD:InitializeLDB()
-	local LDB = LibStub("LibDataBroker-1.1", true)
-	if not LDB then return end
-	MOD.ldb = LDB:NewDataObject("WoodysToolkit", {
-		type = "launcher",
-		text = "Woody's Toolkit",
-		icon = "Interface\\Icons\\Trade_Engineering",
-		-- icon = [[Interface\AddOns\Raven\Raven]],
-		OnClick = function(_, msg)
-			MOD:OptionsPanel()
--- 			if msg == "RightButton" then
--- 				if IsShiftKeyDown() then
--- 					MOD.db.profile.hideBlizz = not MOD.db.profile.hideBlizz
--- 					MOD.db.profile.hideConsolidated = MOD.db.profile.hideBlizz
--- 				else
--- 					MOD:ToggleBarGroupLocks()
--- 				end
--- 			elseif msg == "LeftButton" then
--- 				if IsShiftKeyDown() then
--- 					MOD.db.profile.enabled = not MOD.db.profile.enabled
--- 				else
--- 					MOD:OptionsPanel()
--- 				end
--- 			end
--- 			doUpdate = true
-		end,
-		OnTooltipShow = function(tooltip)
-			if not tooltip or not tooltip.AddLine then return end
-			tooltip:AddLine(L["WTK"])
-			tooltip:AddLine(L["WTK left click"])
-			tooltip:AddLine(L["WTK right click"])
-			tooltip:AddLine(L["WTK shift left click"])
-			tooltip:AddLine(L["WTK shift right click"])
-		end,
-	})
-	MOD.ldbi = LibStub("LibDBIcon-1.0", true)
-	if MOD.ldbi then MOD.ldbi:Register("WoodysToolkit", MOD.ldb, MOD.db.global.Minimap) end
+  local LDB = LibStub("LibDataBroker-1.1", true)
+  if not LDB then return end
+  MOD.ldb = LDB:NewDataObject("WoodysToolkit", {
+    type = "launcher",
+    text = "Woody's Toolkit",
+    icon = "Interface\\Icons\\Trade_Engineering",
+    -- icon = [[Interface\AddOns\Raven\Raven]],
+    OnClick = function(_, msg)
+      MOD:OptionsPanel()
+--      if msg == "RightButton" then
+--        if IsShiftKeyDown() then
+--          MOD.db.profile.hideBlizz = not MOD.db.profile.hideBlizz
+--          MOD.db.profile.hideConsolidated = MOD.db.profile.hideBlizz
+--        else
+--          MOD:ToggleBarGroupLocks()
+--        end
+--      elseif msg == "LeftButton" then
+--        if IsShiftKeyDown() then
+--          MOD.db.profile.enabled = not MOD.db.profile.enabled
+--        else
+--          MOD:OptionsPanel()
+--        end
+--      end
+--      doUpdate = true
+    end,
+    OnTooltipShow = function(tooltip)
+      if not tooltip or not tooltip.AddLine then return end
+      tooltip:AddLine(L["WTK"])
+      tooltip:AddLine(L["WTK left click"])
+--      tooltip:AddLine(L["WTK right click"])
+--      tooltip:AddLine(L["WTK shift left click"])
+--      tooltip:AddLine(L["WTK shift right click"])
+    end,
+  })
+  MOD.ldbi = LibStub("LibDBIcon-1.0", true)
+  if MOD.ldbi then MOD.ldbi:Register("WoodysToolkit", MOD.ldb, MOD.db.global.Minimap) end
 end
 
 
