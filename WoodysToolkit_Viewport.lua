@@ -18,7 +18,7 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
 
-local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 -- upvalues
 local print = print or _G.print

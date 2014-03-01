@@ -141,13 +141,7 @@ local function toggleOptions()
 end
 
 function MOD:ToggleOptions()
---  toggleOptions()
---  if not initialized then InitializeOptions() end
-  if AceConfigDialog.OpenFrames["WoodysToolkit"] then
-    AceConfigDialog:Close("WoodysToolkit")
-  else
-    AceConfigDialog:Open("WoodysToolkit")
-  end
+  toggleOptions()
 end
 
 local function applySettings()
@@ -168,11 +162,11 @@ local function copyTable(src, dst)
   return dst
 end
 
-function MyAddOn:CreateOptions()
+function MOD:CreateOptions()
   local options = {
     type = "group",
     name = L["options.name"],
-    handler = WoodysToolkit,
+    handler = MOD,
     childGroups = "tree",
     args = {
       config = {
@@ -182,55 +176,102 @@ function MyAddOn:CreateOptions()
         func = toggleOptions,
         order = 1,
       },
-      stopButtonHeader = {
-        type = "header",
-        name = L["options.escapeButton.header"],
-        order = 10,
-      },
-      stopButton = {
-        type = "toggle",
-        name = L["options.escapeButton.name"],
-        width = "full",
-        set = setStopButtonToggle,
-        get = getStopButtonToggle,
-        order = 11,
-      },
-      miscHeader = {
-        type = "header",
-        name = L["options.misc.header.name"],
-        order = 90,
-      },
-      idbpcHack = {
-        type = "toggle",
-        name = L["options.idbpcHack.name"],
-        width = "full",
-        set = setIdbpcHackToggle,
-        get = getIdbpcHackToggle,
-        order = 91,
-      },
-      reloadButton = {
-        type = "execute",
-        name = L["options.reloadui.name"],
-        cmdHidden = true,
-        width = nil,
-        func = function()
-          _G.ReloadUI()
-        end,
-        order = 92,
+      general = {
+        type = "group",
+        name = "General",
+        order = 2,
+        args = {
+          stopButtonHeader = {
+            type = "header",
+            name = L["options.escapeButton.header"],
+            order = 10,
+          },
+          stopButton = {
+            type = "toggle",
+            name = L["options.escapeButton.name"],
+            width = "full",
+            set = setStopButtonToggle,
+            get = getStopButtonToggle,
+            order = 11,
+          },
+          miscHeader = {
+            type = "header",
+            name = L["options.misc.header.name"],
+            order = 90,
+          },
+          idbpcHack = {
+            type = "toggle",
+            name = L["options.idbpcHack.name"],
+            width = "full",
+            set = setIdbpcHackToggle,
+            get = getIdbpcHackToggle,
+            order = 91,
+          },
+          reloadButton = {
+            type = "execute",
+            name = L["options.reloadui.name"],
+            cmdHidden = true,
+            width = nil,
+            func = function()
+              _G.ReloadUI()
+            end,
+            order = 92,
+          },
+        },
       },
     },
   }
   return options
 end
 
-function MyAddOn:PopulateOptions()
+local function printTable(t)
+  for k, v in pairs(t) do
+    print("  key: " .. k .. " ; type: " .. type(v))
+  end
+end
+
+function MOD:PopulateOptions()
   local options = {}
-  copyTable(MyAddOn:CreateOptions(), options)
+  copyTable(MOD:CreateOptions(), options)
+
+  local orderidx = 100
+  for k, v in pairs(mPlugins) do
+    orderidx = orderidx + 10
+    local pluginOptions = {
+      order = orderidx,
+      type = "group",
+      name = v["name"] or k,
+      args = {
+      }
+    }
+      options.args[k] = pluginOptions
+      copyTable(v:CreateOptions(), pluginOptions.args)
+--      AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_" .. pluginOptions.name, pluginOptions)
+--      AceConfigDialog:AddToBlizOptions(MODNAME .. "_" .. pluginOptions.name, pluginOptions.name, MODNAME)
+  end
+
+
+  AceConfig:RegisterOptionsTable(MODNAME, options)
+  mConfigFrame = mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
+  mConfigFrame.default = function(...)
+  --    self.db:ResetProfile()
+    for i=1,select("#", ...) do
+      local x = select(i, ...)
+      print("arg" .. i .. ": " .. type(x))
+      printTable(x)
+    end
+  end
+
+
+  local profiles = AceDBOptions:GetOptionsTable(self.db)
+  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
+  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
+
   return options
 end
 
-function WoodysToolkit:RefreshDB()
-  WoodysToolkit:Print("Refreshing DB Profile")
+function MOD:RefreshDB()
+  MOD:Print("Refreshing DB Profile")
   applySettings()
 end
 
@@ -238,26 +279,26 @@ end
 -- </ Event Handlers > ------------------------------------------
 --------------------------------------------------------------------------------
 
-function WoodysToolkit:ADDON_LOADED()
+function MOD:ADDON_LOADED()
   self:UnregisterEvent("ADDON_LOADED")
 end
 
-function WoodysToolkit:PLAYER_ENTERING_WORLD()
+function MOD:PLAYER_ENTERING_WORLD()
   applySettings()
 end
 
-function WoodysToolkit:PLAYER_LOGIN()
+function MOD:PLAYER_LOGIN()
   -- Nothing here yet.
 end
 
-function WoodysToolkit:DUEL_REQUESTED(event, name)
+function MOD:DUEL_REQUESTED(event, name)
   if self.db.profile.autoDuelDecline then
     HideUIPanel(StaticPopup1);
     CancelDuel();
   end
 end
 
-function WoodysToolkit:MERCHANT_SHOW()
+function MOD:MERCHANT_SHOW()
   for _, plugin in pairs(mPlugins) do
     if plugin["MERCHANT_SHOW"] then
       plugin:MERCHANT_SHOW()
@@ -265,28 +306,17 @@ function WoodysToolkit:MERCHANT_SHOW()
   end
 end
 
-WoodysToolkit:RegisterEvent("ADDON_LOADED")
-WoodysToolkit:RegisterEvent("PLAYER_ENTERING_WORLD")
-WoodysToolkit:RegisterEvent("PLAYER_LOGIN")
-WoodysToolkit:RegisterEvent("DUEL_REQUESTED")
+MOD:RegisterEvent("ADDON_LOADED")
+MOD:RegisterEvent("PLAYER_ENTERING_WORLD")
+MOD:RegisterEvent("PLAYER_LOGIN")
+MOD:RegisterEvent("DUEL_REQUESTED")
 
 --------------------------------------------------------------------------------
 -- </ in-game configuration UI code > ------------------------------------------
 --------------------------------------------------------------------------------
 
--- Check if the options panel is loaded, if not then get it loaded and ask it to toggle open/close status
 function MOD:OptionsPanel()
-  --     if not optionsLoaded then
-  --         optionsLoaded = true
-  --         local loaded, reason = LoadAddOn(MOD_Options)
-  --         if not loaded then
-  --             print(L["Failed to load "] .. tostring(MOD_Options) .. ": " .. tostring(reason))
-  -- 			optionsFailed = true
-  --         end
-  -- 	end
-  if not optionsFailed then
-    MOD:ToggleOptions()
-  end
+  MOD:ToggleOptions()
 end
 
 -- Tie into LibDataBroker
@@ -297,7 +327,6 @@ function MOD:InitializeLDB()
     type = "launcher",
     text = "Woody's Toolkit",
     icon = "Interface\\Icons\\Trade_Engineering",
-    -- icon = [[Interface\AddOns\Raven\Raven]],
     OnClick = function(_, msg)
       MOD:OptionsPanel()
 --      if msg == "RightButton" then
@@ -331,7 +360,7 @@ end
 
 
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
-function WoodysToolkit:OnInitialize()
+function MOD:OnInitialize()
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
   self.db = LibStub("AceDB-3.0"):New(MODNAME .. "DB", createDatabaseDefaults(), true)
 
@@ -343,44 +372,40 @@ function WoodysToolkit:OnInitialize()
   self.db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
   self:RefreshDB()
 
-  -- See: wowace.com/addons/ace3/pages/getting-started/#w-registering-the-options
-  local options = self:PopulateOptions()
-
   for _, plugin in pairs(mPlugins) do
     if plugin["OnInitialize"] then
       plugin:OnInitialize()
     end
   end
 
-  AceConfig:RegisterOptionsTable(MODNAME, options)
+  local options = self:PopulateOptions()
+--  AceConfig:RegisterOptionsTable(MODNAME, options)
+--  mConfigFrame = mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
+--  mConfigFrame.default = function()
+--    self.db:ResetProfile()
+--  end
+--
+--  local orderidx = 100
+--  for k, v in pairs(mPlugins) do
+--    orderidx = orderidx + 10
+--    local pluginOptions = {
+--      order = orderidx,
+--      type = "group",
+--      name = v["name"] or k,
+--      args = {
+--      }
+--    }
+--    copyTable(v:CreateOptions(), pluginOptions.args)
+--    AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_" .. pluginOptions.name, pluginOptions)
+--    AceConfigDialog:AddToBlizOptions(MODNAME .. "_" .. pluginOptions.name, pluginOptions.name, MODNAME)
+--  end
+--
+--  local profiles = AceDBOptions:GetOptionsTable(self.db)
+--  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
+--  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
 
-  -- Register the Ace3 profile options table
-  mConfigFrame = mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
-  mConfigFrame.default = function()
-    self.db:ResetProfile()
-  end
-
-  local orderidx = 100
-  for k, v in pairs(mPlugins) do
-    orderidx = orderidx + 10
-    local pluginOptions = {
-      order = orderidx,
-      type = "group",
-      name = v["name"] or k,
-      args = {
-      }
-    }
-    copyTable(v:CreateOptions(), pluginOptions.args)
-    AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_" .. pluginOptions.name, pluginOptions)
-    AceConfigDialog:AddToBlizOptions(MODNAME .. "_" .. pluginOptions.name, pluginOptions.name, MODNAME)
-  end
-
-  local profiles = AceDBOptions:GetOptionsTable(self.db)
-  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
-  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
-
-  LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "woodystoolkit", MODNAME)
-  LibStub("AceConfigCmd-3.0").CreateChatCommand(WoodysToolkit, "wtk", MODNAME)
+  LibStub("AceConfigCmd-3.0").CreateChatCommand(MOD, "woodystoolkit", MODNAME)
+  LibStub("AceConfigCmd-3.0").CreateChatCommand(MOD, "wtk", MODNAME)
 
   self:InitializeLDB()
 
@@ -388,11 +413,11 @@ function WoodysToolkit:OnInitialize()
 end
 
 -- Called by AceAddon.
-function WoodysToolkit:OnEnable()
+function MOD:OnEnable()
   self:RegisterEvent("MERCHANT_SHOW")
 end
 
 -- Called by AceAddon.
-function WoodysToolkit:OnDisable()
+function MOD:OnDisable()
   -- Nothing here yet.
 end
