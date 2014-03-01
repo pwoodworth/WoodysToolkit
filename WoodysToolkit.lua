@@ -40,6 +40,11 @@ local type = _G.type
 
 mPlugins = mPlugins or {}
 
+function MOD:AddLocalPlugin(plugin)
+  mPlugins = mPlugins or {}
+  mPlugins[plugin.name:lower()] = plugin
+end
+
 local function invokePlugins(funcname,...)
   for _, plugin in pairs(mPlugins) do
     if plugin[funcname] then

@@ -246,5 +246,4 @@ function thisPlugin:CreateOptions()
   return options
 end
 
-mPlugins = mPlugins or {}
-mPlugins["viewport"] = thisPlugin
+MOD:AddLocalPlugin(thisPlugin)

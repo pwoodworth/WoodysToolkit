@@ -367,5 +367,4 @@ function thisPlugin:CreateOptions()
   return options
 end
 
-mPlugins = mPlugins or {}
-mPlugins["selljunk"] = thisPlugin
+MOD:AddLocalPlugin(thisPlugin)

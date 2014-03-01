@@ -605,5 +605,4 @@ function thisPlugin:CreateOptions()
   return options
 end
 
-mPlugins = mPlugins or {}
-mPlugins["mouse"] = thisPlugin
+MOD:AddLocalPlugin(thisPlugin)
