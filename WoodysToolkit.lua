@@ -8,13 +8,9 @@ WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit
 local _G = getfenv(0)
 WoodysToolkit._G = WoodysToolkit._G or _G
 setfenv(1, WoodysToolkit)
-
 MODNAME = "WoodysToolkit"
-
-local WoodysToolkit = _G.WoodysToolkit
 local LibStub = _G.LibStub
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
---local MOD = WoodysToolkit
 
 local L = LibStub("AceLocale-3.0"):GetLocale("WoodysToolkit", true)
 local AceConfig = LibStub("AceConfig-3.0")

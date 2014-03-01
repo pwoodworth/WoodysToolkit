@@ -6,13 +6,9 @@ WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit
 local _G = getfenv(0)
 WoodysToolkit._G = WoodysToolkit._G or _G
 setfenv(1, WoodysToolkit)
-
 MODNAME = "WoodysToolkit"
-
-local WoodysToolkit = _G.WoodysToolkit
 local LibStub = _G.LibStub
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
---local MOD = WoodysToolkit
 
 local L = LibStub("AceLocale-3.0"):GetLocale("WoodysToolkit", true)
 local AceConfig = LibStub("AceConfig-3.0")
@@ -53,7 +49,7 @@ local function createSellButton()
     MOD.sellButton:SetPoint("TOPLEFT", 60, -32)
   end
   MOD.sellButton:SetText(L["Sell Junk"])
-  MOD.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+  MOD.sellButton:SetScript("OnClick", function() MOD:JunkSell() end)
 
   _G.StaticPopupDialogs["WoodysToolkit_DestroyConfirmation"] = {
     text = "Do you want to destroy %s?",
