@@ -11,6 +11,8 @@ MODNAME = "WoodysToolkit"
 
 local WoodysToolkit = _G.WoodysToolkit
 local LibStub = _G.LibStub
+local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+--local MOD = WoodysToolkit
 
 local L = LibStub("AceLocale-3.0"):GetLocale("WoodysToolkit", true)
 local AceConfig = LibStub("AceConfig-3.0")
@@ -18,7 +20,6 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
 
-local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 -- upvalues
 local print = print or _G.print

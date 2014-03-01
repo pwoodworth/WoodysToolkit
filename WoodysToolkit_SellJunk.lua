@@ -5,21 +5,20 @@
 WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
 local _G = getfenv(0)
 WoodysToolkit._G = WoodysToolkit._G or _G
-
--- Set the environment of the current function to the global table WoodysToolkit.
--- See: http://www.lua.org/pil/14.3.html
 setfenv(1, WoodysToolkit)
+
+MODNAME = "WoodysToolkit"
 
 local WoodysToolkit = _G.WoodysToolkit
 local LibStub = _G.LibStub
+local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+--local MOD = WoodysToolkit
 
 local L = LibStub("AceLocale-3.0"):GetLocale("WoodysToolkit", true)
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
-
-local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 -- upvalues
 local print = print or _G.print
@@ -44,17 +43,17 @@ local SILVER_PER_GOLD = _G.SILVER_PER_GOLD
 --------------------------------------------------------------------------------
 
 local function createSellButton()
-  if MyAddOn.sellButton then
+  if MOD.sellButton then
     return
   end
-  MyAddOn.sellButton = _G.CreateFrame("Button", nil, _G.MerchantFrame, "OptionsButtonTemplate")
+  MOD.sellButton = _G.CreateFrame("Button", nil, _G.MerchantFrame, "OptionsButtonTemplate")
   if IsAddOnLoaded("GnomishVendorShrinker") then
-    MyAddOn.sellButton:SetPoint("TOPRIGHT", -23, 0)
+    MOD.sellButton:SetPoint("TOPRIGHT", -23, 0)
   else
-    MyAddOn.sellButton:SetPoint("TOPLEFT", 60, -32)
+    MOD.sellButton:SetPoint("TOPLEFT", 60, -32)
   end
-  MyAddOn.sellButton:SetText(L["Sell Junk"])
-  MyAddOn.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
+  MOD.sellButton:SetText(L["Sell Junk"])
+  MOD.sellButton:SetScript("OnClick", function() WoodysToolkit:JunkSell() end)
 
   _G.StaticPopupDialogs["WoodysToolkit_DestroyConfirmation"] = {
     text = "Do you want to destroy %s?",
@@ -65,7 +64,7 @@ local function createSellButton()
       if item then
         PickupContainerItem(bag, slot)
         DeleteCursorItem()
-        local showSpam = MyAddOn.db.profile.selljunk.showSpam
+        local showSpam = MOD.db.profile.selljunk.showSpam
         if showSpam then
           print(L["Destroyed"] .. ": " .. item)
         end
@@ -109,7 +108,7 @@ end
 
 local function isJunkException(link)
   local link, isLink, name = extractLink(link)
-  local exceptions = MyAddOn.db.profile.selljunk.exceptions
+  local exceptions = MOD.db.profile.selljunk.exceptions
   local found = isJunkInList(exceptions, link)
   if found then
     return true
@@ -144,7 +143,7 @@ local function printGold(total)
   end
   ret = ret .. copper .. " " .. L["copper"]
   if silver > 0 or gold > 0 or copper > 0 then
-    MyAddOn:Print(L["Gained"] .. ": " .. ret)
+    MOD:Print(L["Gained"] .. ": " .. ret)
   end
 end
 
@@ -153,11 +152,11 @@ end
 --   - grey quality, unless it's in exception list         --
 --   - better than grey quality, if it's in exception list --
 -------------------------------------------------------------
-function MyAddOn:JunkSell()
+function MOD:JunkSell()
   local limit = 0
-  local destroy = MyAddOn.db.profile.selljunk.destroy
-  local showSpam = MyAddOn.db.profile.selljunk.showSpam
-  local max12 = MyAddOn.db.profile.selljunk.max12
+  local destroy = MOD.db.profile.selljunk.destroy
+  local showSpam = MOD.db.profile.selljunk.showSpam
+  local max12 = MOD.db.profile.selljunk.max12
   local profit = 0
   for bag = 0, 4 do
     for slot = 1, _G.GetContainerNumSlots(bag) do
@@ -201,14 +200,14 @@ function MyAddOn:JunkSell()
   end
 end
 
-function MyAddOn:JunkAdd(link)
+function MOD:JunkAdd(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
   exceptions[name] = link
   self:Print(L["Added"] .. ": " .. link)
 end
 
-function MyAddOn:JunkRem(link)
+function MOD:JunkRem(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
   local found = isJunkInList(exceptions, link)
@@ -218,7 +217,7 @@ function MyAddOn:JunkRem(link)
   end
 end
 
-function MyAddOn:ListExceptions()
+function MOD:ListExceptions()
   local exceptions = self.db.profile.selljunk.exceptions
   if exceptions then
     for k, v in pairs(exceptions) do
@@ -228,7 +227,7 @@ function MyAddOn:ListExceptions()
   end
 end
 
-function MyAddOn:JunkClearDB()
+function MOD:JunkClearDB()
   wipe(self.db.profile.selljunk.destroyables)
   wipe(self.db.profile.selljunk.exceptions)
   self:Print(L["Exceptions succesfully cleared."])
@@ -255,8 +254,8 @@ local thisPlugin = {
 
 function thisPlugin:MERCHANT_SHOW()
   createSellButton()
-  if MyAddOn.db.profile.selljunk.auto then
-    MyAddOn:JunkSell()
+  if MOD.db.profile.selljunk.auto then
+    MOD:JunkSell()
   end
 end
 
@@ -272,8 +271,8 @@ function thisPlugin:CreateOptions()
       type = "toggle",
       name = L["Automatically sell junk"],
       desc = L["Toggles the automatic selling of junk when the merchant window is opened."],
-      get = function() return MyAddOn.db.profile.selljunk.auto end,
-      set = function() MyAddOn.db.profile.selljunk.auto = not MyAddOn.db.profile.selljunk.auto end,
+      get = function() return MOD.db.profile.selljunk.auto end,
+      set = function() MOD.db.profile.selljunk.auto = not MOD.db.profile.selljunk.auto end,
     },
     divider2 = {
       order = 3,
@@ -285,8 +284,8 @@ function thisPlugin:CreateOptions()
       type = "toggle",
       name = L["Sell max. 12 items"],
       desc = L["This is failsafe mode. Will sell only 12 items in one pass. In case of an error, all items can be bought back from vendor."],
-      get = function() return MyAddOn.db.profile.selljunk.max12 end,
-      set = function() MyAddOn.db.profile.selljunk.max12 = not MyAddOn.db.profile.selljunk.max12 end,
+      get = function() return MOD.db.profile.selljunk.max12 end,
+      set = function() MOD.db.profile.selljunk.max12 = not MOD.db.profile.selljunk.max12 end,
     },
     divider3 = {
       order = 5,
@@ -298,8 +297,8 @@ function thisPlugin:CreateOptions()
       type = "toggle",
       name = L["Show gold gained"],
       desc = L["Shows gold gained from selling trash."],
-      get = function() return MyAddOn.db.profile.selljunk.printGold end,
-      set = function() MyAddOn.db.profile.selljunk.printGold = not MyAddOn.db.profile.selljunk.printGold end,
+      get = function() return MOD.db.profile.selljunk.printGold end,
+      set = function() MOD.db.profile.selljunk.printGold = not MOD.db.profile.selljunk.printGold end,
     },
     divider4 = {
       order = 7,
@@ -311,8 +310,8 @@ function thisPlugin:CreateOptions()
       type = "toggle",
       name = L["Show 'item sold' spam"],
       desc = L["Prints itemlinks to chat, when automatically selling items."],
-      get = function() return MyAddOn.db.profile.selljunk.showSpam end,
-      set = function() MyAddOn.db.profile.selljunk.showSpam = not MyAddOn.db.profile.selljunk.showSpam end,
+      get = function() return MOD.db.profile.selljunk.showSpam end,
+      set = function() MOD.db.profile.selljunk.showSpam = not MOD.db.profile.selljunk.showSpam end,
     },
     divider5 = {
       order = 9,
@@ -324,14 +323,14 @@ function thisPlugin:CreateOptions()
       type = "execute",
       name = L["Clear"],
       desc = L["Removes all exceptions."],
-      func = function() MyAddOn:JunkClearDB() end,
+      func = function() MOD:JunkClearDB() end,
     },
     listglobal = {
       order = 11,
       type = "execute",
       name = L["List"],
       desc = L["List all exceptions."],
-      func = function() MyAddOn:ListExceptions() end,
+      func = function() MOD:ListExceptions() end,
     },
     divider6 = {
       order = 12,
@@ -354,7 +353,7 @@ function thisPlugin:CreateOptions()
       name = L["Add item"] .. ':',
       usage = L["<Item Link>"],
       get = false,
-      set = function(info, v) MyAddOn:JunkAdd(v) end,
+      set = function(info, v) MOD:JunkAdd(v) end,
     },
     rem = {
       order = 16,
@@ -362,7 +361,7 @@ function thisPlugin:CreateOptions()
       name = L["Remove item"] .. ':',
       usage = L["<Item Link>"],
       get = false,
-      set = function(info, v) MyAddOn:JunkRem(v) end,
+      set = function(info, v) MOD:JunkRem(v) end,
     },
   }
   return options

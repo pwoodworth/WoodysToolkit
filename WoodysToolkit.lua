@@ -12,16 +12,17 @@ setfenv(1, WoodysToolkit)
 MODNAME = "WoodysToolkit"
 
 local WoodysToolkit = _G.WoodysToolkit
-local MOD = WoodysToolkit
 local LibStub = _G.LibStub
+local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+--local MOD = WoodysToolkit
 
 local L = LibStub("AceLocale-3.0"):GetLocale("WoodysToolkit", true)
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
-
-local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+local AceConfigCmd = LibStub("AceConfigCmd-3.0")
+local AceDB = LibStub("AceDB-3.0")
 
 -- upvalues
 local print = print or _G.print
@@ -34,12 +35,36 @@ local select = _G.select
 local type = _G.type
 
 --------------------------------------------------------------------------------
--- Settings
+-- Utilities
 --------------------------------------------------------------------------------
 
 mPlugins = mPlugins or {}
 
-mConfigFrame = nil
+local function invokePlugins(funcname,...)
+  for _, plugin in pairs(mPlugins) do
+    if plugin[funcname] then
+      plugin[funcname](plugin,...)
+    end
+  end
+end
+
+local function copyTable(src, dst)
+  local dst = dst or {}
+  for k,v in pairs(src) do
+    dst[k] = v
+  end
+  return dst
+end
+
+local function printTable(t)
+  for k, v in pairs(t) do
+    print("  key: " .. k .. " ; type: " .. type(v))
+  end
+end
+
+--------------------------------------------------------------------------------
+-- Settings
+--------------------------------------------------------------------------------
 
 local function createDatabaseDefaults()
   local databaseDefaults = {
@@ -134,9 +159,9 @@ end
 
 local function toggleOptions()
     if not _G.InCombatLockdown() then
-      _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
       -- Called twice to workaround UI bug
-      _G.InterfaceOptionsFrame_OpenToCategory(mConfigFrame)
+      _G.InterfaceOptionsFrame_OpenToCategory(MOD.mConfigFrame)
+      _G.InterfaceOptionsFrame_OpenToCategory(MOD.mConfigFrame)
     end
 end
 
@@ -147,19 +172,7 @@ end
 local function applySettings()
   applyStopButton()
   applyIdpcFuncHack()
-  for _, plugin in pairs(mPlugins) do
-    if plugin["ApplySettings"] then
-      plugin:ApplySettings()
-    end
-  end
-end
-
-local function copyTable(src, dst)
-  local dst = dst or {}
-  for k,v in pairs(src) do
-    dst[k] = v
-  end
-  return dst
+  invokePlugins("ApplySettings")
 end
 
 function MOD:CreateOptions()
@@ -224,12 +237,6 @@ function MOD:CreateOptions()
   return options
 end
 
-local function printTable(t)
-  for k, v in pairs(t) do
-    print("  key: " .. k .. " ; type: " .. type(v))
-  end
-end
-
 function MOD:PopulateOptions()
   local options = {}
   copyTable(MOD:CreateOptions(), options)
@@ -252,14 +259,9 @@ function MOD:PopulateOptions()
 
 
   AceConfig:RegisterOptionsTable(MODNAME, options)
-  mConfigFrame = mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
-  mConfigFrame.default = function(...)
-  --    self.db:ResetProfile()
-    for i=1,select("#", ...) do
-      local x = select(i, ...)
-      print("arg" .. i .. ": " .. type(x))
-      printTable(x)
-    end
+  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
+  MOD.mConfigFrame.default = function(...)
+    self.db:ResetProfile()
   end
 
 
@@ -298,12 +300,8 @@ function MOD:DUEL_REQUESTED(event, name)
   end
 end
 
-function MOD:MERCHANT_SHOW()
-  for _, plugin in pairs(mPlugins) do
-    if plugin["MERCHANT_SHOW"] then
-      plugin:MERCHANT_SHOW()
-    end
-  end
+function MOD:MERCHANT_SHOW(...)
+  invokePlugins("MERCHANT_SHOW",...)
 end
 
 MOD:RegisterEvent("ADDON_LOADED")
@@ -328,30 +326,27 @@ function MOD:InitializeLDB()
     text = "Woody's Toolkit",
     icon = "Interface\\Icons\\Trade_Engineering",
     OnClick = function(_, msg)
-      MOD:OptionsPanel()
---      if msg == "RightButton" then
---        if IsShiftKeyDown() then
---          MOD.db.profile.hideBlizz = not MOD.db.profile.hideBlizz
---          MOD.db.profile.hideConsolidated = MOD.db.profile.hideBlizz
---        else
---          MOD:ToggleBarGroupLocks()
---        end
---      elseif msg == "LeftButton" then
---        if IsShiftKeyDown() then
---          MOD.db.profile.enabled = not MOD.db.profile.enabled
---        else
---          MOD:OptionsPanel()
---        end
---      end
---      doUpdate = true
+      if msg == "RightButton" then
+        if _G.IsShiftKeyDown() then
+          MOD:OptionsPanel()
+        else
+          MOD:OptionsPanel()
+        end
+      elseif msg == "LeftButton" then
+        if _G.IsShiftKeyDown() then
+          MOD:OptionsPanel()
+        else
+          MOD:OptionsPanel()
+        end
+      end
     end,
     OnTooltipShow = function(tooltip)
       if not tooltip or not tooltip.AddLine then return end
       tooltip:AddLine(L["WTK"])
       tooltip:AddLine(L["WTK left click"])
---      tooltip:AddLine(L["WTK right click"])
---      tooltip:AddLine(L["WTK shift left click"])
---      tooltip:AddLine(L["WTK shift right click"])
+      tooltip:AddLine(L["WTK right click"])
+      tooltip:AddLine(L["WTK shift left click"])
+      tooltip:AddLine(L["WTK shift right click"])
     end,
   })
   MOD.ldbi = LibStub("LibDBIcon-1.0", true)
@@ -362,7 +357,7 @@ end
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function MOD:OnInitialize()
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
-  self.db = LibStub("AceDB-3.0"):New(MODNAME .. "DB", createDatabaseDefaults(), true)
+  self.db = AceDB:New(MODNAME .. "DB", createDatabaseDefaults(), true)
 
   local currentVersion = _G.GetAddOnMetadata(MODNAME, "Version")
   self.db.global.version = currentVersion
@@ -372,40 +367,12 @@ function MOD:OnInitialize()
   self.db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
   self:RefreshDB()
 
-  for _, plugin in pairs(mPlugins) do
-    if plugin["OnInitialize"] then
-      plugin:OnInitialize()
-    end
-  end
+  invokePlugins("OnInitialize")
 
   local options = self:PopulateOptions()
---  AceConfig:RegisterOptionsTable(MODNAME, options)
---  mConfigFrame = mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
---  mConfigFrame.default = function()
---    self.db:ResetProfile()
---  end
---
---  local orderidx = 100
---  for k, v in pairs(mPlugins) do
---    orderidx = orderidx + 10
---    local pluginOptions = {
---      order = orderidx,
---      type = "group",
---      name = v["name"] or k,
---      args = {
---      }
---    }
---    copyTable(v:CreateOptions(), pluginOptions.args)
---    AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_" .. pluginOptions.name, pluginOptions)
---    AceConfigDialog:AddToBlizOptions(MODNAME .. "_" .. pluginOptions.name, pluginOptions.name, MODNAME)
---  end
---
---  local profiles = AceDBOptions:GetOptionsTable(self.db)
---  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
---  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
 
-  LibStub("AceConfigCmd-3.0").CreateChatCommand(MOD, "woodystoolkit", MODNAME)
-  LibStub("AceConfigCmd-3.0").CreateChatCommand(MOD, "wtk", MODNAME)
+  AceConfigCmd.CreateChatCommand(MOD, "woodystoolkit", MODNAME)
+  AceConfigCmd.CreateChatCommand(MOD, "wtk", MODNAME)
 
   self:InitializeLDB()
 

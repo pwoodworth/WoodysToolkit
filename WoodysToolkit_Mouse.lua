@@ -15,16 +15,15 @@ setfenv(1, WoodysToolkit)
 MODNAME = "WoodysToolkit"
 
 local WoodysToolkit = _G.WoodysToolkit
-local MOD = WoodysToolkit
 local LibStub = _G.LibStub
+local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+--local MOD = WoodysToolkit
 
 local L = LibStub("AceLocale-3.0"):GetLocale("WoodysToolkit", true)
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
-
-local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 -- upvalues
 local print = print or _G.print
@@ -50,7 +49,7 @@ clauseText = nil
 mMouseLockEnabled = false
 mMouseLockInverted = false
 
-function MyAddOn:predFun(enabled, inverted, clauseText, event, ...)
+function MOD:predFun(enabled, inverted, clauseText, event, ...)
   return (enabled and not inverted) or (not enabled and inverted)
 end
 
@@ -84,7 +83,7 @@ end
 
 local function updateLock(event, ...)
   local shouldMouselookOld = shouldMouselook
-  shouldMouselook = MyAddOn:predFun(mMouseLockEnabled, mMouseLockInverted, clauseText, event, ...)
+  shouldMouselook = MOD:predFun(mMouseLockEnabled, mMouseLockInverted, clauseText, event, ...)
   if shouldMouselook ~= shouldMouselookOld then
     rematch()
   end
