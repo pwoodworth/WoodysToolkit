@@ -31,6 +31,7 @@ local mod = _G.mod
 local pairs = _G.pairs
 local wipe = _G.wipe
 local select = _G.select
+local type = _G.type
 
 --------------------------------------------------------------------------------
 -- Settings
@@ -55,8 +56,17 @@ local function createDatabaseDefaults()
 
   for k, v in pairs(mPlugins) do
     if v.defaults then
+      print("Adding defaults for " .. v.name)
       databaseDefaults["global"][k] = v.defaults.global
       databaseDefaults["profile"][k] = v.defaults.profile
+--      if v.name == "Mouse" then
+--        for k2, v2 in pairs(v.defaults) do
+--          print("  entry: " .. k2 .. " ; type: " .. type(v2))
+--          for k3, v3 in pairs(v2) do
+--            print("    entry: " .. k3 .. " ; type: " .. type(v3))
+--          end
+--        end
+--      end
     end
   end
 
@@ -140,7 +150,13 @@ local function toggleOptions()
 end
 
 function MOD:ToggleOptions()
-  toggleOptions()
+--  toggleOptions()
+--  if not initialized then InitializeOptions() end
+  if AceConfigDialog.OpenFrames["WoodysToolkit"] then
+    AceConfigDialog:Close("WoodysToolkit")
+  else
+    AceConfigDialog:Open("WoodysToolkit")
+  end
 end
 
 local function applySettings()

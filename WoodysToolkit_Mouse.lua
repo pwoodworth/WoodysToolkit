@@ -1,8 +1,7 @@
-_G["BINDING_HEADER_MOUSELOOKHANDLER"] = "MouselookHandler"
-_G["BINDING_NAME_INVERTMOUSELOOK"]    = "Invert Mouselook"
-_G["BINDING_NAME_TOGGLEMOUSELOOK"]    = "Toggle Mouselook"
-_G["BINDING_NAME_LOCKMOUSELOOK"]      = "Enable Mouselook"
-_G["BINDING_NAME_UNLOCKMOUSELOOK"]    = "Disable Mouselook"
+_G["BINDING_NAME_WTKMLINVERT"]    = "Invert Mouselook"
+_G["BINDING_NAME_WTKMLTOGGLE"]    = "Toggle Mouselook"
+_G["BINDING_NAME_WTKMLENABLE"]    = "Enable Mouselook"
+_G["BINDING_NAME_WTKMLDISABLE"]   = "Disable Mouselook"
 
 --------------------------------------------------------------------------------
 -- AddOn Initialization
@@ -27,8 +26,18 @@ local AceDBOptions = LibStub("AceDBOptions-3.0")
 
 local MyAddOn = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
+-- upvalues
+local print = print or _G.print
+local string = string or _G.string
+local floor = _G.floor
+local mod = _G.mod
+local pairs = _G.pairs
+local wipe = _G.wipe
+local select = _G.select
+local type = _G.type
 local IsMouselooking = _G.IsMouselooking
-local MouselookStart, MouselookStop = _G.MouselookStart, _G.MouselookStop
+local MouselookStart = _G.MouselookStart
+local MouselookStop = _G.MouselookStop
 
 local customEventFrame
 
@@ -46,8 +55,7 @@ function MyAddOn:predFun(enabled, inverted, clauseText, event, ...)
 end
 
 local function defer()
-  local db = MyAddOn.db
-  if not db.profile.useDeferWorkaround then return end
+  if not db.profile.mouse.useDeferWorkaround then return end
   for i = 1, 5 do
     if _G.IsMouseButtonDown(i) then return true end
   end
@@ -57,7 +65,7 @@ end
 -- saved state.
 local function rematch()
   if defer() then return end
-  if db.profile.useSpellTargetingOverride and _G.SpellIsTargeting() then
+  if db.profile.mouse.useSpellTargetingOverride and _G.SpellIsTargeting() then
     MouselookStop()
     return
   end
@@ -157,28 +165,37 @@ handlerFrame:RegisterEvent("ADDON_LOADED")
 -- < in-game configuration UI code > -------------------------------------------
 --------------------------------------------------------------------------------
 
+local function printDatabaseEntries()
+  for k2, v2 in pairs(db.profile) do
+    print("  entry: " .. k2 .. " ; type: " .. type(v2))
+    if type(v2) == "table" then
+      for k3, v3 in pairs(v2) do
+        print("    entry: " .. k3 .. " ; type: " .. type(v3))
+      end
+    end
+  end
+end
+
 local function applyOverrideBindings(info, val)
-  local db = MyAddOn.db
-  if db.profile.useOverrideBindings then
-    for key, command in _G.pairs(db.profile.mouseOverrideBindings) do
+--  printDatabaseEntries()
+  if db.profile.mouse.useOverrideBindings then
+    for key, command in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
       _G.SetMouselookOverrideBinding(key, command == "" and nil or command)
     end
   else
-    for key, _ in _G.pairs(db.profile.mouseOverrideBindings) do
+    for key, _ in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
       _G.SetMouselookOverrideBinding(key, nil)
     end
   end
 end
 
 local function setUseOverrideBindings(info, val)
-  local db = MyAddOn.db
-  db.profile.useOverrideBindings = val
+  db.profile.mouse.useOverrideBindings = val
   applyOverrideBindings()
 end
 
 local function getUseOverrideBindings(info)
-  local db = MyAddOn.db
-  return db.profile.useOverrideBindings
+  return db.profile.mouse.useOverrideBindings
 end
 
 -- "Hint: Use info[#info] to get the leaf node name, info[#info-1] for the parent, and so on!"
@@ -186,7 +203,7 @@ end
 
 local suggestedCommands = {}
 for _, v in _G.ipairs({
-  "UNLOCKMOUSELOOK",
+  "WTKMLDISABLE",
   "MOVEFORWARD",
   "MOVEBACKWARD",
   "TOGGLEAUTORUN",
@@ -200,7 +217,7 @@ end
 -- configured.
 local selectedKey
 
--- Array containing all the keys from db.profile.mouseOverrideBindings.
+-- Array containing all the keys from db.profile.mouse.mouseOverrideBindings.
 local overrideKeys = {}
 
 local deferText = [[When clicking and holding any mouse button while ]]
@@ -250,10 +267,9 @@ local thisPlugin = {
 }
 
 function thisPlugin:OnInitialize()
-  local db = MyAddOn.db
-  for k, _ in _G.pairs(db.profile.mouseOverrideBindings) do
+  for k, _ in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
     if not (_G.type(k) == "string") then
-      db.profile.mouseOverrideBindings[k] = nil
+      db.profile.mouse.mouseOverrideBindings[k] = nil
     else
       _G.table.insert(overrideKeys, (k))
     end
@@ -267,7 +283,6 @@ function thisPlugin:ApplySettings()
 end
 
 function thisPlugin:CreateOptions()
-  local db = MyAddOn.db
   local options = {
     general = {
       type = "group",
@@ -289,8 +304,8 @@ function thisPlugin:CreateOptions()
           type = "toggle",
           name = "Enable defer workaround",
           width = "full",
-          set = function(info, val) db.profile.useDeferWorkaround = val end,
-          get = function(info) return db.profile.useDeferWorkaround  end,
+          set = function(info, val) db.profile.mouse.useDeferWorkaround = val end,
+          get = function(info) return db.profile.mouse.useDeferWorkaround  end,
           order = 2,
         },
         spellTargetingOverrideHeader = {
@@ -308,8 +323,8 @@ function thisPlugin:CreateOptions()
           type = "toggle",
           name = "Enable",
           width = "full",
-          set = function(info, val) db.profile.useSpellTargetingOverride = val end,
-          get = function(info) return db.profile.useSpellTargetingOverride end,
+          set = function(info, val) db.profile.mouse.useSpellTargetingOverride = val end,
+          get = function(info) return db.profile.mouse.useSpellTargetingOverride end,
           order = 8,
         },
       },
@@ -358,8 +373,8 @@ function thisPlugin:CreateOptions()
           desc = "Create a new mouselook override binding.",
           set = function(info, val)
             val = _G.string.upper(val)
-            if not db.profile.mouseOverrideBindings[val] then
-              db.profile.mouseOverrideBindings[val] = ""
+            if not db.profile.mouse.mouseOverrideBindings[val] then
+              db.profile.mouse.mouseOverrideBindings[val] = ""
               --overrideKeys[#overrideKeys + 1] = val
               _G.table.insert(overrideKeys, val)
               -- http://stackoverflow.com/questions/2038418/associatively-sorting-a-table-by-v
@@ -406,11 +421,11 @@ function thisPlugin:CreateOptions()
           values = function(info) return suggestedCommands end,
           hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
           set = function(info, val)
-            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = val
+            db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]] = val
             applyOverrideBindings()
           end,
           get = function(info)
-            return db.profile.mouseOverrideBindings[overrideKeys[selectedKey]]
+            return db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]]
           end,
           order = 180,
         },
@@ -423,11 +438,11 @@ function thisPlugin:CreateOptions()
           hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
           set = function(info, val)
             if val == "" then val = nil end
-            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = val
+            db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]] = val
             applyOverrideBindings()
           end,
           get = function(info)
-            return db.profile.mouseOverrideBindings[overrideKeys[selectedKey]]
+            return db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]]
           end,
           order = 190,
         },
@@ -459,7 +474,7 @@ function thisPlugin:CreateOptions()
           confirmText = "This can't be undone. Continue?",
           func = function()
             _G.SetMouselookOverrideBinding(overrideKeys[selectedKey], nil)
-            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = nil
+            db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]] = nil
             -- This wont shift down the remaining integer keys: overrideKeys[selectedKey] = nil
             _G.table.remove(overrideKeys, selectedKey)
             selectedKey = 0
@@ -476,80 +491,6 @@ function thisPlugin:CreateOptions()
         },
       },
     },
-    advanced = {
-      type = "group",
-      name = "Advanced",
-      order = 120,
-      args = {
-        header1 = {
-          type = "header",
-          name = "Lua chunk",
-          order = 0,
-        },
-        desc1 = {
-          type = "description",
-          name = "You can provide a chunk of Lua code that will " ..
-              "be compiled and ran when loading the addon " ..
-              "(and when you change the Lua chunk). " ..
-              "It must define a function " ..
-              "\'MyAddOn:predFun\' which will control " ..
-              "when mouselook is started and stopped and " ..
-              "gets called with these arguments:\n" ..
-              " - the current default mouselook state (boolean),\n" ..
-              " - the state of the temporary inversion switch; " ..
-              "true while the key assigned is being held down (boolean),\n" ..
-              " - the clause text obtained from your macro string; " ..
-              "i.e., the text after whichever set of conditions applied (string), " ..
-              "if any, and otherwise nil.\n\n" ..
-              "Additionally, if it was called in response to an event the name " ..
-              "of the event (string) and the event's specific arguments will be passed " ..
-              "(See |cFF3366BBhttp://wowprogramming.com/docs/events|r).\n" ..
-              "    Mouselook will be enabled if true is returned and disabled otherwise.",
-          fontSize = "medium",
-          order = 1,
-        },
-        header2 = {
-          type = "header",
-          name = "Reset advanced settings",
-          order = 4,
-        },
-        desc2 = {
-          type = "description",
-          name = "Reenter the default events, macro text and function.",
-          fontSize = "medium",
-          width = "double",
-          order = 5,
-        },
-        advanced1 = {
-          type = "group",
-          name = "Lua chunk",
-          args = {
-            header2 = {
-              type = "header",
-              name = "Reload UI",
-              order = 2,
-            },
-            desc1 = {
-              type = "description",
-              name = "Useful to get rid of side effects introduced by previous Lua chunks " ..
-                  "(e.g. global variables or hooks from hooksecurefunc()). Otherwise unnecessary.",
-              fontSize = "medium",
-              width = "double",
-              order = 3,
-            },
-            reloadButton = {
-              type = "execute",
-              name = "Reload",
-              width = "half",
-              func = function()
-                _G.ReloadUI()
-              end,
-              order = 4,
-            },
-          },
-        },
-      },
-    },
     binds = {
       type = "group",
       name = "Keybindings",
@@ -557,7 +498,7 @@ function thisPlugin:CreateOptions()
       args = {
         toggleHeader = {
           type = "header",
-          name = _G["BINDING_NAME_TOGGLEMOUSELOOK"],
+          name = _G["BINDING_NAME_WTKMLTOGGLE"],
           order = 0,
         },
         toggleDescription = {
@@ -573,17 +514,17 @@ function thisPlugin:CreateOptions()
           desc = "Toggles the normal mouselook state.",
           width = "half",
           set = function(info, key)
-            local oldKey = (_G.GetBindingKey("TOGGLEMOUSELOOK"))
+            local oldKey = (_G.GetBindingKey("WTKMLTOGGLE"))
             if oldKey then _G.SetBinding(oldKey) end
-            _G.SetBinding(key, "TOGGLEMOUSELOOK")
+            _G.SetBinding(key, "WTKMLTOGGLE")
             _G.SaveBindings(_G.GetCurrentBindingSet())
           end,
-          get = function(info) return (_G.GetBindingKey("TOGGLEMOUSELOOK")) end,
+          get = function(info) return (_G.GetBindingKey("WTKMLTOGGLE")) end,
           order = 2,
         },
         invertHeader = {
           type = "header",
-          name = _G["BINDING_NAME_INVERTMOUSELOOK"],
+          name = _G["BINDING_NAME_WTKMLINVERT"],
           order = 3,
         },
         invertDescription = {
@@ -599,17 +540,17 @@ function thisPlugin:CreateOptions()
           desc = "Inverts mouselook while the key is being held.",
           width = "half",
           set = function(info, key)
-            local oldKey = (_G.GetBindingKey("INVERTMOUSELOOK"))
+            local oldKey = (_G.GetBindingKey("WTKMLINVERT"))
             if oldKey then _G.SetBinding(oldKey) end
-            _G.SetBinding(key, "INVERTMOUSELOOK")
+            _G.SetBinding(key, "WTKMLINVERT")
             _G.SaveBindings(_G.GetCurrentBindingSet())
           end,
-          get = function(info) return (_G.GetBindingKey("INVERTMOUSELOOK")) end,
+          get = function(info) return (_G.GetBindingKey("WTKMLINVERT")) end,
           order = 5,
         },
         lockHeader = {
           type = "header",
-          name = _G["BINDING_NAME_LOCKMOUSELOOK"],
+          name = _G["BINDING_NAME_WTKMLENABLE"],
           order = 6,
         },
         lockDescription = {
@@ -625,17 +566,17 @@ function thisPlugin:CreateOptions()
           desc = "Sets the normal mouselook state to enabled.",
           width = "half",
           set = function(info, key)
-            local oldKey = (_G.GetBindingKey("LOCKMOUSELOOK"))
+            local oldKey = (_G.GetBindingKey("WTKMLENABLE"))
             if oldKey then _G.SetBinding(oldKey) end
-            _G.SetBinding(key, "LOCKMOUSELOOK")
+            _G.SetBinding(key, "WTKMLENABLE")
             _G.SaveBindings(_G.GetCurrentBindingSet())
           end,
-          get = function(info) return (_G.GetBindingKey("LOCKMOUSELOOK")) end,
+          get = function(info) return (_G.GetBindingKey("WTKMLENABLE")) end,
           order = 8,
         },
         unlockHeader = {
           type = "header",
-          name = _G["BINDING_NAME_UNLOCKMOUSELOOK"],
+          name = _G["BINDING_NAME_WTKMLDISABLE"],
           order = 9,
         },
         unlockDescription = {
@@ -651,12 +592,12 @@ function thisPlugin:CreateOptions()
           desc = "Sets the normal mouselook state to disabled.",
           width = "half",
           set = function(info, key)
-            local oldKey = (_G.GetBindingKey("UNLOCKMOUSELOOK"))
+            local oldKey = (_G.GetBindingKey("WTKMLDISABLE"))
             if oldKey then _G.SetBinding(oldKey) end
-            _G.SetBinding(key, "UNLOCKMOUSELOOK")
+            _G.SetBinding(key, "WTKMLDISABLE")
             _G.SaveBindings(_G.GetCurrentBindingSet())
           end,
-          get = function(info) return (_G.GetBindingKey("UNLOCKMOUSELOOK")) end,
+          get = function(info) return (_G.GetBindingKey("WTKMLDISABLE")) end,
           order = 11,
         },
       },
