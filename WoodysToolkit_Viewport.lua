@@ -6,8 +6,6 @@ local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 local _G = getfenv(0)
 setfenv(1, MOD)
-local LibStub = _G.LibStub
-local L = LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
 
 
 -- upvalues

@@ -9,14 +9,7 @@ local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 MOD._G = MOD._G or _G
 setfenv(1, MOD)
 local LibStub = _G.LibStub
-
---WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
---WoodysToolkit._G = WoodysToolkit._G or _G
---setfenv(1, WoodysToolkit)
---local LibStub = _G.LibStub
---local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
-
-local L = LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
+MOD.L = MOD.L or LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
