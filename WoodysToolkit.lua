@@ -183,7 +183,7 @@ end
 local function applySettings()
   applyStopButton()
   applyIdpcFuncHack()
-  invokeModules("ApplySettings")
+--  invokeModules("ApplySettings")
 end
 
 function MOD:CreateOptions()

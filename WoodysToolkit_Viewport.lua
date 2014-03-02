@@ -140,14 +140,27 @@ SUB.defaults = {
   },
 }
 
-function SUB:ApplySettings()
+function SUB:RefreshDB()
+  SUB:Print("Refreshing DB Profile")
   applyViewport()
 end
+
+function SUB:PLAYER_ENTERING_WORLD()
+  SUB:Print("Refreshing DB Profile")
+  applyViewport()
+end
+
+SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 -- Called by AceAddon.
 function SUB:OnInitialize()
   --  self.db = MOD.db
+  db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
+  db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
+  db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
+
   self:Print("SUBNAME: " .. SUBNAME)
+  applyViewport()
 end
 
 -- Called by AceAddon.
