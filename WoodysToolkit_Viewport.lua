@@ -9,13 +9,13 @@ setfenv(1, MOD)
 
 
 -- upvalues
-local print = print or _G.print
-local string = string or _G.string
-local floor = _G.floor
-local mod = _G.mod
-local pairs = _G.pairs
-local wipe = _G.wipe
-local select = _G.select
+--local print = print or _G.print
+--local string = string or _G.string
+--local floor = _G.floor
+--local mod = _G.mod
+--local pairs = _G.pairs
+--local wipe = _G.wipe
+--local select = _G.select
 
 --------------------------------------------------------------------------------
 -- Viewport

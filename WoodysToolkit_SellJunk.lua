@@ -8,12 +8,12 @@ local _G = getfenv(0)
 setfenv(1, MOD)
 
 -- upvalues
-local print = print or _G.print
-local string = string or _G.string
+--local print = print or _G.print
+--local string = string or _G.string
 local floor = _G.floor
 local mod = _G.mod
 local string_find = _G.string.find
-local pairs = _G.pairs
+--local pairs = _G.pairs
 local wipe = _G.wipe
 local DeleteCursorItem = _G.DeleteCursorItem
 local GetContainerItemInfo = _G.GetContainerItemInfo
