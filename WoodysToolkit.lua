@@ -52,6 +52,10 @@ local function pairsByKeys(t, f)
   return iter
 end
 
+function MOD:IterateModulesSorted()
+  return pairsByKeys(self.modules)
+end
+
 local function invokeModules(funcname, ...)
   for name, module in MOD:IterateModules() do
     if type(module[funcname]) == "function" then
@@ -204,11 +208,11 @@ function MOD:CreateOptions()
         func = toggleOptions,
         order = 1,
       },
-      general = {
-        type = "group",
-        name = "General",
-        order = 2,
-        args = {
+--      general = {
+--        type = "group",
+--        name = "General",
+--        order = 2,
+--        args = {
           stopButtonHeader = {
             type = "header",
             name = L["options.escapeButton.header"],
@@ -245,14 +249,14 @@ function MOD:CreateOptions()
             end,
             order = 92,
           },
-        },
-      },
+--        },
+--      },
     },
   }
   return options
 end
 
-function MOD:PopulateOptions()
+function MOD:CreateCliOptions()
   local options = {}
   copyTable(MOD:CreateOptions(), options)
 
@@ -270,20 +274,66 @@ function MOD:PopulateOptions()
     copyTable(module:CreateOptions(), pluginOptions.args)
   end
 
-  AceConfig:RegisterOptionsTable(MODNAME, options, { "woodystoolkit", "wtk" })
-  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit", nil, "general")
+  printTable(options.args)
+
+  AceConfig:RegisterOptionsTable(MODNAME .. "_SlashCmd", options, { "woodystoolkit", "wtk" })
+--  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit", nil, "general")
+--  MOD.mConfigFrame.default = function(...)
+--    self.db:ResetProfile()
+--  end
+
+--  for name, module in MOD:IterateModules() do
+--    AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
+--  end
+
+--  local profiles = AceDBOptions:GetOptionsTable(self.db)
+--  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
+--  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
+
+  return options
+end
+
+function MOD:CreateGuiOptions()
+  local options = {}
+  copyTable(MOD:CreateOptions(), options)
+  AceConfig:RegisterOptionsTable(MODNAME, options)
+  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
   MOD.mConfigFrame.default = function(...)
     self.db:ResetProfile()
   end
 
-  for name, module in MOD:IterateModules() do
-    AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
+  local modOpts = {}
+  local orderidx = 100
+  for name, module in MOD:IterateModulesSorted() do
+    orderidx = orderidx + 10
+    local pluginOptions = {
+      order = orderidx,
+      type = "group",
+      name = name,
+      args = {
+      }
+    }
+    copyTable(module:CreateOptions(), pluginOptions.args)
+
+    local FULLSUBNAME = MODNAME .. "_" .. name
+
+    modOpts[name:lower()] = pluginOptions
+    AceConfig:RegisterOptionsTable(FULLSUBNAME, pluginOptions)
+    MOD.mConfigFrame[name] = AceConfigDialog:AddToBlizOptions(FULLSUBNAME, pluginOptions.name, "WoodysToolkit")
   end
 
   local profiles = AceDBOptions:GetOptionsTable(self.db)
   AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
   AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
 
+  return options
+end
+
+
+function MOD:PopulateOptions()
+  local options = {}
+  options = self:CreateCliOptions()
+  self:CreateGuiOptions()
   return options
 end
 
