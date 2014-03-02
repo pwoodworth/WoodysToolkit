@@ -274,22 +274,7 @@ function MOD:CreateCliOptions()
     copyTable(module:CreateOptions(), pluginOptions.args)
   end
 
-  printTable(options.args)
-
   AceConfig:RegisterOptionsTable(MODNAME .. "_SlashCmd", options, { "woodystoolkit", "wtk" })
---  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit", nil, "general")
---  MOD.mConfigFrame.default = function(...)
---    self.db:ResetProfile()
---  end
-
---  for name, module in MOD:IterateModules() do
---    AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
---  end
-
---  local profiles = AceDBOptions:GetOptionsTable(self.db)
---  AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
---  AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
-
   return options
 end
 
