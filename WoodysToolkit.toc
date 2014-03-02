@@ -7,6 +7,7 @@
 ## LoadOnDemand: 0
 ## SavedVariables: WoodysToolkitDB
 ## Dependencies: Ace3
+## OptionalDeps: Chatter
 
 Embeds.xml
 

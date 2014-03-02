@@ -78,13 +78,8 @@ local function updateLock(event, ...)
   end
 end
 
-function LockInvert()
-  mMouseLockInverted = true
-  updateLock()
-end
-
-function LockRevert()
-  mMouseLockInverted = false
+function LockInvert(val)
+  mMouseLockInverted = val
   updateLock()
 end
 

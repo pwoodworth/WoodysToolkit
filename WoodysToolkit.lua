@@ -1,18 +1,20 @@
-
-local MODNAME = ...
-
-_G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
-
 --------------------------------------------------------------------------------
 -- AddOn Initialization
 --------------------------------------------------------------------------------
 
-WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
+local MODNAME = ...
 local _G = getfenv(0)
-WoodysToolkit._G = WoodysToolkit._G or _G
-setfenv(1, WoodysToolkit)
-local LibStub = _G.LibStub
+_G[MODNAME] = _G[MODNAME] or LibStub("AceAddon-3.0"):NewAddon(MODNAME, "AceConsole-3.0", "AceEvent-3.0")
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+MOD._G = MOD._G or _G
+setfenv(1, MOD)
+local LibStub = _G.LibStub
+
+--WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
+--WoodysToolkit._G = WoodysToolkit._G or _G
+--setfenv(1, WoodysToolkit)
+--local LibStub = _G.LibStub
+--local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
 local L = LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
 local AceConfig = LibStub("AceConfig-3.0")
@@ -32,6 +34,9 @@ local pairs = _G.pairs
 local wipe = _G.wipe
 local select = _G.select
 local type = _G.type
+local table = table or _G.table
+
+_G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
 
 --------------------------------------------------------------------------------
 -- Utilities
@@ -42,6 +47,20 @@ mPlugins = mPlugins or {}
 function MOD:AddLocalPlugin(plugin)
   mPlugins = mPlugins or {}
   mPlugins[plugin.name:lower()] = plugin
+end
+
+local function pairsByKeys(t, f)
+  local a = {}
+  for n in pairs(t) do table.insert(a, n) end
+  table.sort(a, f)
+  local i = 0      -- iterator variable
+  local iter = function()   -- iterator function
+    i = i + 1
+    if a[i] == nil then return nil
+    else return a[i], t[a[i]]
+    end
+  end
+  return iter
 end
 
 local function invokePlugins(funcname,...)
@@ -61,8 +80,8 @@ local function copyTable(src, dst)
 end
 
 local function printTable(t)
-  for k, v in pairs(t) do
-    print("  key: " .. k .. " ; type: " .. type(v))
+  for k, v in pairsByKeys(t) do
+    print("  key: " .. _G.tostring(k) .. " ; type: " .. type(v))
   end
 end
 
@@ -335,7 +354,7 @@ function MOD:InitializeLDB()
         if _G.IsShiftKeyDown() then
           MOD:OptionsPanel()
         else
-          MOD:OptionsPanel()
+          printTable(MOD)
         end
       elseif msg == "LeftButton" then
         if _G.IsShiftKeyDown() then

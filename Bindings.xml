@@ -3,11 +3,7 @@
     -- Clear
   </Binding>
   <Binding name="WTKMLINVERT" description="Inverts mouselook while the key is being held." runOnUp="true" header="WOODYSTOOLKIT">
-    if keystate == "down" then
-    WoodysToolkit.LockInvert()
-    elseif keystate == "up" then
-    WoodysToolkit.LockRevert()
-    end
+    WoodysToolkit.LockInvert(keystate == "down")
   </Binding>
   <Binding name="WTKMLTOGGLE" description="Toggles the default mouselook state on key up." header="WOODYSTOOLKIT">
     WoodysToolkit.LockToggle()
