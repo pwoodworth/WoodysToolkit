@@ -1,19 +1,12 @@
-_G["BINDING_NAME_WTKMLINVERT"]    = "Invert Mouselook"
-_G["BINDING_NAME_WTKMLTOGGLE"]    = "Toggle Mouselook"
-_G["BINDING_NAME_WTKMLENABLE"]    = "Enable Mouselook"
-_G["BINDING_NAME_WTKMLDISABLE"]   = "Disable Mouselook"
-
 --------------------------------------------------------------------------------
 -- AddOn Initialization
 --------------------------------------------------------------------------------
 
-WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
-local _G = getfenv(0)
-WoodysToolkit._G = WoodysToolkit._G or _G
-setfenv(1, WoodysToolkit)
-MODNAME = "WoodysToolkit"
-local LibStub = _G.LibStub
+local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+local _G = getfenv(0)
+setfenv(1, MOD)
+local LibStub = _G.LibStub
 local L = LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
 
 -- upvalues
@@ -28,6 +21,11 @@ local type = _G.type
 local IsMouselooking = _G.IsMouselooking
 local MouselookStart = _G.MouselookStart
 local MouselookStop = _G.MouselookStop
+
+_G["BINDING_NAME_WTKMLINVERT"]    = "Invert Mouselook"
+_G["BINDING_NAME_WTKMLTOGGLE"]    = "Toggle Mouselook"
+_G["BINDING_NAME_WTKMLENABLE"]    = "Enable Mouselook"
+_G["BINDING_NAME_WTKMLDISABLE"]   = "Disable Mouselook"
 
 local customEventFrame
 

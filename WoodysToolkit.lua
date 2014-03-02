@@ -1,3 +1,6 @@
+
+local MODNAME = ...
+
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
 
 --------------------------------------------------------------------------------
@@ -8,7 +11,6 @@ WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit
 local _G = getfenv(0)
 WoodysToolkit._G = WoodysToolkit._G or _G
 setfenv(1, WoodysToolkit)
-MODNAME = "WoodysToolkit"
 local LibStub = _G.LibStub
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 
@@ -19,6 +21,7 @@ local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
 local AceConfigCmd = LibStub("AceConfigCmd-3.0")
 local AceDB = LibStub("AceDB-3.0")
+local AceTab = LibStub("AceTab-3.0")
 
 -- upvalues
 local print = print or _G.print
@@ -379,14 +382,33 @@ function MOD:OnInitialize()
   self:InitializeLDB()
 
   applySettings()
+  self:Print("MODNAME: " .. MODNAME)
 end
+
+local function tabComplete(t, text, pos)
+  local word = _G.strsub(text, pos)
+  if #word == 0 then return end
+  local cf = _G.ChatEdit_GetActiveWindow()
+  local channel = cf:GetAttribute("chatType")
+  local searchword = "^" .. _G.strlower(word)
+  print("searchword: " .. searchword)
+--  for k, v in pairs(channels[channel]) do
+--    if strmatch(strlower(k), searchword) then
+--      tinsert(t, k)
+--    end
+--  end
+  return t
+end
+
 
 -- Called by AceAddon.
 function MOD:OnEnable()
   self:RegisterEvent("MERCHANT_SHOW")
+--  AceTab:RegisterTabCompletion(MODNAME, "wtk", tabComplete)
 end
 
 -- Called by AceAddon.
 function MOD:OnDisable()
   -- Nothing here yet.
+--  AceTab:UnregisterTabCompletion(MODNAME)
 end

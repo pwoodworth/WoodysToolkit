@@ -2,13 +2,11 @@
 -- AddOn Initialization
 --------------------------------------------------------------------------------
 
-WoodysToolkit = WoodysToolkit or LibStub("AceAddon-3.0"):NewAddon("WoodysToolkit", "AceConsole-3.0", "AceEvent-3.0")
-local _G = getfenv(0)
-WoodysToolkit._G = WoodysToolkit._G or _G
-setfenv(1, WoodysToolkit)
-MODNAME = "WoodysToolkit"
-local LibStub = _G.LibStub
+local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+local _G = getfenv(0)
+setfenv(1, MOD)
+local LibStub = _G.LibStub
 local L = LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
 
 
