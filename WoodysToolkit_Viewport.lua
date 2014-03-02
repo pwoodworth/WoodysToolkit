@@ -9,6 +9,13 @@ local upvalues = setmetatable({}, { __index = MOD })
 local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
 setfenv(1, SUB)
 
+local AceConfig = LibStub("AceConfig-3.0")
+local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
+local AceDBOptions = LibStub("AceDBOptions-3.0")
+local AceConfigCmd = LibStub("AceConfigCmd-3.0")
+local AceDB = LibStub("AceDB-3.0")
+
 --------------------------------------------------------------------------------
 -- Viewport
 --------------------------------------------------------------------------------
@@ -129,6 +136,95 @@ end
 -- Plugin Setup
 --------------------------------------------------------------------------------
 
+local fooVals = {}
+
+local function getFoo(info)
+  local key = info[#info]
+  local val = fooVals[key]
+  if not val then
+    val = false
+  end
+  return val
+end
+
+local function setFoo(info, val)
+  local key = info[#info]
+  if not val then
+    val = false
+  end
+  fooVals[key] = val
+end
+
+function SUB:CreateOptions2()
+  local options = {
+    type = "group",
+    name = L[SUBNAME .. "2"],
+    handler = SUB,
+--    childGroups = "tree",
+    args = {
+      alphaHeader = {
+        type = "header",
+        name = L["options.alpha.header"],
+        order = 10,
+      },
+      alpha = {
+        type = "toggle",
+        name = L["options.alpha.name"],
+        width = "full",
+        set = setFoo,
+        get = getFoo,
+        order = 11,
+      },
+      betaHeader = {
+        type = "header",
+        name = L["options.beta.header"],
+        order = 90,
+      },
+      beta = {
+        type = "toggle",
+        name = L["options.beta.name"],
+        width = "full",
+        set = setFoo,
+        get = getFoo,
+        order = 91,
+      },
+      delta = {
+        type = "execute",
+        name = L["options.delta.name"],
+        cmdHidden = true,
+        width = nil,
+        func = function()
+          _G.ReloadUI()
+        end,
+        order = 92,
+      },
+    },
+  }
+  return options
+end
+
+function SUB:PopulateOptions2()
+  local options = SUB:CreateOptions2()
+--  AceConfig:RegisterOptionsTable(MODNAME, options)
+--  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit", nil, "general")
+--  MOD.mConfigFrame.default = function(...)
+--    self.db:ResetProfile()
+--  end
+--
+--  for name, module in MOD:IterateModules() do
+--    AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
+--  end
+
+--  local profiles = AceDBOptions:GetOptionsTable(self.db)
+  local FULLSUBNAME = MODNAME .. "_" .. SUBNAME
+  AceConfigRegistry:RegisterOptionsTable(FULLSUBNAME, options)
+--  AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
+  AceConfigDialog:AddToBlizOptions(FULLSUBNAME, options.name, MODNAME)
+
+  return options
+end
+
+
 SUB.defaults = {
   profile = {
     enable = false,
@@ -159,6 +255,7 @@ function SUB:OnInitialize()
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
 
   self:Print("SUBNAME: " .. SUBNAME)
+--  self:PopulateOptions2()
   applyViewport()
 end
 

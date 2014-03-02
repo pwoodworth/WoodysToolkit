@@ -32,6 +32,7 @@ local AceDB = LibStub("AceDB-3.0")
 local AceTab = LibStub("AceTab-3.0")
 
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
+_G["BINDING_NAME_WTKRELOADUI"] = "Reload UI"
 
 --------------------------------------------------------------------------------
 -- Utilities
@@ -256,7 +257,6 @@ function MOD:PopulateOptions()
   copyTable(MOD:CreateOptions(), options)
 
   local orderidx = 100
-
   for name, module in MOD:IterateModules() do
     orderidx = orderidx + 10
     local pluginOptions = {
@@ -270,7 +270,7 @@ function MOD:PopulateOptions()
     copyTable(module:CreateOptions(), pluginOptions.args)
   end
 
-  AceConfig:RegisterOptionsTable(MODNAME, options)
+  AceConfig:RegisterOptionsTable(MODNAME, options, { "woodystoolkit", "wtk" })
   MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit", nil, "general")
   MOD.mConfigFrame.default = function(...)
     self.db:ResetProfile()
@@ -380,9 +380,6 @@ function MOD:OnInitialize()
   self:RefreshDB()
 
   local options = self:PopulateOptions()
-
-  AceConfigCmd.CreateChatCommand(MOD, "woodystoolkit", MODNAME)
-  AceConfigCmd.CreateChatCommand(MOD, "wtk", MODNAME)
 
   self:InitializeLDB()
 

@@ -1,4 +1,7 @@
 <Bindings>
+  <Binding name="WTKRELOADUI" description="Reload UI." header="WOODYSTOOLKIT">
+    ReloadUI()
+  </Binding>
   <Binding name="MACRO wtkstop" description="Stop casting, cancel targeting, and clear target." header="WOODYSTOOLKIT">
     -- Clear
   </Binding>
