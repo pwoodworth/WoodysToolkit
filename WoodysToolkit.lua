@@ -68,9 +68,12 @@ local function copyTable(src, dst)
 end
 
 local function printTable(t)
+  local count = 0
   for k, v in pairsByKeys(t) do
+    count = count + 1
     printd("  key: " .. _G.tostring(k) .. " ; type: " .. type(v))
   end
+  printd("key count: " .. count)
 end
 
 --------------------------------------------------------------------------------

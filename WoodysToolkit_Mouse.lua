@@ -4,10 +4,10 @@
 
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
-setfenv(1, MOD)
 local SUBNAME = "Mouse"
-local upvalues = setmetatable({}, { __index = _G })
+local upvalues = setmetatable({}, { __index = MOD })
 local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+setfenv(1, SUB)
 
 
 _G["BINDING_NAME_WTKMLINVERT"]    = "Invert Mouselook"
@@ -26,7 +26,7 @@ clauseText = nil
 mMouseLockEnabled = false
 mMouseLockInverted = false
 
-function MOD:predFun(enabled, inverted, clauseText, event, ...)
+function SUB:predFun(enabled, inverted, clauseText, event, ...)
   return (enabled and not inverted) or (not enabled and inverted)
 end
 
@@ -60,28 +60,28 @@ end
 
 local function updateLock(event, ...)
   local shouldMouselookOld = shouldMouselook
-  shouldMouselook = MOD:predFun(mMouseLockEnabled, mMouseLockInverted, clauseText, event, ...)
+  shouldMouselook = SUB:predFun(mMouseLockEnabled, mMouseLockInverted, clauseText, event, ...)
   if shouldMouselook ~= shouldMouselookOld then
     rematch()
   end
 end
 
-function LockInvert(val)
+function MOD.LockInvert(val)
   mMouseLockInverted = val
   updateLock()
 end
 
-function LockToggle()
+function MOD.LockToggle()
   mMouseLockEnabled = not mMouseLockEnabled
   updateLock()
 end
 
-function LockEnable()
+function MOD.LockEnable()
   mMouseLockEnabled = true
   updateLock()
 end
 
-function LockDisable()
+function MOD.LockDisable()
   mMouseLockEnabled = false
   updateLock()
 end
