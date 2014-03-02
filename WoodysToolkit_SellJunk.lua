@@ -4,26 +4,10 @@
 
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
-local _G = getfenv(0)
 setfenv(1, MOD)
 
 -- upvalues
---local print = print or _G.print
---local string = string or _G.string
-local floor = _G.floor
-local mod = _G.mod
 local string_find = _G.string.find
---local pairs = _G.pairs
-local wipe = _G.wipe
-local DeleteCursorItem = _G.DeleteCursorItem
-local GetContainerItemInfo = _G.GetContainerItemInfo
-local GetItemInfo = _G.GetItemInfo
-local PickupContainerItem = _G.PickupContainerItem
-local PickupMerchantItem = _G.PickupMerchantItem
-local IsAddOnLoaded = _G.IsAddOnLoaded
-local select = _G.select
-local COPPER_PER_SILVER = _G.COPPER_PER_SILVER
-local SILVER_PER_GOLD = _G.SILVER_PER_GOLD
 
 --------------------------------------------------------------------------------
 -- SellJunk

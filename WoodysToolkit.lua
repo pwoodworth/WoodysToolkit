@@ -4,16 +4,9 @@
 
 local MODNAME = ...
 local _G = getfenv(0)
-local upvalues = setmetatable({}, { __index = {
-  ["pairs"] = _G.pairs,
-  ["print"] = _G.print,
-  ["string"] = _G.string,
-  ["table"] = _G.table,
-  ["type"] = _G.type,
-}})
+local upvalues = setmetatable({}, { __index = _G })
 _G[MODNAME] = _G[MODNAME] or LibStub("AceAddon-3.0"):NewAddon(upvalues, MODNAME, "AceConsole-3.0", "AceEvent-3.0")
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
-MOD._G = MOD._G or _G
 setfenv(1, MOD)
 local LibStub = _G.LibStub
 MOD.L = MOD.L or LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
@@ -24,17 +17,6 @@ local AceDBOptions = LibStub("AceDBOptions-3.0")
 local AceConfigCmd = LibStub("AceConfigCmd-3.0")
 local AceDB = LibStub("AceDB-3.0")
 local AceTab = LibStub("AceTab-3.0")
-
--- upvalues
---local print = print or _G.print
---local string = string or _G.string
---local floor = _G.floor
---local mod = _G.mod
---local pairs = _G.pairs
---local wipe = _G.wipe
---local select = _G.select
---local type = _G.type
---local table = table or _G.table
 
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
 

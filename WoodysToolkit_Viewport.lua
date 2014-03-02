@@ -4,18 +4,7 @@
 
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
-local _G = getfenv(0)
 setfenv(1, MOD)
-
-
--- upvalues
---local print = print or _G.print
---local string = string or _G.string
---local floor = _G.floor
---local mod = _G.mod
---local pairs = _G.pairs
---local wipe = _G.wipe
---local select = _G.select
 
 --------------------------------------------------------------------------------
 -- Viewport
