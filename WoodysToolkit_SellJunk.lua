@@ -17,17 +17,17 @@ local string_find = _G.string.find
 --------------------------------------------------------------------------------
 
 local function createSellButton()
-  if MOD.sellButton then
+  if mSellButton then
     return
   end
-  MOD.sellButton = _G.CreateFrame("Button", nil, _G.MerchantFrame, "OptionsButtonTemplate")
+  mSellButton = _G.CreateFrame("Button", nil, _G.MerchantFrame, "OptionsButtonTemplate")
   if IsAddOnLoaded("GnomishVendorShrinker") then
-    MOD.sellButton:SetPoint("TOPRIGHT", -23, 0)
+    mSellButton:SetPoint("TOPRIGHT", -23, 0)
   else
-    MOD.sellButton:SetPoint("TOPLEFT", 60, -32)
+    mSellButton:SetPoint("TOPLEFT", 60, -32)
   end
-  MOD.sellButton:SetText(L["Sell Junk"])
-  MOD.sellButton:SetScript("OnClick", function() MOD:JunkSell() end)
+  mSellButton:SetText(L["Sell Junk"])
+  mSellButton:SetScript("OnClick", function() SUB:SellTheJunk() end)
 
   _G.StaticPopupDialogs["WoodysToolkit_DestroyConfirmation"] = {
     text = "Do you want to destroy %s?",
@@ -38,7 +38,7 @@ local function createSellButton()
       if item then
         PickupContainerItem(bag, slot)
         DeleteCursorItem()
-        local showSpam = MOD.db.profile.selljunk.showSpam
+        local showSpam = db.profile.selljunk.showSpam
         if showSpam then
           print(L["Destroyed"] .. ": " .. item)
         end
@@ -82,7 +82,7 @@ end
 
 local function isJunkException(link)
   local link, isLink, name = extractLink(link)
-  local exceptions = MOD.db.profile.selljunk.exceptions
+  local exceptions = db.profile.selljunk.exceptions
   local found = isJunkInList(exceptions, link)
   if found then
     return true
@@ -126,11 +126,11 @@ end
 --   - grey quality, unless it's in exception list         --
 --   - better than grey quality, if it's in exception list --
 -------------------------------------------------------------
-function MOD:JunkSell()
+function SUB:SellTheJunk()
   local limit = 0
-  local destroy = MOD.db.profile.selljunk.destroy
-  local showSpam = MOD.db.profile.selljunk.showSpam
-  local max12 = MOD.db.profile.selljunk.max12
+  local destroy = db.profile.selljunk.destroy
+  local showSpam = db.profile.selljunk.showSpam
+  local max12 = db.profile.selljunk.max12
   local profit = 0
   for bag = 0, 4 do
     for slot = 1, _G.GetContainerNumSlots(bag) do
@@ -174,14 +174,14 @@ function MOD:JunkSell()
   end
 end
 
-function MOD:JunkAdd(link)
+function SUB:JunkAdd(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
   exceptions[name] = link
   self:Print(L["Added"] .. ": " .. link)
 end
 
-function MOD:JunkRem(link)
+function SUB:JunkRem(link)
   local link, isLink, name = extractLink(link)
   local exceptions = self.db.profile.selljunk.exceptions
   local found = isJunkInList(exceptions, link)
@@ -191,7 +191,7 @@ function MOD:JunkRem(link)
   end
 end
 
-function MOD:ListExceptions()
+function SUB:ListTheExceptions()
   local exceptions = self.db.profile.selljunk.exceptions
   if exceptions then
     for k, v in pairs(exceptions) do
@@ -201,7 +201,7 @@ function MOD:ListExceptions()
   end
 end
 
-function MOD:JunkClearDB()
+function SUB:JunkClearDB()
   wipe(self.db.profile.selljunk.destroyables)
   wipe(self.db.profile.selljunk.exceptions)
   self:Print(L["Exceptions succesfully cleared."])
@@ -225,14 +225,14 @@ SUB.defaults = {
 
 function SUB:MERCHANT_SHOW()
   createSellButton()
-  if MOD.db.profile.selljunk.auto then
-    MOD:JunkSell()
+  if db.profile.selljunk.auto then
+    SUB:SellTheJunk()
   end
 end
 
 -- Called by AceAddon.
 function SUB:OnInitialize()
---  self.db = MOD.db
+--  self.db = db
   self:Print("SUBNAME: " .. SUBNAME)
 end
 
@@ -258,8 +258,8 @@ function SUB:CreateOptions()
       type = "toggle",
       name = L["Automatically sell junk"],
       desc = L["Toggles the automatic selling of junk when the merchant window is opened."],
-      get = function() return MOD.db.profile.selljunk.auto end,
-      set = function() MOD.db.profile.selljunk.auto = not MOD.db.profile.selljunk.auto end,
+      get = function() return db.profile.selljunk.auto end,
+      set = function() db.profile.selljunk.auto = not db.profile.selljunk.auto end,
     },
     divider2 = {
       order = 3,
@@ -271,8 +271,8 @@ function SUB:CreateOptions()
       type = "toggle",
       name = L["Sell max. 12 items"],
       desc = L["This is failsafe mode. Will sell only 12 items in one pass. In case of an error, all items can be bought back from vendor."],
-      get = function() return MOD.db.profile.selljunk.max12 end,
-      set = function() MOD.db.profile.selljunk.max12 = not MOD.db.profile.selljunk.max12 end,
+      get = function() return db.profile.selljunk.max12 end,
+      set = function() db.profile.selljunk.max12 = not db.profile.selljunk.max12 end,
     },
     divider3 = {
       order = 5,
@@ -284,8 +284,8 @@ function SUB:CreateOptions()
       type = "toggle",
       name = L["Show gold gained"],
       desc = L["Shows gold gained from selling trash."],
-      get = function() return MOD.db.profile.selljunk.printGold end,
-      set = function() MOD.db.profile.selljunk.printGold = not MOD.db.profile.selljunk.printGold end,
+      get = function() return db.profile.selljunk.printGold end,
+      set = function() db.profile.selljunk.printGold = not db.profile.selljunk.printGold end,
     },
     divider4 = {
       order = 7,
@@ -297,8 +297,8 @@ function SUB:CreateOptions()
       type = "toggle",
       name = L["Show 'item sold' spam"],
       desc = L["Prints itemlinks to chat, when automatically selling items."],
-      get = function() return MOD.db.profile.selljunk.showSpam end,
-      set = function() MOD.db.profile.selljunk.showSpam = not MOD.db.profile.selljunk.showSpam end,
+      get = function() return db.profile.selljunk.showSpam end,
+      set = function() db.profile.selljunk.showSpam = not db.profile.selljunk.showSpam end,
     },
     divider5 = {
       order = 9,
@@ -310,14 +310,14 @@ function SUB:CreateOptions()
       type = "execute",
       name = L["Clear"],
       desc = L["Removes all exceptions."],
-      func = function() MOD:JunkClearDB() end,
+      func = function() SUB:JunkClearDB() end,
     },
     listglobal = {
       order = 11,
       type = "execute",
       name = L["List"],
       desc = L["List all exceptions."],
-      func = function() MOD:ListExceptions() end,
+      func = function() SUB:ListTheExceptions() end,
     },
     divider6 = {
       order = 12,
@@ -340,7 +340,7 @@ function SUB:CreateOptions()
       name = L["Add item"] .. ':',
       usage = L["<Item Link>"],
       get = false,
-      set = function(info, v) MOD:JunkAdd(v) end,
+      set = function(info, v) SUB:JunkAdd(v) end,
     },
     rem = {
       order = 16,
@@ -348,7 +348,7 @@ function SUB:CreateOptions()
       name = L["Remove item"] .. ':',
       usage = L["<Item Link>"],
       get = false,
-      set = function(info, v) MOD:JunkRem(v) end,
+      set = function(info, v) SUB:JunkRem(v) end,
     },
   }
   return options
