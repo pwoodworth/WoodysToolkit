@@ -5,6 +5,10 @@
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 setfenv(1, MOD)
+local SUBNAME = "Mouse"
+local upvalues = setmetatable({}, { __index = _G })
+local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+
 
 _G["BINDING_NAME_WTKMLINVERT"]    = "Invert Mouselook"
 _G["BINDING_NAME_WTKMLTOGGLE"]    = "Toggle Mouselook"
@@ -217,10 +221,6 @@ local spellTargetingOverrideText = [[Disable mouselook while a spell is awaiting
 --------------------------------------------------------------------------------
 -- Plugin Setup
 --------------------------------------------------------------------------------
-
-local SUBNAME = "Mouse"
-local upvalues = setmetatable({}, { __index = _G })
-local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
 
 SUB.defaults = {
   profile = {

@@ -5,6 +5,9 @@
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 setfenv(1, MOD)
+local SUBNAME = "SellJunk"
+local upvalues = setmetatable({}, { __index = _G })
+local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
 
 -- upvalues
 local string_find = _G.string.find
@@ -207,10 +210,6 @@ end
 --------------------------------------------------------------------------------
 -- Plugin Setup
 --------------------------------------------------------------------------------
-
-local SUBNAME = "SellJunk"
-local upvalues = setmetatable({}, { __index = _G })
-local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
 
 SUB.defaults = {
   profile = {
