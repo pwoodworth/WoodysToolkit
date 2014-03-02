@@ -161,8 +161,8 @@ end
 local function toggleOptions()
     if not _G.InCombatLockdown() then
       -- Called twice to workaround UI bug
-      _G.InterfaceOptionsFrame_OpenToCategory(MOD.mConfigFrame)
-      _G.InterfaceOptionsFrame_OpenToCategory(MOD.mConfigFrame)
+      _G.InterfaceOptionsFrame_OpenToCategory(MODNAME)
+      _G.InterfaceOptionsFrame_OpenToCategory(MODNAME)
     end
 end
 
@@ -252,19 +252,20 @@ function MOD:PopulateOptions()
       args = {
       }
     }
-      options.args[k] = pluginOptions
-      copyTable(v:CreateOptions(), pluginOptions.args)
---      AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_" .. pluginOptions.name, pluginOptions)
---      AceConfigDialog:AddToBlizOptions(MODNAME .. "_" .. pluginOptions.name, pluginOptions.name, MODNAME)
+    options.args[k] = pluginOptions
+    copyTable(v:CreateOptions(), pluginOptions.args)
   end
 
-
   AceConfig:RegisterOptionsTable(MODNAME, options)
-  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
+  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit", nil, "general")
   MOD.mConfigFrame.default = function(...)
     self.db:ResetProfile()
   end
 
+  for k, v in pairs(mPlugins) do
+    local pname = v["name"] or k
+    AceConfigDialog:AddToBlizOptions(MODNAME, pname, MODNAME, pname:lower())
+  end
 
   local profiles = AceDBOptions:GetOptionsTable(self.db)
   AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
