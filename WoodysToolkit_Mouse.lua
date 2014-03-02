@@ -144,6 +144,7 @@ local function printDatabaseEntries()
 end
 
 local function applyOverrideBindings(info, val)
+  print("applyOverrideBindings")
 --  printDatabaseEntries()
   if db.profile.mouse.useOverrideBindings then
     for key, command in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
@@ -234,13 +235,25 @@ SUB.defaults = {
   },
 }
 
-function SUB:ApplySettings()
+function SUB:RefreshDB()
+  SUB:Print("Refreshing DB Profile")
   applyOverrideBindings()
 end
 
+function SUB:PLAYER_ENTERING_WORLD()
+  SUB:Print("Refreshing DB Profile")
+  applyOverrideBindings()
+end
+
+SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
+
 -- Called by AceAddon.
 function SUB:OnInitialize()
-  --  self.db = MOD.db
+--  self.db = MOD.db
+  db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
+  db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
+  db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
+
   self:Print("SUBNAME: " .. SUBNAME)
   for k, _ in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
     if not (_G.type(k) == "string") then
@@ -250,6 +263,7 @@ function SUB:OnInitialize()
     end
   end
   _G.table.sort(overrideKeys)
+  applyOverrideBindings()
   updateLock()
 end
 

@@ -4,7 +4,20 @@
 
 local MODNAME = ...
 local _G = getfenv(0)
+
+local function pdebug(...)
+  print("DEBUG: ", ...)
+end
+
+local function psdebug(self, ...)
+  self:Print("DEBUG: ", ...)
+end
+
 local upvalues = setmetatable({}, { __index = _G })
+upvalues = setmetatable({
+  printd = pdebug,
+  Printd = psdebug,
+}, { __index = upvalues })
 _G[MODNAME] = _G[MODNAME] or LibStub("AceAddon-3.0"):NewAddon(upvalues, MODNAME, "AceConsole-3.0", "AceEvent-3.0")
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 setfenv(1, MOD)
@@ -56,7 +69,7 @@ end
 
 local function printTable(t)
   for k, v in pairsByKeys(t) do
-    print("  key: " .. _G.tostring(k) .. " ; type: " .. type(v))
+    printd("  key: " .. _G.tostring(k) .. " ; type: " .. type(v))
   end
 end
 
@@ -316,7 +329,7 @@ end
 function MOD:InitializeLDB()
   local LDB = LibStub("LibDataBroker-1.1", true)
   if not LDB then return end
-  MOD.ldb = LDB:NewDataObject("WoodysToolkit", {
+  MOD.ldb = LDB:NewDataObject(MODNAME, {
     type = "launcher",
     text = "Woody's Toolkit",
     icon = "Interface\\Icons\\Trade_Engineering",
@@ -351,7 +364,7 @@ end
 
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function MOD:OnInitialize()
-  self:Print("OnInitialize")
+  self:Printd("OnInitialize")
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
   self.db = AceDB:New(MODNAME .. "DB", createDatabaseDefaults(), true)
 
@@ -373,31 +386,12 @@ function MOD:OnInitialize()
   applySettings()
 end
 
-local function tabComplete(t, text, pos)
-  local word = _G.strsub(text, pos)
-  if #word == 0 then return end
-  local cf = _G.ChatEdit_GetActiveWindow()
-  local channel = cf:GetAttribute("chatType")
-  local searchword = "^" .. _G.strlower(word)
-  print("searchword: " .. searchword)
---  for k, v in pairs(channels[channel]) do
---    if strmatch(strlower(k), searchword) then
---      tinsert(t, k)
---    end
---  end
-  return t
-end
-
-
 -- Called by AceAddon.
 function MOD:OnEnable()
-  self:Print("OnEnable")
---  AceTab:RegisterTabCompletion(MODNAME, "wtk", tabComplete)
+  self:Printd("OnEnable")
 end
 
 -- Called by AceAddon.
 function MOD:OnDisable()
-  self:Print("OnDisable")
-  -- Nothing here yet.
---  AceTab:UnregisterTabCompletion(MODNAME)
+  self:Printd("OnDisable")
 end
