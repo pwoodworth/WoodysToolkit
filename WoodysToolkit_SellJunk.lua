@@ -208,6 +208,34 @@ end
 -- Plugin Setup
 --------------------------------------------------------------------------------
 
+local SUBNAME = "Junk"
+local upvalues = setmetatable({}, { __index = _G })
+local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+
+function SUB:MERCHANT_SHOW()
+  createSellButton()
+  if MOD.db.profile.selljunk.auto then
+    MOD:JunkSell()
+  end
+end
+
+-- Called by AceAddon.
+function SUB:OnInitialize()
+--  self.db = MOD.db
+  self:Print("SUBNAME: " .. SUBNAME)
+end
+
+-- Called by AceAddon.
+function SUB:OnEnable()
+  self:RegisterEvent("MERCHANT_SHOW")
+end
+
+-- Called by AceAddon.
+function SUB:OnDisable()
+  -- Nothing here yet.
+end
+
+
 local thisPlugin = {
   name = "SellJunk",
   defaults = {
@@ -222,13 +250,6 @@ local thisPlugin = {
     },
   }
 }
-
-function thisPlugin:MERCHANT_SHOW()
-  createSellButton()
-  if MOD.db.profile.selljunk.auto then
-    MOD:JunkSell()
-  end
-end
 
 function thisPlugin:CreateOptions()
   local options = {

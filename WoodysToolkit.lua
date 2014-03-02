@@ -306,10 +306,6 @@ function MOD:DUEL_REQUESTED(event, name)
   end
 end
 
-function MOD:MERCHANT_SHOW(...)
-  invokePlugins("MERCHANT_SHOW",...)
-end
-
 MOD:RegisterEvent("ADDON_LOADED")
 MOD:RegisterEvent("PLAYER_ENTERING_WORLD")
 MOD:RegisterEvent("PLAYER_LOGIN")
@@ -404,7 +400,6 @@ end
 
 -- Called by AceAddon.
 function MOD:OnEnable()
-  self:RegisterEvent("MERCHANT_SHOW")
 --  AceTab:RegisterTabCompletion(MODNAME, "wtk", tabComplete)
 end
 
