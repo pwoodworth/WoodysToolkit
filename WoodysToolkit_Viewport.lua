@@ -126,24 +126,41 @@ end
 -- Plugin Setup
 --------------------------------------------------------------------------------
 
-local thisPlugin = {
-  name = "Viewport",
-  defaults = {
-    profile = {
-      enable = false,
-      top = 0,
-      bottom = 0,
-      left = 0,
-      right = 0
-    },
-  }
+local SUBNAME = "Viewport"
+local upvalues = setmetatable({}, { __index = _G })
+local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+
+SUB.defaults = {
+  profile = {
+    enable = false,
+    top = 0,
+    bottom = 0,
+    left = 0,
+    right = 0
+  },
 }
 
-function thisPlugin:ApplySettings()
+function SUB:ApplySettings()
   applyViewport()
 end
 
-function thisPlugin:CreateOptions()
+-- Called by AceAddon.
+function SUB:OnInitialize()
+  --  self.db = MOD.db
+  self:Print("SUBNAME: " .. SUBNAME)
+end
+
+-- Called by AceAddon.
+function SUB:OnEnable()
+  -- Nothing here yet.
+end
+
+-- Called by AceAddon.
+function SUB:OnDisable()
+  -- Nothing here yet.
+end
+
+function SUB:CreateOptions()
   local options = {
     header = {
       type = "header",
@@ -221,5 +238,3 @@ function thisPlugin:CreateOptions()
   }
   return options
 end
-
-MOD:AddLocalPlugin(thisPlugin)

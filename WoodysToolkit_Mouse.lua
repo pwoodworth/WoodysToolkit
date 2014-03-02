@@ -217,23 +217,31 @@ local spellTargetingOverrideText = [[Disable mouselook while a spell is awaiting
 -- Plugin Setup
 --------------------------------------------------------------------------------
 
-local thisPlugin = {
-  name = "Mouse",
-  defaults = {
-    profile = {
-      ["newUser"] = true,
-      ["useSpellTargetingOverride"] = true,
-      ["useDeferWorkaround"] = true,
-      ["useOverrideBindings"] = true,
-      ["mouseOverrideBindings"] = {
-        ["BUTTON1"] = "STRAFELEFT",
-        ["BUTTON2"] = "STRAFERIGHT",
-      },
+local SUBNAME = "Mouse"
+local upvalues = setmetatable({}, { __index = _G })
+local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+
+SUB.defaults = {
+  profile = {
+    ["newUser"] = true,
+    ["useSpellTargetingOverride"] = true,
+    ["useDeferWorkaround"] = true,
+    ["useOverrideBindings"] = true,
+    ["mouseOverrideBindings"] = {
+      ["BUTTON1"] = "STRAFELEFT",
+      ["BUTTON2"] = "STRAFERIGHT",
     },
-  }
+  },
 }
 
-function thisPlugin:OnInitialize()
+function SUB:ApplySettings()
+  applyOverrideBindings()
+end
+
+-- Called by AceAddon.
+function SUB:OnInitialize()
+  --  self.db = MOD.db
+  self:Print("SUBNAME: " .. SUBNAME)
   for k, _ in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
     if not (_G.type(k) == "string") then
       db.profile.mouse.mouseOverrideBindings[k] = nil
@@ -245,11 +253,17 @@ function thisPlugin:OnInitialize()
   updateLock()
 end
 
-function thisPlugin:ApplySettings()
-  applyOverrideBindings()
+-- Called by AceAddon.
+function SUB:OnEnable()
+  -- Nothing here yet.
 end
 
-function thisPlugin:CreateOptions()
+-- Called by AceAddon.
+function SUB:OnDisable()
+  -- Nothing here yet.
+end
+
+function SUB:CreateOptions()
   local options = {
     general = {
       type = "group",
@@ -572,5 +586,3 @@ function thisPlugin:CreateOptions()
   }
   return options
 end
-
-MOD:AddLocalPlugin(thisPlugin)

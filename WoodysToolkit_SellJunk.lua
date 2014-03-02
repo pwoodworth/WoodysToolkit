@@ -208,9 +208,21 @@ end
 -- Plugin Setup
 --------------------------------------------------------------------------------
 
-local SUBNAME = "Junk"
+local SUBNAME = "SellJunk"
 local upvalues = setmetatable({}, { __index = _G })
 local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+
+SUB.defaults = {
+  profile = {
+    auto = false,
+    destroy = true,
+    max12 = true,
+    printGold = true,
+    showSpam = true,
+    exceptions = {},
+    destroyables = {},
+  },
+}
 
 function SUB:MERCHANT_SHOW()
   createSellButton()
@@ -235,23 +247,7 @@ function SUB:OnDisable()
   -- Nothing here yet.
 end
 
-
-local thisPlugin = {
-  name = "SellJunk",
-  defaults = {
-    profile = {
-      auto = false,
-      destroy = true,
-      max12 = true,
-      printGold = true,
-      showSpam = true,
-      exceptions = {},
-      destroyables = {},
-    },
-  }
-}
-
-function thisPlugin:CreateOptions()
+function SUB:CreateOptions()
   local options = {
     divider1 = {
       order = 1,
@@ -358,5 +354,3 @@ function thisPlugin:CreateOptions()
   }
   return options
 end
-
-MOD:AddLocalPlugin(thisPlugin)

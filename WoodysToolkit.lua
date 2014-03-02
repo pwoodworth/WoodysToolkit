@@ -24,13 +24,6 @@ _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
 -- Utilities
 --------------------------------------------------------------------------------
 
-mPlugins = mPlugins or {}
-
-function MOD:AddLocalPlugin(plugin)
-  mPlugins = mPlugins or {}
-  mPlugins[plugin.name:lower()] = plugin
-end
-
 local function pairsByKeys(t, f)
   local a = {}
   for n in pairs(t) do table.insert(a, n) end
@@ -45,10 +38,10 @@ local function pairsByKeys(t, f)
   return iter
 end
 
-local function invokePlugins(funcname,...)
-  for _, plugin in pairs(mPlugins) do
-    if plugin[funcname] then
-      plugin[funcname](plugin,...)
+local function invokeModules(funcname, ...)
+  for name, module in MOD:IterateModules() do
+    if type(module[funcname]) == "function" then
+      module[funcname](module, ...)
     end
   end
 end
@@ -84,10 +77,10 @@ local function createDatabaseDefaults()
     },
   }
 
-  for k, v in pairs(mPlugins) do
-    if v.defaults then
-      databaseDefaults["global"][k] = v.defaults.global
-      databaseDefaults["profile"][k] = v.defaults.profile
+  for name, module in MOD:IterateModules() do
+    if module.defaults then
+      databaseDefaults["global"][name:lower()] = module.defaults.global
+      databaseDefaults["profile"][name:lower()] = module.defaults.profile
     end
   end
 
@@ -177,7 +170,7 @@ end
 local function applySettings()
   applyStopButton()
   applyIdpcFuncHack()
-  invokePlugins("ApplySettings")
+  invokeModules("ApplySettings")
 end
 
 function MOD:CreateOptions()
@@ -247,17 +240,18 @@ function MOD:PopulateOptions()
   copyTable(MOD:CreateOptions(), options)
 
   local orderidx = 100
-  for k, v in pairs(mPlugins) do
+
+  for name, module in MOD:IterateModules() do
     orderidx = orderidx + 10
     local pluginOptions = {
       order = orderidx,
       type = "group",
-      name = v["name"] or k,
+      name = name,
       args = {
       }
     }
-    options.args[k] = pluginOptions
-    copyTable(v:CreateOptions(), pluginOptions.args)
+    options.args[name:lower()] = pluginOptions
+    copyTable(module:CreateOptions(), pluginOptions.args)
   end
 
   AceConfig:RegisterOptionsTable(MODNAME, options)
@@ -266,9 +260,8 @@ function MOD:PopulateOptions()
     self.db:ResetProfile()
   end
 
-  for k, v in pairs(mPlugins) do
-    local pname = v["name"] or k
-    AceConfigDialog:AddToBlizOptions(MODNAME, pname, MODNAME, pname:lower())
+  for name, module in MOD:IterateModules() do
+    AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
   end
 
   local profiles = AceDBOptions:GetOptionsTable(self.db)
@@ -358,6 +351,7 @@ end
 
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function MOD:OnInitialize()
+  self:Print("OnInitialize")
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
   self.db = AceDB:New(MODNAME .. "DB", createDatabaseDefaults(), true)
 
@@ -369,8 +363,6 @@ function MOD:OnInitialize()
   self.db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
   self:RefreshDB()
 
-  invokePlugins("OnInitialize")
-
   local options = self:PopulateOptions()
 
   AceConfigCmd.CreateChatCommand(MOD, "woodystoolkit", MODNAME)
@@ -379,7 +371,6 @@ function MOD:OnInitialize()
   self:InitializeLDB()
 
   applySettings()
-  self:Print("MODNAME: " .. MODNAME)
 end
 
 local function tabComplete(t, text, pos)
@@ -400,11 +391,13 @@ end
 
 -- Called by AceAddon.
 function MOD:OnEnable()
+  self:Print("OnEnable")
 --  AceTab:RegisterTabCompletion(MODNAME, "wtk", tabComplete)
 end
 
 -- Called by AceAddon.
 function MOD:OnDisable()
+  self:Print("OnDisable")
   -- Nothing here yet.
 --  AceTab:UnregisterTabCompletion(MODNAME)
 end
