@@ -183,7 +183,6 @@ end
 local function applySettings()
   applyStopButton()
   applyIdpcFuncHack()
---  invokeModules("ApplySettings")
 end
 
 function MOD:CreateOptions()
@@ -200,119 +199,97 @@ function MOD:CreateOptions()
         func = toggleOptions,
         order = 1,
       },
---      general = {
---        type = "group",
---        name = "General",
---        order = 2,
---        args = {
-          stopButtonHeader = {
-            type = "header",
-            name = L["options.escapeButton.header"],
-            order = 10,
-          },
-          stopButton = {
-            type = "toggle",
-            name = L["options.escapeButton.name"],
-            width = "full",
-            set = setStopButtonToggle,
-            get = getStopButtonToggle,
-            order = 11,
-          },
-          miscHeader = {
-            type = "header",
-            name = L["options.misc.header.name"],
-            order = 90,
-          },
-          idbpcHack = {
-            type = "toggle",
-            name = L["options.idbpcHack.name"],
-            width = "full",
-            set = setIdbpcHackToggle,
-            get = getIdbpcHackToggle,
-            order = 91,
-          },
-          reloadButton = {
-            type = "execute",
-            name = L["options.reloadui.name"],
-            cmdHidden = true,
-            width = nil,
-            func = function()
-              _G.ReloadUI()
-            end,
-            order = 92,
-          },
---        },
---      },
+      stopButtonHeader = {
+        type = "header",
+        name = L["options.escapeButton.header"],
+        order = 10,
+      },
+      stopButton = {
+        type = "toggle",
+        name = L["options.escapeButton.name"],
+        width = "full",
+        set = setStopButtonToggle,
+        get = getStopButtonToggle,
+        order = 11,
+      },
+      miscHeader = {
+        type = "header",
+        name = L["options.misc.header.name"],
+        order = 90,
+      },
+      idbpcHack = {
+        type = "toggle",
+        name = L["options.idbpcHack.name"],
+        width = "full",
+        set = setIdbpcHackToggle,
+        get = getIdbpcHackToggle,
+        order = 91,
+      },
+      reloadButton = {
+        type = "execute",
+        name = L["options.reloadui.name"],
+        cmdHidden = true,
+        width = nil,
+        func = function()
+          _G.ReloadUI()
+        end,
+        order = 92,
+      },
     },
   }
   return options
 end
 
-function MOD:CreateCliOptions()
-  local options = {}
-  copyTable(MOD:CreateOptions(), options)
-
-  local orderidx = 100
-  for name, module in MOD:IterateModules() do
-    orderidx = orderidx + 10
-    local pluginOptions = {
-      order = orderidx,
-      type = "group",
-      name = name,
-      args = {
-      }
-    }
-    options.args[name:lower()] = pluginOptions
-    copyTable(module:CreateOptions(), pluginOptions.args)
+function MOD:IterateModuleOptions(f)
+  local modules = self.modules
+  local a = {}
+  for n in pairs(modules) do
+    table.insert(a, n)
   end
-
-  AceConfig:RegisterOptionsTable(MODNAME .. "_SlashCmd", options, { "woodystoolkit", "wtk" })
-  return options
+  table.sort(a, f)
+  local ii = 0
+  local iter = function()
+    ii = ii + 1
+    if a[ii] == nil then
+      return nil
+    else
+      local name, module = a[ii], modules[a[ii]]
+      local options = {
+        order = ii * 100,
+        type = "group",
+        name = name,
+        args = module:CreateOptions(),
+      }
+      return options, name, module
+    end
+  end
+  return iter
 end
 
-function MOD:CreateGuiOptions()
-  local options = {}
-  copyTable(MOD:CreateOptions(), options)
-  AceConfig:RegisterOptionsTable(MODNAME, options)
+function MOD:PopulateOptions()
+  local options = MOD:CreateOptions()
+  for modopts in MOD:IterateModuleOptions() do
+    options.args[modopts.name:lower()] = modopts
+  end
+  AceConfig:RegisterOptionsTable(MODNAME .. "_SlashCmd", options, { "woodystoolkit", "wtk" })
+
+  AceConfig:RegisterOptionsTable(MODNAME, MOD:CreateOptions())
   MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
   MOD.mConfigFrame.default = function(...)
     self.db:ResetProfile()
   end
 
-  local modOpts = {}
-  local orderidx = 100
-  for name, module in MOD:IterateModulesSorted() do
-    orderidx = orderidx + 10
-    local pluginOptions = {
-      order = orderidx,
-      type = "group",
-      name = name,
-      args = {
-      }
-    }
-    copyTable(module:CreateOptions(), pluginOptions.args)
-
-    local FULLSUBNAME = MODNAME .. "_" .. name
-
-    modOpts[name:lower()] = pluginOptions
-    AceConfig:RegisterOptionsTable(FULLSUBNAME, pluginOptions)
-    MOD.mConfigFrame[name] = AceConfigDialog:AddToBlizOptions(FULLSUBNAME, pluginOptions.name, "WoodysToolkit")
+  for modopts in MOD:IterateModuleOptions() do
+    local FULLSUBNAME = MODNAME .. "_" .. modopts.name
+    AceConfig:RegisterOptionsTable(FULLSUBNAME, modopts)
+    MOD.mConfigFrame[modopts.name] = AceConfigDialog:AddToBlizOptions(FULLSUBNAME, modopts.name, "WoodysToolkit")
   end
 
   local profiles = AceDBOptions:GetOptionsTable(self.db)
   AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)
   AceConfigDialog:AddToBlizOptions(MODNAME .. "_Profiles", profiles.name, "WoodysToolkit")
-
-  return options
 end
 
-
-function MOD:PopulateOptions()
-  local options = {}
-  options = self:CreateCliOptions()
-  self:CreateGuiOptions()
-  return options
-end
 
 function MOD:RefreshDB()
 --  MOD:Print("Refreshing DB Profile")
@@ -355,7 +332,6 @@ function MOD:OptionsPanel()
   MOD:ToggleOptions()
 end
 
--- Tie into LibDataBroker
 function MOD:InitializeLDB()
   local LDB = LibStub("LibDataBroker-1.1", true)
   if not LDB then return end
@@ -406,7 +382,7 @@ function MOD:OnInitialize()
   self.db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
   self:RefreshDB()
 
-  local options = self:PopulateOptions()
+  self:PopulateOptions()
 
   self:InitializeLDB()
 
