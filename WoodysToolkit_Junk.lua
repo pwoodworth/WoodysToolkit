@@ -4,7 +4,7 @@
 
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
-local SUBNAME = "SellJunk"
+local SUBNAME = "Junk"
 local upvalues = setmetatable({}, { __index = MOD })
 local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
 setfenv(1, SUB)
@@ -13,7 +13,7 @@ setfenv(1, SUB)
 local string_find = _G.string.find
 
 --------------------------------------------------------------------------------
--- SellJunk
+-- Junk
 --------------------------------------------------------------------------------
 
 local function createSellButton()
@@ -233,7 +233,7 @@ end
 
 -- Called by AceAddon.
 function SUB:OnInitialize()
-  self.db = MOD.db:RegisterNamespace("Junk", SUB.defaults)
+  self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
 --  self:Print("SUBNAME: " .. SUBNAME)
 end
 

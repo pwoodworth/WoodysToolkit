@@ -15,5 +15,5 @@ i18n-enUS.lua
 
 WoodysToolkit.lua
 WoodysToolkit_Mouse.lua
-WoodysToolkit_SellJunk.lua
+WoodysToolkit_Junk.lua
 WoodysToolkit_Viewport.lua

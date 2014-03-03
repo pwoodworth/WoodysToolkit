@@ -97,14 +97,6 @@ local function createDatabaseDefaults()
       autoDuelDecline = true,
     },
   }
-
-  for name, module in MOD:IterateModules() do
-    if module.defaults then
-      databaseDefaults["global"][name:lower()] = module.defaults.global
-      databaseDefaults["profile"][name:lower()] = module.defaults.profile
-    end
-  end
-
   return databaseDefaults
 end
 
