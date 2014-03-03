@@ -16,6 +16,8 @@ local string_find = _G.string.find
 -- Junk
 --------------------------------------------------------------------------------
 
+local DESTROY_CONFIRMATION_DIALOG_NAME = "WoodysToolkit_DestroyConfirmation"
+
 local function createSellButton()
   if mSellButton then
     return
@@ -30,7 +32,7 @@ local function createSellButton()
   mSellButton:SetText(L["Sell Junk"])
   mSellButton:SetScript("OnClick", function() SUB:SellTheJunk() end)
 
-  _G.StaticPopupDialogs["WoodysToolkit_DestroyConfirmation"] = {
+  _G.StaticPopupDialogs[DESTROY_CONFIRMATION_DIALOG_NAME] = {
     text = "Do you want to destroy %s?",
     button1 = "Yes",
     button2 = "No",
@@ -154,7 +156,7 @@ function SUB:SellTheJunk()
             end
           else
             if destroy then
-              local dialog = _G.StaticPopup_Show("WoodysToolkit_DestroyConfirmation", item)
+              local dialog = _G.StaticPopup_Show(DESTROY_CONFIRMATION_DIALOG_NAME, item)
               if (dialog) then
                 dialog.data  = bag
                 dialog.data2 = slot
