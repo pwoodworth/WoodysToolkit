@@ -5,16 +5,8 @@
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 local SUBNAME = "Viewport"
-local upvalues = setmetatable({}, { __index = MOD })
-local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+local SUB = MOD:NewModule(SUBNAME, "AceConsole-3.0", "AceEvent-3.0")
 setfenv(1, SUB)
-
-local AceConfig = LibStub("AceConfig-3.0")
-local AceConfigDialog = LibStub("AceConfigDialog-3.0")
-local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
-local AceDBOptions = LibStub("AceDBOptions-3.0")
-local AceConfigCmd = LibStub("AceConfigCmd-3.0")
-local AceDB = LibStub("AceDB-3.0")
 
 --------------------------------------------------------------------------------
 -- Viewport
@@ -26,7 +18,6 @@ mOriginalViewport = nil
 local function getCurrentScreenResolution()
   local resolution = ({_G.GetScreenResolutions()})[_G.GetCurrentResolution()]
   for width, height in string.gmatch(resolution, "(%w+)x(%w+)") do
-    --     print("w="..k.." h="..v)
     return _G.tonumber(width), _G.tonumber(height)
   end
 end
@@ -159,14 +150,10 @@ SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 -- Called by AceAddon.
 function SUB:OnInitialize()
-  --  self.db = MOD.db
   self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
   db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
-
---  self:Print("SUBNAME: " .. SUBNAME)
---  self:PopulateOptions2()
   applyViewport()
 end
 

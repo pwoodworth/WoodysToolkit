@@ -5,8 +5,7 @@
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 local SUBNAME = "Junk"
-local upvalues = setmetatable({}, { __index = MOD })
-local SUB = MOD:NewModule(SUBNAME, upvalues, "AceConsole-3.0", "AceEvent-3.0")
+local SUB = MOD:NewModule(SUBNAME, "AceConsole-3.0", "AceEvent-3.0")
 setfenv(1, SUB)
 
 -- upvalues

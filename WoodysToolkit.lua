@@ -23,13 +23,18 @@ local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 setfenv(1, MOD)
 local LibStub = _G.LibStub
 MOD.L = MOD.L or LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
+
+--local subupvalues = setmetatable({}, { __index = MOD })
+local subupvalues = setmetatable({
+  L = MOD.L,
+}, { __index = upvalues })
+MOD:SetDefaultModulePrototype(subupvalues)
+
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceDBOptions = LibStub("AceDBOptions-3.0")
-local AceConfigCmd = LibStub("AceConfigCmd-3.0")
 local AceDB = LibStub("AceDB-3.0")
-local AceTab = LibStub("AceTab-3.0")
 
 _G["BINDING_HEADER_WOODYSTOOLKIT"] = "Woody's Toolkit"
 _G["BINDING_NAME_WTKRELOADUI"] = "Reload UI"
