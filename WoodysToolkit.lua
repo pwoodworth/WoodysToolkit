@@ -323,7 +323,7 @@ function MOD:PopulateOptions()
 end
 
 function MOD:RefreshDB()
-  MOD:Print("Refreshing DB Profile")
+--  MOD:Print("Refreshing DB Profile")
   applySettings()
 end
 
@@ -402,7 +402,7 @@ end
 
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function MOD:OnInitialize()
-  self:Printd("OnInitialize")
+--  self:Printd("OnInitialize")
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
   self.db = AceDB:New(MODNAME .. "DB", createDatabaseDefaults(), true)
 
@@ -423,10 +423,10 @@ end
 
 -- Called by AceAddon.
 function MOD:OnEnable()
-  self:Printd("OnEnable")
+--  self:Printd("OnEnable")
 end
 
 -- Called by AceAddon.
 function MOD:OnDisable()
-  self:Printd("OnDisable")
+--  self:Printd("OnDisable")
 end

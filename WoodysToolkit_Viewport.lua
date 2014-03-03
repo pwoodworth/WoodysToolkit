@@ -254,7 +254,7 @@ function SUB:OnInitialize()
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
 
-  self:Print("SUBNAME: " .. SUBNAME)
+--  self:Print("SUBNAME: " .. SUBNAME)
 --  self:PopulateOptions2()
   applyViewport()
 end

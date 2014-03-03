@@ -233,7 +233,7 @@ end
 -- Called by AceAddon.
 function SUB:OnInitialize()
 --  self.db = db
-  self:Print("SUBNAME: " .. SUBNAME)
+--  self:Print("SUBNAME: " .. SUBNAME)
 end
 
 -- Called by AceAddon.
