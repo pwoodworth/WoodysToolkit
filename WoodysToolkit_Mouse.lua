@@ -31,7 +31,7 @@ function SUB:predFun(enabled, inverted, clauseText, event, ...)
 end
 
 local function defer()
-  if not db.profile.mouse.useDeferWorkaround then return end
+  if not db.profile.useDeferWorkaround then return end
   for i = 1, 5 do
     if _G.IsMouseButtonDown(i) then return true end
   end
@@ -41,7 +41,7 @@ end
 -- saved state.
 local function rematch()
   if defer() then return end
-  if db.profile.mouse.useSpellTargetingOverride and _G.SpellIsTargeting() then
+  if db.profile.useSpellTargetingOverride and _G.SpellIsTargeting() then
     MouselookStop()
     return
   end
@@ -150,24 +150,24 @@ end
 local function applyOverrideBindings(info, val)
 --  print("applyOverrideBindings")
 --  printDatabaseEntries()
-  if db.profile.mouse.useOverrideBindings then
-    for key, command in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
+  if db.profile.useOverrideBindings then
+    for key, command in _G.pairs(db.profile.mouseOverrideBindings) do
       _G.SetMouselookOverrideBinding(key, command == "" and nil or command)
     end
   else
-    for key, _ in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
+    for key, _ in _G.pairs(db.profile.mouseOverrideBindings) do
       _G.SetMouselookOverrideBinding(key, nil)
     end
   end
 end
 
 local function setUseOverrideBindings(info, val)
-  db.profile.mouse.useOverrideBindings = val
+  db.profile.useOverrideBindings = val
   applyOverrideBindings()
 end
 
 local function getUseOverrideBindings(info)
-  return db.profile.mouse.useOverrideBindings
+  return db.profile.useOverrideBindings
 end
 
 -- "Hint: Use info[#info] to get the leaf node name, info[#info-1] for the parent, and so on!"
@@ -189,7 +189,7 @@ end
 -- configured.
 local selectedKey
 
--- Array containing all the keys from db.profile.mouse.mouseOverrideBindings.
+-- Array containing all the keys from db.profile.mouseOverrideBindings.
 local overrideKeys = {}
 
 local deferText = [[When clicking and holding any mouse button while ]]
@@ -208,15 +208,6 @@ local bindText = [[Enable to define a set of keybindings that only apply while m
   .. [[For example, you could strafe with the left (BUTTON1) and right (BUTTON2) mouse buttons.]]
 
 local spellTargetingOverrideText = [[Disable mouselook while a spell is awaiting a target.]]
-
---local options = {
---  type = "group",
---  name = "MouselookHandler Options",
---  handler = MouselookHandler,
---  childGroups = "tree",
---  args = {
---  },
---}
 
 --------------------------------------------------------------------------------
 -- Plugin Setup
@@ -249,15 +240,15 @@ SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 -- Called by AceAddon.
 function SUB:OnInitialize()
---  self.db = MOD.db
+  self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
   db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
 
 --  self:Print("SUBNAME: " .. SUBNAME)
-  for k, _ in _G.pairs(db.profile.mouse.mouseOverrideBindings) do
+  for k, _ in _G.pairs(db.profile.mouseOverrideBindings) do
     if not (_G.type(k) == "string") then
-      db.profile.mouse.mouseOverrideBindings[k] = nil
+      db.profile.mouseOverrideBindings[k] = nil
     else
       _G.table.insert(overrideKeys, (k))
     end
@@ -299,8 +290,8 @@ function SUB:CreateOptions()
           type = "toggle",
           name = "Enable defer workaround",
           width = "full",
-          set = function(info, val) db.profile.mouse.useDeferWorkaround = val end,
-          get = function(info) return db.profile.mouse.useDeferWorkaround  end,
+          set = function(info, val) db.profile.useDeferWorkaround = val end,
+          get = function(info) return db.profile.useDeferWorkaround  end,
           order = 2,
         },
         spellTargetingOverrideHeader = {
@@ -318,8 +309,8 @@ function SUB:CreateOptions()
           type = "toggle",
           name = "Enable",
           width = "full",
-          set = function(info, val) db.profile.mouse.useSpellTargetingOverride = val end,
-          get = function(info) return db.profile.mouse.useSpellTargetingOverride end,
+          set = function(info, val) db.profile.useSpellTargetingOverride = val end,
+          get = function(info) return db.profile.useSpellTargetingOverride end,
           order = 8,
         },
       },
@@ -368,8 +359,8 @@ function SUB:CreateOptions()
           desc = "Create a new mouselook override binding.",
           set = function(info, val)
             val = _G.string.upper(val)
-            if not db.profile.mouse.mouseOverrideBindings[val] then
-              db.profile.mouse.mouseOverrideBindings[val] = ""
+            if not db.profile.mouseOverrideBindings[val] then
+              db.profile.mouseOverrideBindings[val] = ""
               --overrideKeys[#overrideKeys + 1] = val
               _G.table.insert(overrideKeys, val)
               -- http://stackoverflow.com/questions/2038418/associatively-sorting-a-table-by-v
@@ -416,11 +407,11 @@ function SUB:CreateOptions()
           values = function(info) return suggestedCommands end,
           hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
           set = function(info, val)
-            db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]] = val
+            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = val
             applyOverrideBindings()
           end,
           get = function(info)
-            return db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]]
+            return db.profile.mouseOverrideBindings[overrideKeys[selectedKey]]
           end,
           order = 180,
         },
@@ -433,11 +424,11 @@ function SUB:CreateOptions()
           hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
           set = function(info, val)
             if val == "" then val = nil end
-            db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]] = val
+            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = val
             applyOverrideBindings()
           end,
           get = function(info)
-            return db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]]
+            return db.profile.mouseOverrideBindings[overrideKeys[selectedKey]]
           end,
           order = 190,
         },
@@ -469,7 +460,7 @@ function SUB:CreateOptions()
           confirmText = "This can't be undone. Continue?",
           func = function()
             _G.SetMouselookOverrideBinding(overrideKeys[selectedKey], nil)
-            db.profile.mouse.mouseOverrideBindings[overrideKeys[selectedKey]] = nil
+            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = nil
             -- This wont shift down the remaining integer keys: overrideKeys[selectedKey] = nil
             _G.table.remove(overrideKeys, selectedKey)
             selectedKey = 0

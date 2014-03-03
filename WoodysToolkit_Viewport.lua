@@ -88,12 +88,12 @@ local function resetViewport()
 end
 
 local function applyViewport()
-  if db.profile.viewport.enable then
+  if db.profile.enable then
     saveOriginalViewport()
-    local top = db.profile.viewport["top"]
-    local bottom = db.profile.viewport["bottom"]
-    local left = db.profile.viewport["left"]
-    local right = db.profile.viewport["right"]
+    local top = db.profile["top"]
+    local bottom = db.profile["bottom"]
+    local left = db.profile["left"]
+    local right = db.profile["right"]
     setupViewport(top, bottom, left, right)
   else
     resetViewport()
@@ -102,7 +102,7 @@ end
 
 local function getViewportCoordinate(info)
   local key = info[#info]
-  local val = db.profile.viewport[key]
+  local val = db.profile[key]
   if not val then
     val = 0
   end
@@ -118,112 +118,23 @@ local function setViewportCoordinate(info, val)
   end
   local scaling = getViewpointScaling()
   val = _G.math.floor((val * scaling) + 0.5)
-  db.profile.viewport[key] = val
+  db.profile[key] = val
   applyViewport()
 end
 
 local function setViewportToggle(info, val)
-  db.profile.viewport.enable = val
+  db.profile.enable = val
   applyViewport()
 end
 
 local function getViewportToggle(info)
-  return db.profile.viewport.enable
+  return db.profile.enable
 end
 
 
 --------------------------------------------------------------------------------
 -- Plugin Setup
 --------------------------------------------------------------------------------
-
-local fooVals = {}
-
-local function getFoo(info)
-  local key = info[#info]
-  local val = fooVals[key]
-  if not val then
-    val = false
-  end
-  return val
-end
-
-local function setFoo(info, val)
-  local key = info[#info]
-  if not val then
-    val = false
-  end
-  fooVals[key] = val
-end
-
-function SUB:CreateOptions2()
-  local options = {
-    type = "group",
-    name = L[SUBNAME .. "2"],
-    handler = SUB,
---    childGroups = "tree",
-    args = {
-      alphaHeader = {
-        type = "header",
-        name = L["options.alpha.header"],
-        order = 10,
-      },
-      alpha = {
-        type = "toggle",
-        name = L["options.alpha.name"],
-        width = "full",
-        set = setFoo,
-        get = getFoo,
-        order = 11,
-      },
-      betaHeader = {
-        type = "header",
-        name = L["options.beta.header"],
-        order = 90,
-      },
-      beta = {
-        type = "toggle",
-        name = L["options.beta.name"],
-        width = "full",
-        set = setFoo,
-        get = getFoo,
-        order = 91,
-      },
-      delta = {
-        type = "execute",
-        name = L["options.delta.name"],
-        cmdHidden = true,
-        width = nil,
-        func = function()
-          _G.ReloadUI()
-        end,
-        order = 92,
-      },
-    },
-  }
-  return options
-end
-
-function SUB:PopulateOptions2()
-  local options = SUB:CreateOptions2()
---  AceConfig:RegisterOptionsTable(MODNAME, options)
---  MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit", nil, "general")
---  MOD.mConfigFrame.default = function(...)
---    self.db:ResetProfile()
---  end
---
---  for name, module in MOD:IterateModules() do
---    AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
---  end
-
---  local profiles = AceDBOptions:GetOptionsTable(self.db)
-  local FULLSUBNAME = MODNAME .. "_" .. SUBNAME
-  AceConfigRegistry:RegisterOptionsTable(FULLSUBNAME, options)
---  AceConfigDialog:AddToBlizOptions(MODNAME, name, MODNAME, name:lower())
-  AceConfigDialog:AddToBlizOptions(FULLSUBNAME, options.name, MODNAME)
-
-  return options
-end
-
 
 SUB.defaults = {
   profile = {
@@ -241,7 +152,6 @@ function SUB:RefreshDB()
 end
 
 function SUB:PLAYER_ENTERING_WORLD()
-  SUB:Print("Refreshing DB Profile")
   applyViewport()
 end
 
@@ -250,6 +160,7 @@ SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
 -- Called by AceAddon.
 function SUB:OnInitialize()
   --  self.db = MOD.db
+  self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
   db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
