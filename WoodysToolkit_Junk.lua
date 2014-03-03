@@ -235,7 +235,7 @@ end
 -- Called by AceAddon.
 function SUB:OnInitialize()
   self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
---  self:Print("SUBNAME: " .. SUBNAME)
+  self:Printd("OnInitialize")
 end
 
 -- Called by AceAddon.

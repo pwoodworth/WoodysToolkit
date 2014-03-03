@@ -5,12 +5,14 @@
 local MODNAME = ...
 local _G = getfenv(0)
 
+local DEBUG = false
+
 local function pdebug(...)
-  print("DEBUG: ", ...)
+  if DEBUG then print(...) end
 end
 
 local function psdebug(self, ...)
-  self:Print("DEBUG: ", ...)
+  if DEBUG then self:Print(...) end
 end
 
 local upvalues = setmetatable({}, { __index = _G })
@@ -43,7 +45,7 @@ _G["BINDING_NAME_WTKRELOADUI"] = "Reload UI"
 -- Utilities
 --------------------------------------------------------------------------------
 
-local function pairsByKeys(t, f)
+local function spairs(t, f)
   local a = {}
   for n in pairs(t) do table.insert(a, n) end
   table.sort(a, f)
@@ -58,7 +60,7 @@ local function pairsByKeys(t, f)
 end
 
 function MOD:IterateModulesSorted()
-  return pairsByKeys(self.modules)
+  return spairs(self.modules)
 end
 
 local function invokeModules(funcname, ...)
@@ -79,7 +81,7 @@ end
 
 local function printTable(t)
   local count = 0
-  for k, v in pairsByKeys(t) do
+  for k, v in spairs(t) do
     count = count + 1
     printd("  key: " .. _G.tostring(k) .. " ; type: " .. type(v))
   end
@@ -155,7 +157,7 @@ end
 
 
 function MOD:RefreshDB()
---  MOD:Print("Refreshing DB Profile")
+  self:Printd("Refreshing DB Profile")
   self:ApplySettings()
 end
 
@@ -224,7 +226,7 @@ end
 
 -- See: wowace.com/addons/ace3/pages/getting-started/#w-standard-methods
 function MOD:OnInitialize()
---  self:Printd("OnInitialize")
+  self:Printd("OnInitialize")
   -- The ".toc" need say "## SavedVariables: WoodysToolkitDB".
   self.db = AceDB:New(MODNAME .. "DB", MOD:CreateDatabaseDefaults(), true)
 
@@ -245,10 +247,10 @@ end
 
 -- Called by AceAddon.
 function MOD:OnEnable()
---  self:Printd("OnEnable")
+  self:Printd("OnEnable")
 end
 
 -- Called by AceAddon.
 function MOD:OnDisable()
---  self:Printd("OnDisable")
+  self:Printd("OnDisable")
 end
