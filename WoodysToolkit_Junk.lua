@@ -119,7 +119,7 @@ local function printGold(total)
   end
   ret = ret .. copper .. " " .. L["copper"]
   if silver > 0 or gold > 0 or copper > 0 then
-    MOD:Print(L["Gained"] .. ": " .. ret)
+    SUB:Print(L["Gained"] .. ": " .. ret)
   end
 end
 
@@ -236,11 +236,6 @@ end
 function SUB:OnEnable()
   self:Printd("OnEnable")
   self:RegisterEvent("MERCHANT_SHOW")
-end
-
--- Called by AceAddon.
-function SUB:OnDisable()
-  self:Printd("OnDisable")
 end
 
 function SUB:CreateOptions()

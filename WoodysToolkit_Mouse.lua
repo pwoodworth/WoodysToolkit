@@ -225,14 +225,13 @@ SUB.defaults = {
   },
 }
 
-function SUB:RefreshDB()
-  self:Printd("Refreshing DB Profile")
+function SUB:ApplySettings()
+  self:Printd("ApplySettings")
   applyOverrideBindings()
 end
 
 function SUB:PLAYER_ENTERING_WORLD()
---  SUB:Print("Refreshing DB Profile")
-  applyOverrideBindings()
+  self:ApplySettings()
 end
 
 SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -253,7 +252,7 @@ function SUB:OnInitialize()
     end
   end
   _G.table.sort(overrideKeys)
-  applyOverrideBindings()
+  self:ApplySettings()
   updateLock()
 end
 

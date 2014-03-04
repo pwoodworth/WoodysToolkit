@@ -31,24 +31,32 @@ local subupvalues = setmetatable({
   L = MOD.L,
 }, { __index = upvalues })
 
+function subupvalues:ApplySettings()
+  self:Printd("ApplySettings")
+end
+
 function subupvalues:OnInitialize()
   self:Printd("OnInitialize")
   self.db = MOD.db:RegisterNamespace(self:GetName(), self.defaults)
   db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
+  self:ApplySettings()
 end
 
 function subupvalues:OnEnable()
   self:Printd("OnEnable")
+  self:ApplySettings()
 end
 
 function subupvalues:OnDisable()
-  self:Printd("OnEnable")
+  self:Printd("OnDisable")
+  self:ApplySettings()
 end
 
 function subupvalues:RefreshDB()
   self:Printd("RefreshDB")
+  self:ApplySettings()
 end
 
 MOD:SetDefaultModulePrototype(subupvalues)
