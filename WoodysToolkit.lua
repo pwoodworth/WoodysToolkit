@@ -5,7 +5,7 @@
 local MODNAME = ...
 local _G = getfenv(0)
 
-local DEBUG = true
+local DEBUG = false
 
 local function pdebug(...)
   if DEBUG then print(...) end

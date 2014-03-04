@@ -17,25 +17,11 @@ function MOD:CreateDatabaseDefaults()
       Minimap = { hide = false, minimapPos = 180, radius = 80, }, -- saved DBIcon minimap settings
     },
     ["profile"] = {
-      ["declineduel"] = false,
       ["stopbutton"] = false,
     },
   }
   return databaseDefaults
 end
-
---------------------------------------------------------------------------------
--- Decline Duel
---------------------------------------------------------------------------------
-
-function MOD:DUEL_REQUESTED(event, name)
-  if self.db.profile.declineduel then
-    HideUIPanel(StaticPopup1);
-    CancelDuel();
-  end
-end
-
-MOD:RegisterEvent("DUEL_REQUESTED")
 
 --------------------------------------------------------------------------------
 -- Stop Button
@@ -124,14 +110,6 @@ function MOD:CreateOptions()
         type = "header",
         name = L["options.misc.header.name"],
         order = 90,
-      },
-      declineduel = {
-        type = "toggle",
-        name = L["options.idbpcHack.name"],
-        width = "full",
-        get = "GetToggleOption",
-        set = "SetToggleOption",
-        order = 91,
       },
       reloadButton = {
         type = "execute",
