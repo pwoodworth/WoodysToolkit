@@ -4,8 +4,6 @@
 
 local MODNAME = ...
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
---local SUBNAME = "Viewport"
---local SUB = MOD:NewModule(SUBNAME, "AceConsole-3.0", "AceEvent-3.0")
 setfenv(1, MOD)
 
 --------------------------------------------------------------------------------
@@ -19,37 +17,25 @@ function MOD:CreateDatabaseDefaults()
       Minimap = { hide = false, minimapPos = 180, radius = 80, }, -- saved DBIcon minimap settings
     },
     ["profile"] = {
-      ["stopButtonToggle"] = false,
-      ["idbpcHackToggle"] = false,
-      autoDuelDecline = true,
+      ["declineduel"] = false,
+      ["stopbutton"] = false,
     },
   }
   return databaseDefaults
 end
 
 --------------------------------------------------------------------------------
--- IDPC Function Hack
+-- Decline Duel
 --------------------------------------------------------------------------------
 
-mIdbpcFunc = nil
-
-local function applyIdpcFuncHack()
-  if db.profile.idbpcHackToggle then
-    if not mIdbpcFunc then
-      mIdbpcFunc = _G.C_StorePublic.IsDisabledByParentalControls
-      _G.C_StorePublic.IsDisabledByParentalControls = function () return false end
-    end
+function MOD:DUEL_REQUESTED(event, name)
+  if self.db.profile.declineduel then
+    HideUIPanel(StaticPopup1);
+    CancelDuel();
   end
 end
 
-local function setIdbpcHackToggle(info, val)
-  db.profile.idbpcHackToggle = val
-  applyIdpcFuncHack()
-end
-
-local function getIdbpcHackToggle(info)
-  return db.profile.idbpcHackToggle
-end
+MOD:RegisterEvent("DUEL_REQUESTED")
 
 --------------------------------------------------------------------------------
 -- Stop Button
@@ -76,41 +62,35 @@ local function createStopMacro()
 end
 
 local function applyStopButton()
-  if db.profile.stopButtonToggle then
+  if db.profile.stopbutton then
     createStopButton()
     createStopMacro()
   end
 end
 
-local function setStopButtonToggle(info, val)
-  db.profile.stopButtonToggle = val
-  applyStopButton()
-end
-
-local function getStopButtonToggle(info)
-  return db.profile.stopButtonToggle
-end
-
---------------------------------------------------------------------------------
--- Decline Duel
---------------------------------------------------------------------------------
-
-function MOD:DUEL_REQUESTED(event, name)
-  if self.db.profile.autoDuelDecline then
-    HideUIPanel(StaticPopup1);
-    CancelDuel();
-  end
-end
-
-MOD:RegisterEvent("DUEL_REQUESTED")
-
 --------------------------------------------------------------------------------
 -- General
 --------------------------------------------------------------------------------
 
-function MOD:ApplySettings()
+local function applySettings()
   applyStopButton()
-  applyIdpcFuncHack()
+end
+
+function MOD:ApplySettings()
+  applySettings()
+end
+
+function MOD:GetToggleOption(info)
+  local key = info[#info]
+  local val = db.profile[key]
+  return val
+end
+
+function MOD:SetToggleOption(info, val)
+  local key = info[#info]
+  db.profile[key] = val
+  self:Printd("option: " .. key .. " = " .. tostring(db.profile[key]))
+  self:ApplySettings()
 end
 
 function MOD:CreateOptions()
@@ -132,12 +112,12 @@ function MOD:CreateOptions()
         name = L["options.escapeButton.header"],
         order = 10,
       },
-      stopButton = {
+      stopbutton = {
         type = "toggle",
         name = L["options.escapeButton.name"],
         width = "full",
-        set = setStopButtonToggle,
-        get = getStopButtonToggle,
+        get = "GetToggleOption",
+        set = "SetToggleOption",
         order = 11,
       },
       miscHeader = {
@@ -145,12 +125,12 @@ function MOD:CreateOptions()
         name = L["options.misc.header.name"],
         order = 90,
       },
-      idbpcHack = {
+      declineduel = {
         type = "toggle",
         name = L["options.idbpcHack.name"],
         width = "full",
-        set = setIdbpcHackToggle,
-        get = getIdbpcHackToggle,
+        get = "GetToggleOption",
+        set = "SetToggleOption",
         order = 91,
       },
       reloadButton = {
