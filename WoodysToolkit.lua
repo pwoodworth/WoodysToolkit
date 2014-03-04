@@ -5,14 +5,14 @@
 local MODNAME = ...
 local _G = getfenv(0)
 
-local DEBUG = false
+local WTK_DEBUG = true
 
 local function pdebug(...)
-  if DEBUG then print(...) end
+  if WTK_DEBUG then print(...) end
 end
 
 local function psdebug(self, ...)
-  if DEBUG then self:Print(...) end
+  if WTK_DEBUG then self:Print(...) end
 end
 
 local upvalues = setmetatable({}, { __index = _G })
@@ -30,6 +30,27 @@ MOD.L = MOD.L or LibStub("AceLocale-3.0"):GetLocale(MODNAME, true)
 local subupvalues = setmetatable({
   L = MOD.L,
 }, { __index = upvalues })
+
+function subupvalues:OnInitialize()
+  self:Printd("OnInitialize")
+  self.db = MOD.db:RegisterNamespace(self:GetName(), self.defaults)
+  db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
+  db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
+  db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
+end
+
+function subupvalues:OnEnable()
+  self:Printd("OnEnable")
+end
+
+function subupvalues:OnDisable()
+  self:Printd("OnEnable")
+end
+
+function subupvalues:RefreshDB()
+  self:Printd("RefreshDB")
+end
+
 MOD:SetDefaultModulePrototype(subupvalues)
 
 local AceConfig = LibStub("AceConfig-3.0")

@@ -138,11 +138,12 @@ SUB.defaults = {
 }
 
 function SUB:RefreshDB()
-  SUB:Print("Refreshing DB Profile")
+  self:Printd("Refreshing DB Profile")
   applyViewport()
 end
 
 function SUB:PLAYER_ENTERING_WORLD()
+  self:Printd("PLAYER_ENTERING_WORLD")
   applyViewport()
 end
 
@@ -150,21 +151,12 @@ SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 -- Called by AceAddon.
 function SUB:OnInitialize()
+  self:Printd("OnInitialize")
   self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
   db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
   applyViewport()
-end
-
--- Called by AceAddon.
-function SUB:OnEnable()
-  -- Nothing here yet.
-end
-
--- Called by AceAddon.
-function SUB:OnDisable()
-  -- Nothing here yet.
 end
 
 function SUB:CreateOptions()

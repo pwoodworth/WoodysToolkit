@@ -226,7 +226,7 @@ SUB.defaults = {
 }
 
 function SUB:RefreshDB()
---  SUB:Print("Refreshing DB Profile")
+  self:Printd("Refreshing DB Profile")
   applyOverrideBindings()
 end
 
@@ -239,12 +239,12 @@ SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 -- Called by AceAddon.
 function SUB:OnInitialize()
+  self:Printd("OnInitialize")
   self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
   db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
 
---  self:Print("SUBNAME: " .. SUBNAME)
   for k, _ in _G.pairs(db.profile.mouseOverrideBindings) do
     if not (_G.type(k) == "string") then
       db.profile.mouseOverrideBindings[k] = nil
@@ -255,16 +255,6 @@ function SUB:OnInitialize()
   _G.table.sort(overrideKeys)
   applyOverrideBindings()
   updateLock()
-end
-
--- Called by AceAddon.
-function SUB:OnEnable()
-  -- Nothing here yet.
-end
-
--- Called by AceAddon.
-function SUB:OnDisable()
-  -- Nothing here yet.
 end
 
 function SUB:CreateOptions()

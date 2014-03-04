@@ -233,19 +233,14 @@ function SUB:MERCHANT_SHOW()
 end
 
 -- Called by AceAddon.
-function SUB:OnInitialize()
-  self.db = MOD.db:RegisterNamespace(SUBNAME, SUB.defaults)
-  self:Printd("OnInitialize")
-end
-
--- Called by AceAddon.
 function SUB:OnEnable()
+  self:Printd("OnEnable")
   self:RegisterEvent("MERCHANT_SHOW")
 end
 
 -- Called by AceAddon.
 function SUB:OnDisable()
-  -- Nothing here yet.
+  self:Printd("OnDisable")
 end
 
 function SUB:CreateOptions()
