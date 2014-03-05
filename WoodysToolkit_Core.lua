@@ -2,8 +2,7 @@
 -- AddOn Initialization
 --------------------------------------------------------------------------------
 
-local MODNAME = ...
-local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+local MODNAME, MOD = ...
 setfenv(1, MOD)
 
 --------------------------------------------------------------------------------

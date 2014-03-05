@@ -2,7 +2,7 @@
 -- AddOn Initialization
 --------------------------------------------------------------------------------
 
-local MODNAME = ...
+local MODNAME, MODTABLE = ...
 local _G = getfenv(0)
 
 local WTK_DEBUG = true
@@ -20,7 +20,7 @@ upvalues = setmetatable({
   printd = pdebug,
   Printd = psdebug,
 }, { __index = upvalues })
-_G[MODNAME] = _G[MODNAME] or LibStub("AceAddon-3.0"):NewAddon(upvalues, MODNAME, "AceConsole-3.0", "AceEvent-3.0")
+_G[MODNAME] = _G[MODNAME] or LibStub("AceAddon-3.0"):NewAddon(setmetatable(MODTABLE, { __index = upvalues }), MODNAME, "AceConsole-3.0", "AceEvent-3.0")
 local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
 setfenv(1, MOD)
 local LibStub = _G.LibStub

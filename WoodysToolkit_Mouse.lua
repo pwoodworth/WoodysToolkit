@@ -2,8 +2,7 @@
 -- AddOn Initialization
 --------------------------------------------------------------------------------
 
-local MODNAME = ...
-local MOD = LibStub("AceAddon-3.0"):GetAddon(MODNAME)
+local MODNAME, MOD = ...
 local SUBNAME = "Mouse"
 local SUB = MOD:NewModule(SUBNAME, "AceConsole-3.0", "AceEvent-3.0")
 setfenv(1, SUB)
