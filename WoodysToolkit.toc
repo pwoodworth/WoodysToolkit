@@ -14,6 +14,7 @@ Embeds.xml
 i18n-enUS.lua
 
 WoodysToolkit.lua
+WoodysToolkit_Aura.lua
 WoodysToolkit_Junk.lua
 WoodysToolkit_Mouse.lua
 WoodysToolkit_Stop.lua
