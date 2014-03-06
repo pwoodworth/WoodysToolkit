@@ -134,6 +134,22 @@ function MOD:ToggleOptions()
   toggleOptions()
 end
 
+function MOD:CreateDatabaseDefaults()
+  local databaseDefaults = {
+    ["global"] = {
+      ["version"] = nil,
+      Minimap = { hide = false, minimapPos = 180, radius = 80, }, -- saved DBIcon minimap settings
+    },
+    ["profile"] = {
+    },
+  }
+  return databaseDefaults
+end
+
+function MOD:ApplySettings()
+  --  applySettings()
+end
+
 function MOD:IterateModuleOptions(f)
   local modules = self.modules
   local a = {}
@@ -213,6 +229,40 @@ MOD:RegisterEvent("PLAYER_LOGIN")
 --------------------------------------------------------------------------------
 -- </ in-game configuration UI code > ------------------------------------------
 --------------------------------------------------------------------------------
+
+function MOD:CreateOptions()
+  local options = {
+    type = "group",
+    name = L["options.name"],
+    handler = MOD,
+    childGroups = "tree",
+    args = {
+      config = {
+        type = "execute",
+        name = L["options.config.name"],
+        guiHidden = true,
+        func = function() MOD:ToggleOptions() end,
+        order = 1,
+      },
+      miscHeader = {
+        type = "header",
+        name = L["options.misc.header.name"],
+        order = 90,
+      },
+      reloadButton = {
+        type = "execute",
+        name = L["options.reloadui.name"],
+        cmdHidden = true,
+        width = nil,
+        func = function()
+          _G.ReloadUI()
+        end,
+        order = 92,
+      },
+    },
+  }
+  return options
+end
 
 function MOD:OptionsPanel()
   MOD:ToggleOptions()
