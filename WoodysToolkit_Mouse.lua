@@ -183,13 +183,6 @@ for _, v in _G.ipairs({
   suggestedCommands[v] = _G.GetBindingText(v, "BINDING_NAME_")
 end
 
--- The key in the "Override bindings" section of the options frame that's currently being
--- configured.
-local selectedKey
-
--- Array containing all the keys from db.profile.mouseOverrideBindings.
-local overrideKeys = {}
-
 --------------------------------------------------------------------------------
 -- Plugin Setup
 --------------------------------------------------------------------------------
@@ -218,6 +211,11 @@ end
 
 SUB:RegisterEvent("PLAYER_ENTERING_WORLD")
 
+-- The key in the "Override bindings" section of the options frame that's currently being
+-- configured.
+local selectedKey = false
+
+
 -- Called by AceAddon.
 function SUB:OnInitialize()
   self:Printd("OnInitialize")
@@ -225,88 +223,51 @@ function SUB:OnInitialize()
   db.RegisterCallback(self, "OnProfileChanged", "RefreshDB")
   db.RegisterCallback(self, "OnProfileCopied", "RefreshDB")
   db.RegisterCallback(self, "OnProfileReset", "RefreshDB")
-
-  for k, _ in _G.pairs(db.profile.mouseOverrideBindings) do
-    if not (_G.type(k) == "string") then
-      db.profile.mouseOverrideBindings[k] = nil
-    else
-      _G.table.insert(overrideKeys, (k))
-    end
-  end
-  _G.table.sort(overrideKeys)
   self:ApplySettings()
   updateLock()
 end
 
 function SUB:CreateOptions()
   local options = {
-    general = {
-      type = "group",
-      name = "General",
-      guiInline = true,
-      order = 100,
-      args = {
-        deferHeader = {
-          type = "header",
-          name = "Defer stopping mouselook",
-          order = 0,
-        },
-        deferToggle = {
-          type = "toggle",
-          name = "Enable defer workaround",
-          desc = L["mouse.lock.defer.desc"],
-          width = "full",
-          set = function(info, val) db.profile.useDeferWorkaround = val end,
-          get = function(info) return db.profile.useDeferWorkaround  end,
-          order = 2,
-        },
-        spellTargetingOverrideHeader = {
-          type = "header",
-          name = "Disable while targeting spell",
-          order = 6,
-        },
---        spellTargetingOverrideDescription = {
---          type = "description",
---          name = L["Disable mouselook while a spell is awaiting a target."],
---          fontSize = "medium",
---          order = 7,
---        },
-        spellTargetingOverrideToggle = {
-          type = "toggle",
-          name = "Disable while targeting spell",
-          desc = L["Disable mouselook while a spell is awaiting a target."],
-          width = "full",
-          set = function(info, val) db.profile.useSpellTargetingOverride = val end,
-          get = function(info) return db.profile.useSpellTargetingOverride end,
-          order = 8,
-        },
-      },
+    deferHeader = {
+      type = "header",
+      name = "Mouselook Options",
+      order = 1,
+    },
+    deferToggle = {
+      type = "toggle",
+      name = "Enable defer stop workaround",
+      desc = L["mouse.lock.defer.desc"],
+      width = "full",
+      set = function(info, val) db.profile.useDeferWorkaround = val end,
+      get = function(info) return db.profile.useDeferWorkaround  end,
+      order = 2,
+    },
+    spellTargetingOverrideToggle = {
+      type = "toggle",
+      name = "Disable while targeting spell",
+      desc = L["Disable mouselook while a spell is awaiting a target."],
+      width = "full",
+      set = function(info, val) db.profile.useSpellTargetingOverride = val end,
+      get = function(info) return db.profile.useSpellTargetingOverride end,
+      order = 8,
+    },
+    overrideBindingsToggle = {
+      type = "toggle",
+      name = "Use mouselook override bindings",
+      desc = L["mouse.lock.bind.desc"],
+      width = "full",
+      set = setUseOverrideBindings,
+      get = getUseOverrideBindings,
+      order = 12,
     },
     overrideBindings = {
       type = "group",
-      name = "Override bindings",
+      name = "Mouselook Override Bindings",
       guiInline = true,
       order = 110,
+      hidden = function() return not getUseOverrideBindings() end,
       args = {
-        overrideBindingsHeader = {
-          type = "header",
-          name = "Mouselook override bindings",
-          order = 100,
-        },
-        overrideBindingsDescription = {
-          type = "description",
-          name = L["mouse.lock.bind.desc"],
-          fontSize = "medium",
-          order = 110,
-        },
-        overrideBindingsToggle = {
-          type = "toggle",
-          name = "Use override bindings",
-          width = "full",
-          set = setUseOverrideBindings,
-          get = getUseOverrideBindings,
-          order = 120,
-        },
         bindingTableHeader = {
           type = "header",
           name = "Binding table",
@@ -329,19 +290,8 @@ function SUB:CreateOptions()
             val = _G.string.upper(val)
             if not db.profile.mouseOverrideBindings[val] then
               db.profile.mouseOverrideBindings[val] = ""
-              --overrideKeys[#overrideKeys + 1] = val
-              _G.table.insert(overrideKeys, val)
-              -- http://stackoverflow.com/questions/2038418/associatively-sorting-a-table-by-v
-              _G.table.sort(overrideKeys, function(a, b)
-                return a < b
-              end)
             end
-            for i = 0, #overrideKeys do
-              if overrideKeys[i] == val then
-                selectedKey = i
-                return
-              end
-            end
+            selectedKey = val
           end,
           get = nil,
           order = 150,
@@ -352,7 +302,13 @@ function SUB:CreateOptions()
           name = "Key",
           desc = "Select one of your existing mouselook override bindings.",
           width = "normal",
-          values = function() return overrideKeys end,
+          values = function()
+            local overrideKeys = {}
+            for k, v in pairs(db.profile.mouseOverrideBindings) do
+              overrideKeys[k] = k
+            end
+            return overrideKeys
+          end,
           set = function(info, value)
             selectedKey = value
           end,
@@ -373,13 +329,13 @@ function SUB:CreateOptions()
           desc = "You can select one of these suggested actions and have the corresponding " ..
               "command inserted above.",
           values = function(info) return suggestedCommands end,
-          hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
+          hidden = function() return not selectedKey or not db.profile.mouseOverrideBindings[selectedKey] end,
           set = function(info, val)
-            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = val
+            db.profile.mouseOverrideBindings[selectedKey] = val
             applyOverrideBindings()
           end,
           get = function(info)
-            return db.profile.mouseOverrideBindings[overrideKeys[selectedKey]]
+            return db.profile.mouseOverrideBindings[selectedKey]
           end,
           order = 180,
         },
@@ -388,15 +344,14 @@ function SUB:CreateOptions()
           desc = "The command to perform; can be any name attribute value of a " ..
               "Bindings.xml-defined binding, or an action command string.",
           type = "input",
-          width = "double",
-          hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
+          hidden = function() return not selectedKey or not db.profile.mouseOverrideBindings[selectedKey] end,
           set = function(info, val)
             if val == "" then val = nil end
-            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = val
+            db.profile.mouseOverrideBindings[selectedKey] = val
             applyOverrideBindings()
           end,
           get = function(info)
-            return db.profile.mouseOverrideBindings[overrideKeys[selectedKey]]
+            return db.profile.mouseOverrideBindings[selectedKey]
           end,
           order = 190,
         },
@@ -408,37 +363,35 @@ function SUB:CreateOptions()
               "    You can select one of the suggested actions and have the corresponding " ..
               "command inserted above.",
           type = "description",
-          hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
+          hidden = function() return not selectedKey or not db.profile.mouseOverrideBindings[selectedKey] end,
           fontSize = "medium",
           order = 200,
         },
         spacer1 = {
           type = "description",
           name = "",
-          hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
+          hidden = function() return not selectedKey or not db.profile.mouseOverrideBindings[selectedKey] end,
           order = 210,
         },
         clearBindingButton = {
           type = "execute",
           name = "Delete",
           desc = "Delete the selected override binding.",
-          hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
+          hidden = function() return not selectedKey or not db.profile.mouseOverrideBindings[selectedKey] end,
           width = "half",
           confirm = true,
           confirmText = "This can't be undone. Continue?",
           func = function()
-            _G.SetMouselookOverrideBinding(overrideKeys[selectedKey], nil)
-            db.profile.mouseOverrideBindings[overrideKeys[selectedKey]] = nil
-            -- This wont shift down the remaining integer keys: overrideKeys[selectedKey] = nil
-            _G.table.remove(overrideKeys, selectedKey)
-            selectedKey = 0
+            _G.SetMouselookOverrideBinding(selectedKey, nil)
+            db.profile.mouseOverrideBindings[selectedKey] = nil
+            selectedKey = false
           end,
           order = 220,
         },
         deleteBindingDescription = {
           type = "description",
           name = "    Clear the selected override binding.",
-          hidden = function() return not selectedKey or not overrideKeys[selectedKey] end,
+          hidden = function() return not selectedKey or not db.profile.mouseOverrideBindings[selectedKey] end,
           width = "double",
           fontSize = "medium",
           order = 230,
