@@ -229,42 +229,48 @@ end
 
 function SUB:CreateOptions()
   local options = {
-    deferHeader = {
-      type = "header",
-      name = "Mouselook Options",
-      order = 1,
-    },
-    deferToggle = {
-      type = "toggle",
-      name = "Enable defer stop workaround",
-      desc = L["mouse.lock.defer.desc"],
-      width = "full",
-      set = function(info, val) db.profile.useDeferWorkaround = val end,
-      get = function(info) return db.profile.useDeferWorkaround  end,
-      order = 2,
-    },
-    spellTargetingOverrideToggle = {
-      type = "toggle",
-      name = "Disable while targeting spell",
-      desc = L["Disable mouselook while a spell is awaiting a target."],
-      width = "full",
-      set = function(info, val) db.profile.useSpellTargetingOverride = val end,
-      get = function(info) return db.profile.useSpellTargetingOverride end,
-      order = 8,
-    },
-    overrideBindingsToggle = {
-      type = "toggle",
-      name = "Use mouselook override bindings",
-      desc = L["mouse.lock.bind.desc"],
-      width = "full",
-      set = setUseOverrideBindings,
-      get = getUseOverrideBindings,
-      order = 12,
+    general = {
+      type = "group",
+      name = "General",
+      order = 100,
+      args = {
+        deferHeader = {
+          type = "header",
+          name = "General Options",
+          order = 1,
+        },
+        deferToggle = {
+          type = "toggle",
+          name = "Enable defer stop workaround",
+          desc = L["mouse.lock.defer.desc"],
+          width = "full",
+          set = function(info, val) db.profile.useDeferWorkaround = val end,
+          get = function(info) return db.profile.useDeferWorkaround  end,
+          order = 2,
+        },
+        spellTargetingOverrideToggle = {
+          type = "toggle",
+          name = "Disable while targeting spell",
+          desc = L["Disable mouselook while a spell is awaiting a target."],
+          width = "full",
+          set = function(info, val) db.profile.useSpellTargetingOverride = val end,
+          get = function(info) return db.profile.useSpellTargetingOverride end,
+          order = 8,
+        },
+        overrideBindingsToggle = {
+          type = "toggle",
+          name = "Use mouselook override bindings",
+          desc = L["mouse.lock.bind.desc"],
+          width = "full",
+          set = setUseOverrideBindings,
+          get = getUseOverrideBindings,
+          order = 12,
+        },
+      },
     },
     overrideBindings = {
       type = "group",
       name = "Mouselook Override Bindings",
-      guiInline = true,
       order = 110,
       hidden = function() return not getUseOverrideBindings() end,
       args = {

@@ -192,16 +192,6 @@ function SUB:JunkRem(link)
   end
 end
 
-function SUB:ListTheExceptions()
-  local exceptions = db.profile.exceptions
-  if exceptions then
-    for k, v in pairs(exceptions) do
-      local link, isLink, name = extractLink(v)
-      self:Print(L["Exception"]..": "..link)
-    end
-  end
-end
-
 function SUB:JunkClearDB()
   wipe(db.profile.destroyables)
   wipe(db.profile.exceptions)
@@ -239,10 +229,10 @@ end
 
 function SUB:CreateOptions()
   local options = {
-    divider1 = {
+    header1 = {
       order = 1,
-      type = "description",
-      name = "",
+      type = "header",
+      name = "Junk Options",
     },
     auto = {
       order = 2,
@@ -291,31 +281,7 @@ function SUB:CreateOptions()
       get = function() return db.profile.showSpam end,
       set = function() db.profile.showSpam = not db.profile.showSpam end,
     },
-    divider5 = {
-      order = 9,
-      type = "header",
-      name = L["Clear exceptions"],
-    },
-    clearglobal = {
-      order = 10,
-      type = "execute",
-      name = L["Clear"],
-      desc = L["Removes all exceptions."],
-      func = function() SUB:JunkClearDB() end,
-    },
-    listglobal = {
-      order = 11,
-      type = "execute",
-      name = L["List"],
-      desc = L["List all exceptions."],
-      func = function() SUB:ListTheExceptions() end,
-    },
-    divider6 = {
-      order = 12,
-      type = "description",
-      name = "",
-    },
-    header1 = {
+    exceptionsHeader = {
       order = 13,
       type = "header",
       name = L["Exceptions"],
@@ -323,7 +289,7 @@ function SUB:CreateOptions()
     note1 = {
       order = 14,
       type = "description",
-      name = L["Drag item into this window to add/remove it from exception list"],
+      name = L["Drag item into this window to add it to exception list"],
     },
     add = {
       order = 15,
@@ -333,16 +299,17 @@ function SUB:CreateOptions()
       get = false,
       set = function(info, v) SUB:JunkAdd(v) end,
     },
---    rem = {
---      order = 16,
---      type = "input",
---      name = L["Remove item"] .. ':',
---      usage = L["<Item Link>"],
---      get = false,
---      set = function(info, v) SUB:JunkRem(v) end,
---    },
+    clearglobal = {
+      order = 40,
+      type = "execute",
+      name = L["Clear"],
+      desc = L["Removes all exceptions."],
+      confirm = true,
+      confirmText = "This can't be undone. Continue?",
+      func = function() SUB:JunkClearDB() end,
+    },
     rem = {
-      order = 160,
+      order = 50,
       type = "select",
       style = "dropdown",
       name = L["Remove item"] .. ':',
@@ -353,7 +320,6 @@ function SUB:CreateOptions()
       end,
       get = false,
       set = function(info, value)
---        SUB:Printd("Removed: " .. value)
         SUB:JunkRem(db.profile.exceptions[value])
       end,
     },

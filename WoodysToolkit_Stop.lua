@@ -77,6 +77,32 @@ function SUB:CreateOptions()
       set = setEnabledToggle,
       order = 11,
     },
+    bindingHeader = {
+      type = "header",
+      name = "MACRO " .. STOP_MACRO_NAME .. " Binding",
+      order = 90,
+    },
+    bindingDescription = {
+      type = "description",
+      name = _G["MACRO "..STOP_MACRO_NAME],
+      width = "double",
+      fontSize = "medium",
+      order = 100,
+    },
+    binding = {
+      type = "keybinding",
+      name = "",
+      desc = _G["MACRO "..STOP_MACRO_NAME],
+--      width = "half",
+      get = function(info) return (_G.GetBindingKey("MACRO "..STOP_MACRO_NAME)) end,
+      set = function(info, key)
+        local oldKey = (_G.GetBindingKey("MACRO "..STOP_MACRO_NAME))
+        if oldKey then _G.SetBinding(oldKey) end
+        _G.SetBinding(key, "MACRO "..STOP_MACRO_NAME)
+        _G.SaveBindings(_G.GetCurrentBindingSet())
+      end,
+      order = 110,
+    },
   }
   return options
 end

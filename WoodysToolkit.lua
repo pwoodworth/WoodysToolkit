@@ -167,6 +167,7 @@ function MOD:IterateModuleOptions(f)
       local options = {
         order = ii * 100,
         type = "group",
+        childGroups = "tab",
         name = name,
         args = module:CreateOptions(),
       }
@@ -236,7 +237,7 @@ function MOD:CreateOptions()
     type = "group",
     name = L["options.name"],
     handler = MOD,
-    childGroups = "tree",
+    childGroups = "tab",
     args = {
       config = {
         type = "execute",
@@ -245,20 +246,26 @@ function MOD:CreateOptions()
         func = function() MOD:ToggleOptions() end,
         order = 1,
       },
-      miscHeader = {
-        type = "header",
-        name = L["options.misc.header.name"],
-        order = 90,
-      },
-      reloadButton = {
-        type = "execute",
-        name = L["options.reloadui.name"],
-        cmdHidden = true,
-        width = nil,
-        func = function()
-          _G.ReloadUI()
-        end,
-        order = 92,
+      general = {
+        type = "group",
+        name = L["General"],
+        args = {
+          miscHeader = {
+            type = "header",
+            name = L["options.misc.header.name"],
+            order = 10,
+          },
+          reloadButton = {
+            type = "execute",
+            name = L["options.reloadui.name"],
+            cmdHidden = true,
+            width = nil,
+            func = function()
+              _G.ReloadUI()
+            end,
+            order = 20,
+          },
+        },
       },
     },
   }
