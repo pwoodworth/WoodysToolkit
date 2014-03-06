@@ -26,6 +26,22 @@ L["WTK right click"] = "|cffffff00Right-click|r to toggle locking all bar groups
 L["WTK shift left click"] = "|cffffff00Shift-left-click|r to enable/disable Woody's Toolkit"
 L["WTK shift right click"] = "|cffffff00Shift-right-click|r to toggle Blizzard buffs"
 
+L["mouse.lock.defer.desc"] = [[When clicking and holding any mouse button while ]]
+    .. [[mouselooking, but only releasing it after stopping mouselooking, the ]]
+    .. [[mouse button's binding won't be run on release.]] .. '\n'
+    .. [[    For example, consider having "BUTTON1" bound to "STRAFELEFT". ]]
+    .. [[Now, when mouselook is active and the left mouse button is pressed ]]
+    .. [[and held, stopping mouselook will result in releasing the mouse ]]
+    .. [[button to no longer have it's effect of cancelling strafing. ]]
+    .. [[Instead, the player will be locked into strafing left until ]]
+    .. [[clicking the left mouse button again.]] .. '\n'
+    .. [[    This setting will cause slightly less obnoxious behavior: it will ]]
+    .. [[defer stopping mouselook until all mouse buttons have been released.]]
+
+L["mouse.lock.bind.desc"] = [[Enable to define a set of keybindings that only apply while mouselooking. ]]
+    .. [[For example, you could strafe with the left (BUTTON1) and right (BUTTON2) mouse buttons.]]
+
+
 L["Added"] = "Added"
 L["Add item"] = "Add item"
 L["Automatically sell junk"] = "Automatically sell junk"

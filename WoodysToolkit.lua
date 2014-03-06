@@ -181,19 +181,20 @@ function MOD:PopulateOptions()
   for modopts in MOD:IterateModuleOptions() do
     options.args[modopts.name:lower()] = modopts
   end
-  AceConfig:RegisterOptionsTable(MODNAME .. "_SlashCmd", options, { "woodystoolkit", "wtk" })
+--  AceConfig:RegisterOptionsTable(MODNAME .. "_SlashCmd", options, { "woodystoolkit", "wtk" })
+--  AceConfig:RegisterOptionsTable(MODNAME, MOD:CreateOptions())
+  AceConfig:RegisterOptionsTable(MODNAME, options, { "woodystoolkit", "wtk" })
 
-  AceConfig:RegisterOptionsTable(MODNAME, MOD:CreateOptions())
   MOD.mConfigFrame = MOD.mConfigFrame or AceConfigDialog:AddToBlizOptions(MODNAME, "WoodysToolkit")
   MOD.mConfigFrame.default = function(...)
     self.db:ResetProfile()
   end
 
-  for modopts in MOD:IterateModuleOptions() do
-    local FULLSUBNAME = MODNAME .. "_" .. modopts.name
-    AceConfig:RegisterOptionsTable(FULLSUBNAME, modopts)
-    MOD.mConfigFrame[modopts.name] = AceConfigDialog:AddToBlizOptions(FULLSUBNAME, modopts.name, "WoodysToolkit")
-  end
+--  for modopts in MOD:IterateModuleOptions() do
+--    local FULLSUBNAME = MODNAME .. "_" .. modopts.name
+--    AceConfig:RegisterOptionsTable(FULLSUBNAME, modopts)
+--    MOD.mConfigFrame[modopts.name] = AceConfigDialog:AddToBlizOptions(FULLSUBNAME, modopts.name, "WoodysToolkit")
+--  end
 
   local profiles = AceDBOptions:GetOptionsTable(self.db)
   AceConfigRegistry:RegisterOptionsTable(MODNAME .. "_Profiles", profiles)

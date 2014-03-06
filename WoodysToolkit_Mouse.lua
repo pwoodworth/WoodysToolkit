@@ -190,23 +190,6 @@ local selectedKey
 -- Array containing all the keys from db.profile.mouseOverrideBindings.
 local overrideKeys = {}
 
-local deferText = [[When clicking and holding any mouse button while ]]
-  .. [[mouselooking, but only releasing it after stopping mouselooking, the ]]
-  .. [[mouse button's binding won't be run on release.]] .. '\n'
-  .. [[    For example, consider having "BUTTON1" bound to "STRAFELEFT". ]]
-  .. [[Now, when mouselook is active and the left mouse button is pressed ]]
-  .. [[and held, stopping mouselook will result in releasing the mouse ]]
-  .. [[button to no longer have it's effect of cancelling strafing. ]]
-  .. [[Instead, the player will be locked into strafing left until ]]
-  .. [[clicking the left mouse button again.]] .. '\n'
-  .. [[    This setting will cause slightly less obnoxious behavior: it will ]]
-  .. [[defer stopping mouselook until all mouse buttons have been released.]]
-
-local bindText = [[Enable to define a set of keybindings that only apply while mouselooking. ]]
-  .. [[For example, you could strafe with the left (BUTTON1) and right (BUTTON2) mouse buttons.]]
-
-local spellTargetingOverrideText = [[Disable mouselook while a spell is awaiting a target.]]
-
 --------------------------------------------------------------------------------
 -- Plugin Setup
 --------------------------------------------------------------------------------
@@ -260,6 +243,7 @@ function SUB:CreateOptions()
     general = {
       type = "group",
       name = "General",
+      guiInline = true,
       order = 100,
       args = {
         deferHeader = {
@@ -267,15 +251,10 @@ function SUB:CreateOptions()
           name = "Defer stopping mouselook",
           order = 0,
         },
-        deferDescription = {
-          type = "description",
-          name = deferText,
-          fontSize = "medium",
-          order = 1,
-        },
         deferToggle = {
           type = "toggle",
           name = "Enable defer workaround",
+          desc = L["mouse.lock.defer.desc"],
           width = "full",
           set = function(info, val) db.profile.useDeferWorkaround = val end,
           get = function(info) return db.profile.useDeferWorkaround  end,
@@ -286,15 +265,16 @@ function SUB:CreateOptions()
           name = "Disable while targeting spell",
           order = 6,
         },
-        spellTargetingOverrideDescription = {
-          type = "description",
-          name = spellTargetingOverrideText,
-          fontSize = "medium",
-          order = 7,
-        },
+--        spellTargetingOverrideDescription = {
+--          type = "description",
+--          name = L["Disable mouselook while a spell is awaiting a target."],
+--          fontSize = "medium",
+--          order = 7,
+--        },
         spellTargetingOverrideToggle = {
           type = "toggle",
-          name = "Enable",
+          name = "Disable while targeting spell",
+          desc = L["Disable mouselook while a spell is awaiting a target."],
           width = "full",
           set = function(info, val) db.profile.useSpellTargetingOverride = val end,
           get = function(info) return db.profile.useSpellTargetingOverride end,
@@ -305,6 +285,7 @@ function SUB:CreateOptions()
     overrideBindings = {
       type = "group",
       name = "Override bindings",
+      guiInline = true,
       order = 110,
       args = {
         overrideBindingsHeader = {
@@ -314,7 +295,7 @@ function SUB:CreateOptions()
         },
         overrideBindingsDescription = {
           type = "description",
-          name = bindText,
+          name = L["mouse.lock.bind.desc"],
           fontSize = "medium",
           order = 110,
         },
