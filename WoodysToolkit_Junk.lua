@@ -333,13 +333,29 @@ function SUB:CreateOptions()
       get = false,
       set = function(info, v) SUB:JunkAdd(v) end,
     },
+--    rem = {
+--      order = 16,
+--      type = "input",
+--      name = L["Remove item"] .. ':',
+--      usage = L["<Item Link>"],
+--      get = false,
+--      set = function(info, v) SUB:JunkRem(v) end,
+--    },
     rem = {
-      order = 16,
-      type = "input",
+      order = 160,
+      type = "select",
+      style = "dropdown",
       name = L["Remove item"] .. ':',
-      usage = L["<Item Link>"],
+      desc = "Select one of your existing exceptions to delete.",
+      width = "full",
+      values = function()
+        return db.profile.exceptions
+      end,
       get = false,
-      set = function(info, v) SUB:JunkRem(v) end,
+      set = function(info, value)
+--        SUB:Printd("Removed: " .. value)
+        SUB:JunkRem(db.profile.exceptions[value])
+      end,
     },
   }
   return options
