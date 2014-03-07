@@ -5,7 +5,7 @@
 local MODNAME, MODTABLE = ...
 local _G = getfenv(0)
 
-local WTK_DEBUG = true
+local WTK_DEBUG = false
 
 local function pdebug(...)
   if WTK_DEBUG then print(...) end
