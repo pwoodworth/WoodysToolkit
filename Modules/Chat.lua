@@ -48,7 +48,7 @@ end
 
 local function setEnabledToggle(info, val)
   db.profile.clientpos.enabled = val
-  applyStopButton()
+  SUB:ApplySettings()
 end
 
 --------------------------------------------------------------------------------
