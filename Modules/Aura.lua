@@ -85,12 +85,8 @@ local snapshotLogic = {
     end
   },
 }
+
 --[[ STAT LOGIC : Text ]]--
---[[
-  display text
-  update text on every frame
-  trigger: Moonkin Form, Incarnation: Chosen of Elune
---]]
 local statLogic = {
   Display = {
     DisplayText = [[%c]],
@@ -103,8 +99,8 @@ local statLogic = {
       local EclipseArc = (UnitBuff("player", "Eclipse (Lunar)") and (1.15 + Mastery)) or 1
       local EclipseNat = (UnitBuff("player", "Eclipse (Solar)") and (1.15 + Mastery)) or 1
       local CelestialAlignment = (UnitBuff("player", "Celestial Alignment") and 1.15) or 1
-      local Form = (UnitBuff("player", "Incarnation: Chosen of Elune") and 1.4) or 1.15
-      local Form = (UnitBuff("player", "Moonkin Form") and 1.4) or 1.15
+      local Form = (UnitBuff("player", "Moonkin Form") and 1.15) or 1
+      Form = (UnitBuff("player", "Incarnation: Chosen of Elune") and 1.4) or Form
       DamageMultiplierArc = EclipseArc * CelestialAlignment * Form * Ticks * CritArc
       DamageMultiplierNat = EclipseNat * CelestialAlignment * Form * Ticks * CritNat
       return ''
@@ -126,13 +122,11 @@ local sunfireRatio = {
       if (displaySunRatio == true) then
         local Sun_pDamage = (1841 + 0.24 * SPNat) * DamageMultiplierNat
         local Sun_RatioPercent = (Sun_pDamage / Sun_sDamage) * 100
-
         if (Sun_RatioPercent >= 101) then
           local Sun_tDuration, Sun_tExpiry = select(6, UnitDebuff("target", "Sunfire", nil, "PLAYER"))
           local Sun_tClipPerSec = ((Sun_RatioPercent / 100 * Sun_tDuration) - Sun_tDuration)
           local Sun_tClipInterval = (Sun_tClipPerSec - (Sun_tClipPerSec % 2))
           local Sun_tRemaining = (Sun_tExpiry - GetTime())
-
           if (Sun_tRemaining <= Sun_tClipInterval) then
             return format("|cFFFF6900%d|r", Sun_RatioPercent)
           else
