@@ -112,89 +112,6 @@ local statLogic = {
   },
 }
 
-
---[[ SUNFIRE RATIO : Text ]]--
-local sunfireRatio = {
-  Display = {
-    DisplayText = [[%c]],
-    UpdateCustomTextOn = [[EveryFrame]],
-    CustomFunction = function()
-      if (displaySunRatio == true) then
-        local Sun_pDamage = (1841 + 0.24 * SPNat) * DamageMultiplierNat
-        local Sun_RatioPercent = (Sun_pDamage / Sun_sDamage) * 100
-        if (Sun_RatioPercent >= 101) then
-          local Sun_tDuration, Sun_tExpiry = select(6, UnitDebuff("target", "Sunfire", nil, "PLAYER"))
-          local Sun_tClipPerSec = ((Sun_RatioPercent / 100 * Sun_tDuration) - Sun_tDuration)
-          local Sun_tClipInterval = (Sun_tClipPerSec - (Sun_tClipPerSec % 2))
-          local Sun_tRemaining = (Sun_tExpiry - GetTime())
-          if (Sun_tRemaining <= Sun_tClipInterval) then
-            return format("|cFFFF6900%d|r", Sun_RatioPercent)
-          else
-            return format("|cFF00FF00%d|r", Sun_RatioPercent)
-          end
-        else
-          return format("|cFF777777%d|r", Sun_RatioPercent)
-        end
-      else
-        return ''
-      end
-    end,
-  },
-  Trigger = {
-    Type = [[Aura]],
-    Auras = [[Sunfire]],
-  },
-  Actions = {
-    OnShow = [[
-      displaySunRatio = true
-    ]],
-    OnHide = [[
-      displaySunRatio = false
-    ]],
-  },
-}
-
---[[ MOONFIRE RATIO : Text ]]--
-local moonfireRatio = {
-  Display = {
-    DisplayText = [[%c]],
-    UpdateCustomTextOn = [[EveryFrame]],
-    CustomFunction = function()
-      if (displayMoonRatio == true) then
-        local Moon_pDamage = (1841 + 0.24 * SPArc) * DamageMultiplierArc
-        local Moon_RatioPercent = (Moon_pDamage / Moon_sDamage) * 100
-        if (Moon_RatioPercent >= 101) then
-          local Moon_tDuration, Moon_tExpiry = select(6, UnitDebuff("target", "Moonfire", nil, "PLAYER"))
-          local Moon_tClipPerSec = ((Moon_RatioPercent / 100 * Moon_tDuration) - Moon_tDuration)
-          local Moon_tClipInterval = (Moon_tClipPerSec - (Moon_tClipPerSec % 2))
-          local Moon_tRemaining = (Moon_tExpiry - GetTime())
-          if (Moon_tRemaining <= Moon_tClipInterval) then
-            return format("|cFFFF6900%d|r", Moon_RatioPercent)
-          else
-            return format("|cFF00FF00%d|r", Moon_RatioPercent)
-          end
-        else
-          return format("|cFF777777%d|r", Moon_RatioPercent)
-        end
-      else
-        return ''
-      end
-    end,
-  },
-  Trigger = {
-    Type = [[Aura]],
-    Auras = [[Moonfire]],
-  },
-  Actions = {
-    OnShow = [[
-      displayMoonRatio = true
-    ]],
-    OnHide = [[
-      displayMoonRatio = false
-    ]],
-  },
-}
-
 --[[ SUNFIRE : Icon ]]--
 local sunfireIcon = {
   Display = {
@@ -203,21 +120,7 @@ local sunfireIcon = {
     CustomFunction =
     function()
       if (UnitDebuff("target", "Sunfire", nil, "PLAYER")) then
-        local Sun_pDamage = (1841 + 0.24 * SPNat) * DamageMultiplierNat
-        local Sun_RatioPercent = (Sun_pDamage / Sun_sDamage) * 100
-        if (Sun_RatioPercent >= 101) then
-          local Sun_tDuration, Sun_tExpiry = select(6, UnitDebuff("target", "Sunfire", nil, "PLAYER"))
-          local Sun_tClipPerSec = ((Sun_RatioPercent / 100 * Sun_tDuration) - Sun_tDuration)
-          local Sun_tClipInterval = (Sun_tClipPerSec - (Sun_tClipPerSec % 2))
-          local Sun_tRemaining = (Sun_tExpiry - GetTime())
-          if (Sun_tRemaining <= Sun_tClipInterval) then
-            return format("|cFFFF6900%d|r", Sun_RatioPercent)
-          else
-            return format("|cFF00FF00%d|r", Sun_RatioPercent)
-          end
-        else
-          return format("|cFF777777%d|r", Sun_RatioPercent)
-        end
+        return gSunRatioText or ""
       else
         return ''
       end
@@ -232,9 +135,21 @@ local sunfireIcon = {
       if (UnitDebuff("target", "Sunfire", nil, "PLAYER")) then
         local Sun_pDamage = (1841 + 0.24 * SPNat) * DamageMultiplierNat
         local Sun_RatioPercent = (Sun_pDamage / Sun_sDamage) * 100
-        if (Sun_RatioPercent >= 101) then
+        if (Sun_RatioPercent >= 119) then
+          if not untrigger then
+            local Sun_tDuration, Sun_tExpiry = select(6, UnitDebuff("target", "Sunfire", nil, "PLAYER"))
+            local Sun_tClipPerSec = ((Sun_RatioPercent / 100 * Sun_tDuration) - Sun_tDuration)
+            local Sun_tClipInterval = (Sun_tClipPerSec - (Sun_tClipPerSec % 2))
+            local Sun_tRemaining = (Sun_tExpiry - GetTime())
+            if (Sun_tRemaining <= Sun_tClipInterval) then
+              gSunRatioText = format("|cFFFF6900%d|r", Sun_RatioPercent)
+            else
+              gSunRatioText = format("|cFF00FF00%d|r", Sun_RatioPercent)
+            end
+          end
           return not untrigger
         else
+          gSunRatioText = format("|cFF777777%d|r", Sun_RatioPercent)
           return untrigger
         end
       else
@@ -254,21 +169,7 @@ local moonfireIcon = {
     UpdateCustomTextOn = [[EveryFrame]],
     CustomFunction = function()
       if (UnitDebuff("target", "Moonfire", nil, "PLAYER")) then
-        local Moon_pDamage = (1841 + 0.24 * SPArc) * DamageMultiplierArc
-        local Moon_RatioPercent = (Moon_pDamage / Moon_sDamage) * 100
-        if (Moon_RatioPercent >= 101) then
-          local Moon_tDuration, Moon_tExpiry = select(6, UnitDebuff("target", "Moonfire", nil, "PLAYER"))
-          local Moon_tClipPerSec = ((Moon_RatioPercent / 100 * Moon_tDuration) - Moon_tDuration)
-          local Moon_tClipInterval = (Moon_tClipPerSec - (Moon_tClipPerSec % 2))
-          local Moon_tRemaining = (Moon_tExpiry - GetTime())
-          if (Moon_tRemaining <= Moon_tClipInterval) then
-            return format("|cFFFF6900%d|r", Moon_RatioPercent)
-          else
-            return format("|cFF00FF00%d|r", Moon_RatioPercent)
-          end
-        else
-          return format("|cFF777777%d|r", Moon_RatioPercent)
-        end
+        return gMoonRatioText or ""
       else
         return ''
       end
@@ -283,9 +184,21 @@ local moonfireIcon = {
       if (UnitDebuff("target", "Moonfire", nil, "PLAYER")) then
         local Moon_pDamage = (1841 + 0.24 * SPArc) * DamageMultiplierArc
         local Moon_RatioPercent = (Moon_pDamage / Moon_sDamage) * 100
-        if (Moon_RatioPercent >= 101) then
+        if (Moon_RatioPercent >= 119) then
+          if not untrigger then
+            local Moon_tDuration, Moon_tExpiry = select(6, UnitDebuff("target", "Moonfire", nil, "PLAYER"))
+            local Moon_tClipPerSec = ((Moon_RatioPercent / 100 * Moon_tDuration) - Moon_tDuration)
+            local Moon_tClipInterval = (Moon_tClipPerSec - (Moon_tClipPerSec % 2))
+            local Moon_tRemaining = (Moon_tExpiry - GetTime())
+            if (Moon_tRemaining <= Moon_tClipInterval) then
+              gMoonRatioText = format("|cFFFF6900%d|r", Moon_RatioPercent)
+            else
+              gMoonRatioText = format("|cFF00FF00%d|r", Moon_RatioPercent)
+            end
+          end
           return not untrigger
         else
+          gMoonRatioText = format("|cFF777777%d|r", Moon_RatioPercent)
           return untrigger
         end
       else
