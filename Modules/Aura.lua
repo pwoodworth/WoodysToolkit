@@ -18,8 +18,15 @@ SUB.defaults = {
   },
 }
 
-SUB.adata = {
-  ["lunar"] = { -- arcane
+local SPID_MOONFIRE = 8921
+local SPID_SUNFIRE = 93402
+
+local FMT_GRAY = "|cFF777777%d|r" -- gray
+local FMT_ORANGE = "|cFFFF6900%d|r" -- orange
+local FMT_GREEN = "|cFF00FF00%d|r" -- green
+
+SUB.sdata = {
+  [SPID_MOONFIRE] = { -- Moonfire arcane
     DamageMultiplier = 1,
     sDamage = 0,
     SPStd = 0,
@@ -27,9 +34,9 @@ SUB.adata = {
     DotName = "Moonfire",
     DotId = 8921,
     EclipseName = "Eclipse (Lunar)",
-    other = "solar",
+    other = SPID_SUNFIRE,
   },
-  ["solar"] = { -- natural
+  [SPID_SUNFIRE] = { -- Sunfire -- natural
     DamageMultiplier = 1,
     sDamage = 0,
     SPStd = 0,
@@ -37,15 +44,15 @@ SUB.adata = {
     DotName = "Sunfire",
     DotId = 93402,
     EclipseName = "Eclipse (Solar)",
-    other = "lunar",
+    other = SPID_MOONFIRE,
   }
 }
 
-SUB.bdata[8921] = SUB.adata["lunar"]
-SUB.bdata[93402] = SUB.adata["solar"]
+local function calcFireDotDmg(dotData)
+  return (1841 + 0.24 * dotData.SPStd) * dotData.DamageMultiplier
+end
 
 function SUB:CalcStdVals()
-  self.adata.solar.SPStd, self.adata.lunar.SPStd = GetSpellBonusDamage(4), GetSpellBonusDamage(7)
   local CritNat, CritArc = (1 + GetSpellCritChance(4) / 100), (1 + GetSpellCritChance(7) / 100)
   local Mastery = GetMasteryEffect() / 100
   local Ticks = ceil(7 * UnitSpellHaste("player") / 100) / 7 + 1
@@ -54,20 +61,23 @@ function SUB:CalcStdVals()
   local CelestialAlignment = (UnitBuff("player", "Celestial Alignment") and 1.15) or 1
   local Form = (UnitBuff("player", "Moonkin Form") and 1.15) or 1
   Form = (UnitBuff("player", "Incarnation: Chosen of Elune") and 1.4) or Form
-  self.adata.lunar.DamageMultiplier = EclipseArc * CelestialAlignment * Form * Ticks * CritArc
-  self.adata.solar.DamageMultiplier = EclipseNat * CelestialAlignment * Form * Ticks * CritNat
+
+  local lunar, solar = sdata[SPID_MOONFIRE], sdata[SPID_SUNFIRE]
+  solar.SPStd, lunar.SPStd = GetSpellBonusDamage(4), GetSpellBonusDamage(7)
+  lunar.DamageMultiplier = EclipseArc * CelestialAlignment * Form * Ticks * CritArc
+  solar.DamageMultiplier = EclipseNat * CelestialAlignment * Form * Ticks * CritNat
 end
 
 function SUB:COMBAT_LOG_EVENT_UNFILTERED(...)
   local _, event, _, source, _, _, _, destination, _, _, _, spell, _, _, _, _, _, _, _, _, _ = ...
   if (source == UnitGUID("player") and destination == UnitGUID("target") and event == "SPELL_CAST_SUCCESS") then
-    local dotData = self.bdata[spell]
+    local dotData = self.sdata[spell]
     if (dotData) then
       self:CalcStdVals()
-      dotData.sDamage = (1841 + 0.24 * dotData.SPStd) * dotData.DamageMultiplier
+      dotData.sDamage = calcFireDotDmg(dotData)
       if UnitBuff("player", "Celestial Alignment") then
-        local thatDot = self.adata[dotData.other]
-        thatDot.sDamage = (1841 + 0.24 * thatDot.SPStd) * thatDot.DamageMultiplier
+        local thatDot = sdata[dotData.other]
+        thatDot.sDamage = calcFireDotDmg(thatDot)
       end
     end
   end
@@ -75,11 +85,11 @@ end
 
 function SUB:CalcRatios(dotType)
   self:CalcStdVals()
-  local dotData = self.adata[dotType]
+  local dotData = sdata[dotType]
 
   local name, _, _, _, _, tDuration, tExpiry = UnitDebuff("target", dotData.DotName, nil, "PLAYER")
   if name then
-    local pDamage = (1841 + 0.24 * dotData.SPStd) * dotData.DamageMultiplier
+    local pDamage = calcFireDotDmg(dotData)
     dotData.ratio = (pDamage / dotData.sDamage) * 100
   else
     dotData.ratio = 999
@@ -87,7 +97,7 @@ function SUB:CalcRatios(dotType)
 
   local needIt = true
   if (dotData.ratio >= data.threshhold) then
-    if (self.adata[dotData.other].ratio >= data.threshhold) and UnitBuff("player", dotData.EclipseName) then
+    if (sdata[dotData.other].ratio >= data.threshhold) and UnitBuff("player", dotData.EclipseName) then
       needIt = false
     end
   else
@@ -97,38 +107,11 @@ function SUB:CalcRatios(dotType)
 end
 
 function SUB:Moonfire()
-  local dotType = "lunar"
-  local showIt, ratio, dotTxt = self:CalcRations(dotType)
-  return showIt, dotTxt
+  return self:CalcRatios(SPID_MOONFIRE)
 end
 
 function SUB:GetSunfire()
-  local dotType = "solar"
-  local showIt, ratio, dotTxt = self:CalcRations(dotType)
-  return showIt, dotTxt
-end
-
-function SUB:FormatRatioText(dotName, pDamage, sDamage)
-  local FMT_GRAY = "|cFF777777%d|r" -- gray
-  local FMT_ORANGE = "|cFFFF6900%d|r" -- orange
-  local FMT_GREEN = "|cFF00FF00%d|r" -- green
-
-  local name, _, _, _, _, tDuration, tExpiry = UnitDebuff("target", dotName, nil, "PLAYER")
-
-  if name then
-    local ratioPercent = (pDamage / sDamage) * 100
-    local tClipPerSec = ((ratioPercent / 100 * tDuration) - tDuration)
-    local tClipInterval = (tClipPerSec - (tClipPerSec % 2))
-    local tRemaining = (tExpiry - GetTime())
-    if (ratioPercent >= data.threshhold) then
-      if (tRemaining <= tClipInterval) then
-        return format(FMT_ORANGE, ratioPercent)
-      else
-        return format(FMT_GREEN, ratioPercent)
-      end
-    end
-  end
-  return format(FMT_GRAY, ratioPercent)
+  return self:CalcRatios(SPID_SUNFIRE)
 end
 
 
@@ -150,6 +133,12 @@ end
 --------------------------------------------------------------------------------
 -- Plugin Setup
 --------------------------------------------------------------------------------
+
+function SUB:OnEnable()
+  self:Printd("OnEnable")
+  self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+  self:ApplySettings()
+end
 
 function SUB:ApplySettings()
   self:Printd("ApplySettings")
