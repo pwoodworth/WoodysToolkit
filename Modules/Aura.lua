@@ -11,247 +11,126 @@ setfenv(1, SUB)
 -- Auras
 --------------------------------------------------------------------------------
 
-local function isAvailableWithin(spellname, seconds)
-  local castart, caduration, caenabled = GetSpellCooldown(spellname)
-  if castart and castart > 0 then
-    local now = GetTime()
-    local caleft = ((castart + caduration) - now)
-    if (caleft > seconds) then
-      return false
-    end
-  end
-  return true
-end
+SUB.defaults = {
+  profile = {
+    enabled = false,
+    threshhold = 119,
+  },
+}
 
-
---[[
-COMBAT_LOG_EVENT_UNFILTERED, PLAYER_ENTERING_WORLD, ACTIONBAR_UPDATE_COOLDOWN, SPELL_UPDATE_COOLDOWN
---]]
-
-_G.WoodysAuraTool = {
-  synapse = {
-    trigger = function(reverse, ...)
-      local trigger = false
-      local start, _, enable = GetInventoryItemCooldown("player", 10)
-      if enable and start and start == 0 then
-        trigger = not isAvailableWithin("Celestial Alignment", 60)
-      end
-      if trigger ~= reverse then
-        return true
-      end
-      return false
-    end,
-    trigger2 = function(reverse, event, _, logevent, _, ...)
-    --    local reverse = false
-      local trigger = false
-      local now = GetTime()
-      local start, _, enable = GetInventoryItemCooldown("player", 10)
-      local castart, caduration, caenabled = GetSpellCooldown("Celestial Alignment")
-      local caleft = 0
-      if enable and start and castart and start == 0 and castart > 0 then
-        caleft = ((castart + caduration) - now)
-        if (caleft > 60) then
-          trigger = true
-        end
-      end
-      if trigger ~= reverse then
-        -- local prefix = trigger and "TRIGGER" or "UNTRIGGER"
-        -- print(prefix.." caleft: "..caleft)
-        return true
-      end
-      return false
-    end,
+SUB.adata = {
+  ["lunar"] = { -- arcane
+    DamageMultiplier = 1,
+    sDamage = 0,
+    SPStd = 0,
+    ratio = 0,
+    DotName = "Moonfire",
+    DotId = 8921,
+    EclipseName = "Eclipse (Lunar)",
+    other = "solar",
+  },
+  ["solar"] = { -- natural
+    DamageMultiplier = 1,
+    sDamage = 0,
+    SPStd = 0,
+    ratio = 0,
+    DotName = "Sunfire",
+    DotId = 93402,
+    EclipseName = "Eclipse (Solar)",
+    other = "lunar",
   }
 }
 
---[[ SNAPSHOT LOGIC : Icon ]]--
-local snapshotLogic = {
-  Trigger = {
-    Type = [[Custom]],
-    EventType = [[Event]],
-    Events = [[COMBAT_LOG_EVENT_UNFILTERED]],
-    Hide = [[Timed]],
-    CustomTrigger = function(...)
-      local _, _, event, _, source, _, _, _, destination, _, _, _, spell, _, _, _, _, _, _, _, _, _ = ...
-      if (source == UnitGUID("player") and destination == UnitGUID("target") and event == "SPELL_CAST_SUCCESS") then
-        if (spell == 8921) then
-          Moon_sDamage = (1841 + 0.24 * SPArc) * DamageMultiplierArc
-          Sun_sDamage = (UnitBuff("player", "Celestial Alignment") and ((1841 + 0.24 * SPNat) * DamageMultiplierNat)) or Sun_sDamage
-        elseif (spell == 93402) then
-          Sun_sDamage = (1841 + 0.24 * SPNat) * DamageMultiplierNat
-          Moon_sDamage = (UnitBuff("player", "Celestial Alignment") and ((1841 + 0.24 * SPArc) * DamageMultiplierArc)) or Moon_sDamage
-        end
+SUB.bdata[8921] = SUB.adata["lunar"]
+SUB.bdata[93402] = SUB.adata["solar"]
+
+function SUB:CalcStdVals()
+  self.adata.solar.SPStd, self.adata.lunar.SPStd = GetSpellBonusDamage(4), GetSpellBonusDamage(7)
+  local CritNat, CritArc = (1 + GetSpellCritChance(4) / 100), (1 + GetSpellCritChance(7) / 100)
+  local Mastery = GetMasteryEffect() / 100
+  local Ticks = ceil(7 * UnitSpellHaste("player") / 100) / 7 + 1
+  local EclipseArc = (UnitBuff("player", "Eclipse (Lunar)") and (1.15 + Mastery)) or 1
+  local EclipseNat = (UnitBuff("player", "Eclipse (Solar)") and (1.15 + Mastery)) or 1
+  local CelestialAlignment = (UnitBuff("player", "Celestial Alignment") and 1.15) or 1
+  local Form = (UnitBuff("player", "Moonkin Form") and 1.15) or 1
+  Form = (UnitBuff("player", "Incarnation: Chosen of Elune") and 1.4) or Form
+  self.adata.lunar.DamageMultiplier = EclipseArc * CelestialAlignment * Form * Ticks * CritArc
+  self.adata.solar.DamageMultiplier = EclipseNat * CelestialAlignment * Form * Ticks * CritNat
+end
+
+function SUB:COMBAT_LOG_EVENT_UNFILTERED(...)
+  local _, event, _, source, _, _, _, destination, _, _, _, spell, _, _, _, _, _, _, _, _, _ = ...
+  if (source == UnitGUID("player") and destination == UnitGUID("target") and event == "SPELL_CAST_SUCCESS") then
+    local dotData = self.bdata[spell]
+    if (dotData) then
+      self:CalcStdVals()
+      dotData.sDamage = (1841 + 0.24 * dotData.SPStd) * dotData.DamageMultiplier
+      if UnitBuff("player", "Celestial Alignment") then
+        local thatDot = self.adata[dotData.other]
+        thatDot.sDamage = (1841 + 0.24 * thatDot.SPStd) * thatDot.DamageMultiplier
       end
     end
-  },
-}
-
---[[ STAT LOGIC : Text ]]--
-local statLogic = {
-  Display = {
-    DisplayText = [[%c]],
-    UpdateCustomTextOn = [[EveryFrame]],
-    CustomFunction = function()
-      SPNat, SPArc = GetSpellBonusDamage(4), GetSpellBonusDamage(7)
-      local CritNat, CritArc = (1 + GetSpellCritChance(4) / 100), (1 + GetSpellCritChance(7) / 100)
-      local Mastery = GetMasteryEffect() / 100
-      local Ticks = ceil(7 * UnitSpellHaste("player") / 100) / 7 + 1
-      local EclipseArc = (UnitBuff("player", "Eclipse (Lunar)") and (1.15 + Mastery)) or 1
-      local EclipseNat = (UnitBuff("player", "Eclipse (Solar)") and (1.15 + Mastery)) or 1
-      local CelestialAlignment = (UnitBuff("player", "Celestial Alignment") and 1.15) or 1
-      local Form = (UnitBuff("player", "Moonkin Form") and 1.15) or 1
-      Form = (UnitBuff("player", "Incarnation: Chosen of Elune") and 1.4) or Form
-      DamageMultiplierArc = EclipseArc * CelestialAlignment * Form * Ticks * CritArc
-      DamageMultiplierNat = EclipseNat * CelestialAlignment * Form * Ticks * CritNat
-      return ''
-    end
-  },
-  Trigger = {
-    Type = [[Aura]],
-    Auras = [[Moonkin Form, Incarnation: Chosen of Elune]],
-  },
-}
-
---[[ SUNFIRE : Icon ]]--
-local sunfireIcon = {
-  Display = {
-    DisplayText = [[%c]],
-    UpdateCustomTextOn = [[EveryFrame]],
-    CustomFunction =
-    function()
-      if (UnitDebuff("target", "Sunfire", nil, "PLAYER")) then
-        return gSunRatioText or ""
-      else
-        return ''
-      end
-    end
-  },
-  Trigger = {
-    Type = [[Custom]],
-    EventType = [[Status]],
-    CustomTrigger =
-    function(...)
-      local untrigger = false
-      if (UnitDebuff("target", "Sunfire", nil, "PLAYER")) then
-        local Sun_pDamage = (1841 + 0.24 * SPNat) * DamageMultiplierNat
-        local Sun_RatioPercent = (Sun_pDamage / Sun_sDamage) * 100
-        if (Sun_RatioPercent >= 119) then
-          if not untrigger then
-            local Sun_tDuration, Sun_tExpiry = select(6, UnitDebuff("target", "Sunfire", nil, "PLAYER"))
-            local Sun_tClipPerSec = ((Sun_RatioPercent / 100 * Sun_tDuration) - Sun_tDuration)
-            local Sun_tClipInterval = (Sun_tClipPerSec - (Sun_tClipPerSec % 2))
-            local Sun_tRemaining = (Sun_tExpiry - GetTime())
-            if (Sun_tRemaining <= Sun_tClipInterval) then
-              gSunRatioText = format("|cFFFF6900%d|r", Sun_RatioPercent)
-            else
-              gSunRatioText = format("|cFF00FF00%d|r", Sun_RatioPercent)
-            end
-          end
-          return not untrigger
-        else
-          gSunRatioText = format("|cFF777777%d|r", Sun_RatioPercent)
-          return untrigger
-        end
-      else
-        if (not UnitDebuff("target", "Moonfire", nil, "PLAYER")) and (UnitBuff("player", "Eclipse (Solar)")) then
-          return untrigger
-        end
-        return not untrigger
-      end
-    end
-  },
-}
-
---[[ MOONFIRE : Icon ]]--
-local moonfireIcon = {
-  Display = {
-    DisplayText = [[%c]],
-    UpdateCustomTextOn = [[EveryFrame]],
-    CustomFunction = function()
-      if (UnitDebuff("target", "Moonfire", nil, "PLAYER")) then
-        return gMoonRatioText or ""
-      else
-        return ''
-      end
-    end,
-  },
-  Trigger = {
-    Type = [[Custom]],
-    EventType = [[Status]],
-    CustomTrigger =
-    function(...)
-      local untrigger = false
-      if (UnitDebuff("target", "Moonfire", nil, "PLAYER")) then
-        local Moon_pDamage = (1841 + 0.24 * SPArc) * DamageMultiplierArc
-        local Moon_RatioPercent = (Moon_pDamage / Moon_sDamage) * 100
-        if (Moon_RatioPercent >= 119) then
-          if not untrigger then
-            local Moon_tDuration, Moon_tExpiry = select(6, UnitDebuff("target", "Moonfire", nil, "PLAYER"))
-            local Moon_tClipPerSec = ((Moon_RatioPercent / 100 * Moon_tDuration) - Moon_tDuration)
-            local Moon_tClipInterval = (Moon_tClipPerSec - (Moon_tClipPerSec % 2))
-            local Moon_tRemaining = (Moon_tExpiry - GetTime())
-            if (Moon_tRemaining <= Moon_tClipInterval) then
-              gMoonRatioText = format("|cFFFF6900%d|r", Moon_RatioPercent)
-            else
-              gMoonRatioText = format("|cFF00FF00%d|r", Moon_RatioPercent)
-            end
-          end
-          return not untrigger
-        else
-          gMoonRatioText = format("|cFF777777%d|r", Moon_RatioPercent)
-          return untrigger
-        end
-      else
-        if (not UnitDebuff("target", "Sunfire", nil, "PLAYER")) and (UnitBuff("player", "Eclipse (Lunar)")) then
-          return untrigger
-        end
-        return not untrigger
-      end
-    end
-  },
-}
-
-
-local fade =
-function(progress, start, delta)
-  if UnitBuff("player", "Shooting Stars") then
-    progress = math.abs(math.cos(math.pi * progress))
-    return start + (progress * delta)
-  else
-    return start
   end
 end
 
+function SUB:CalcRatios(dotType)
+  self:CalcStdVals()
+  local dotData = self.adata[dotType]
 
-
-local zoom =
-function(progress, startX, startY, scaleX, scaleY)
-  if UnitBuff("player", "Shooting Stars") then
---    return scaleX, scaleY
-    progress = math.abs(math.cos(math.pi * progress))
-    local newX = startX + (progress * (scaleX - startX))
-    local newY = startY + (progress * (scaleY - startY))
-    return newX, newY
+  local name, _, _, _, _, tDuration, tExpiry = UnitDebuff("target", dotData.DotName, nil, "PLAYER")
+  if name then
+    local pDamage = (1841 + 0.24 * dotData.SPStd) * dotData.DamageMultiplier
+    dotData.ratio = (pDamage / dotData.sDamage) * 100
   else
-    return startX, startY
+    dotData.ratio = 999
   end
+
+  local needIt = true
+  if (dotData.ratio >= data.threshhold) then
+    if (self.adata[dotData.other].ratio >= data.threshhold) and UnitBuff("player", dotData.EclipseName) then
+      needIt = false
+    end
+  else
+    needIt = false
+  end
+  return needIt, dotData.ratio, format("|cFF00FF00%d|r", dotData.ratio)
 end
 
-local slide =
-function(progress, startX, startY, deltaX, deltaY)
-  if UnitBuff("player", "Shooting Stars") then
-    progress = math.abs(math.cos(math.pi * progress)) / 2
-    local newX = startX + (progress * deltaX)
-    local newY = startY + (progress * deltaY)
-    return newX, newY
-  else
-    return startX, startY
-  end
+function SUB:Moonfire()
+  local dotType = "lunar"
+  local showIt, ratio, dotTxt = self:CalcRations(dotType)
+  return showIt, dotTxt
 end
 
+function SUB:GetSunfire()
+  local dotType = "solar"
+  local showIt, ratio, dotTxt = self:CalcRations(dotType)
+  return showIt, dotTxt
+end
 
+function SUB:FormatRatioText(dotName, pDamage, sDamage)
+  local FMT_GRAY = "|cFF777777%d|r" -- gray
+  local FMT_ORANGE = "|cFFFF6900%d|r" -- orange
+  local FMT_GREEN = "|cFF00FF00%d|r" -- green
 
--- Tempus Repit  -- Sinister Primal Diamond
+  local name, _, _, _, _, tDuration, tExpiry = UnitDebuff("target", dotName, nil, "PLAYER")
+
+  if name then
+    local ratioPercent = (pDamage / sDamage) * 100
+    local tClipPerSec = ((ratioPercent / 100 * tDuration) - tDuration)
+    local tClipInterval = (tClipPerSec - (tClipPerSec % 2))
+    local tRemaining = (tExpiry - GetTime())
+    if (ratioPercent >= data.threshhold) then
+      if (tRemaining <= tClipInterval) then
+        return format(FMT_ORANGE, ratioPercent)
+      else
+        return format(FMT_GREEN, ratioPercent)
+      end
+    end
+  end
+  return format(FMT_GRAY, ratioPercent)
+end
+
 
 local function applyAuras()
   if db.profile.enabled then
@@ -271,12 +150,6 @@ end
 --------------------------------------------------------------------------------
 -- Plugin Setup
 --------------------------------------------------------------------------------
-
-SUB.defaults = {
-  profile = {
-    enabled = false,
-  },
-}
 
 function SUB:ApplySettings()
   self:Printd("ApplySettings")
