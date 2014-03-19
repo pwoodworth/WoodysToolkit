@@ -96,10 +96,10 @@ end
 
 function SUB:OnEnable()
   self:Printd("OnEnable")
-  self:RawHook('SetChatWindowSavedPosition', true)
-  self:RawHook('GetChatWindowSavedPosition', true)
-  self:RawHook('SetChatWindowSavedDimensions', true)
-  self:RawHook('GetChatWindowSavedDimensions', true)
+--  self:RawHook('SetChatWindowSavedPosition', true)
+--  self:RawHook('GetChatWindowSavedPosition', true)
+--  self:RawHook('SetChatWindowSavedDimensions', true)
+--  self:RawHook('GetChatWindowSavedDimensions', true)
   self:UpdateWindowData()
 end
 

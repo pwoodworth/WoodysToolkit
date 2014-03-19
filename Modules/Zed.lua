@@ -250,6 +250,32 @@ function(progress, startX, startY, deltaX, deltaY)
 end
 
 
+local threatfade =
+function(progress, start, delta)
+  local _, _, threatpct = UnitDetailedThreatSituation("player", "target")
+  threatpct = math.floor(threatpct or 0)
+  if (threatpct >= 100) then
+    progress = math.abs(math.cos(math.pi * progress))
+    return start + (progress * delta)
+  else
+    return start
+  end
+end
+
+local threatzoom =
+function(progress, startX, startY, scaleX, scaleY)
+  local _, _, threatpct = UnitDetailedThreatSituation("player", "target")
+  threatpct = math.floor(threatpct or 0)
+  if (threatpct >= 100) then
+    return scaleX, scaleY
+  else
+    progress = threatpct / 100
+    local newX = startX + (progress * (scaleX - startX))
+    local newY = startY + (progress * (scaleY - startY))
+    return newX, newY
+  end
+end
+
 
 -- Tempus Repit  -- Sinister Primal Diamond
 
